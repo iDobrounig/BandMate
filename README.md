@@ -22,12 +22,7 @@ Internes Band-Dashboard: Songvorschläge, Noten & Audio pro Song, Voting, Übe-S
 - **PDF-Noten-Viewer** direkt auf der Songseite
 - **Transponieren**: Akkordzeilen in den Lyrics live um Halbtöne verschieben (deutsch H/B und englisch B unterstützt), optional dauerhaft speichern
 
-## Roadmap / Ideen
-
-- Browser-Audio-Aufnahme (Sprachmemo pro Song via MediaRecorder)
-- Erinnerungs-Mails vor Terminen (braucht Cron-Job am Server)
-- Serien-Termine gesammelt bearbeiten
-- Anwesenheits-Statistik über alle Proben
+Die vollständige Feature-Liste inkl. priorisierter Roadmap steht in **[FEATURES.md](FEATURES.md)**.
 
 ## Lokal starten
 
@@ -66,6 +61,9 @@ Schema-Änderungen: `lib/db/schema.ts` anpassen, dann `npm run db:generate` — 
    npm start           # bzw. Startbefehl im Hosting-Panel: "npm start"
    ```
 4. Im Hosting-Panel (Plesk/cPanel) die App auf den Startbefehl `npm start` und den zugewiesenen Port zeigen lassen (`PORT`-Env wird von Next respektiert).
+5. Läuft ein Reverse-Proxy davor (nginx/Apache): Upload-Limit auf ≥ 60 MB stellen (nginx: `client_max_body_size 60m`), sonst schlagen Audio-Uploads fehl.
+
+Checkliste vor dem Livegang: siehe [FEATURES.md](FEATURES.md), Abschnitt „Vor dem ersten echten Deployment".
 
 ## Scripts
 
