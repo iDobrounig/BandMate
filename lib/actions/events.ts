@@ -1,11 +1,16 @@
 "use server";
 
 import crypto from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, max } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { events, eventAttendance, type AttendanceStatus } from "@/lib/db/schema";
+import {
+  events,
+  eventAttendance,
+  eventSongs,
+  type AttendanceStatus,
+} from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { notifyBand } from "@/lib/mail";
 import { formatDate } from "@/lib/format";
@@ -122,6 +127,31 @@ export async function deleteEvent(eventId: number, scope: "single" | "series") {
   }
   revalidatePath("/", "layout");
   redirect("/termine");
+}
+
+/** Song auf die Probe-Agenda eines Termins setzen. */
+export async function addSongToEvent(eventId: number, songId: number) {
+  await requireUser();
+  const [row] = await db
+    .select({ maxPos: max(eventSongs.position) })
+    .from(eventSongs)
+    .where(eq(eventSongs.eventId, eventId));
+  await db.insert(eventSongs).values({
+    eventId,
+    songId,
+    position: (row?.maxPos ?? 0) + 1,
+  });
+  revalidatePath(`/termine/${eventId}`);
+}
+
+export async function removeEventSong(eventSongId: number) {
+  await requireUser();
+  const row = await db.query.eventSongs.findFirst({
+    where: eq(eventSongs.id, eventSongId),
+  });
+  if (!row) return;
+  await db.delete(eventSongs).where(eq(eventSongs.id, eventSongId));
+  revalidatePath(`/termine/${row.eventId}`);
 }
 
 export async function setAttendance(

@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { setlists, setlistItems, songs } from "@/lib/db/schema";
 import { formatDate } from "@/lib/format";
+import { duplicateSetlist } from "@/lib/actions/setlists";
 import { SetlistForm, DeleteSetlistButton } from "@/components/setlist-forms";
 import { SetlistEditor, type EditorItem } from "@/components/setlist-editor";
 
@@ -66,10 +67,15 @@ export default async function SetlistDetailPage({
               {setlist.notes ? ` · ${setlist.notes}` : ""}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link href={`/setlisten/${setlist.id}/druck`} className="btn">
               🖨 Druckansicht
             </Link>
+            <form action={duplicateSetlist.bind(null, setlist.id)}>
+              <button type="submit" className="btn" title="Kopie dieser Setliste anlegen">
+                ⧉ Duplizieren
+              </button>
+            </form>
             <DeleteSetlistButton setlistId={setlist.id} name={setlist.name} />
           </div>
         </div>

@@ -48,6 +48,41 @@ export async function updateSetlist(
   return { success: "Gespeichert." };
 }
 
+/** Kopiert eine Setliste samt Songs (ohne Datum), z.B. als Basis für den nächsten Gig. */
+export async function duplicateSetlist(setlistId: number) {
+  await requireUser();
+  const original = await db.query.setlists.findFirst({
+    where: eq(setlists.id, setlistId),
+  });
+  if (!original) return;
+
+  const [copy] = await db
+    .insert(setlists)
+    .values({
+      name: `${original.name} (Kopie)`,
+      eventDate: null,
+      notes: original.notes,
+    })
+    .returning();
+
+  const items = await db.query.setlistItems.findMany({
+    where: eq(setlistItems.setlistId, setlistId),
+  });
+  if (items.length > 0) {
+    await db.insert(setlistItems).values(
+      items.map((item) => ({
+        setlistId: copy.id,
+        songId: item.songId,
+        position: item.position,
+        note: item.note,
+      }))
+    );
+  }
+
+  revalidatePath("/setlisten");
+  redirect(`/setlisten/${copy.id}`);
+}
+
 export async function deleteSetlist(setlistId: number) {
   await requireUser();
   await db.delete(setlists).where(eq(setlists.id, setlistId));

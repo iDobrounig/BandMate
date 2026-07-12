@@ -1,13 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, ne, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { events, eventAttendance, setlists, users } from "@/lib/db/schema";
+import {
+  events,
+  eventAttendance,
+  eventSongs,
+  songs,
+  setlists,
+  users,
+} from "@/lib/db/schema";
 import { EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { EventForm, DeleteEventButtons } from "@/components/event-forms";
 import { AttendanceButtons } from "@/components/attendance";
+import { EventAgenda } from "@/components/event-agenda";
 
 export default async function TerminDetailPage({
   params,
@@ -21,7 +29,8 @@ export default async function TerminDetailPage({
   const event = await db.query.events.findFirst({ where: eq(events.id, eventId) });
   if (!event) notFound();
 
-  const [attendance, allUsers, setlist, setlistOptions] = await Promise.all([
+  const [attendance, allUsers, setlist, setlistOptions, agendaItems, agendaOptions] =
+    await Promise.all([
     db
       .select({
         userId: eventAttendance.userId,
@@ -42,6 +51,25 @@ export default async function TerminDetailPage({
       .select({ id: setlists.id, name: setlists.name })
       .from(setlists)
       .orderBy(asc(setlists.name)),
+    db
+      .select({
+        id: eventSongs.id,
+        songId: eventSongs.songId,
+        title: songs.title,
+        artist: songs.artist,
+        songKey: songs.songKey,
+        tempoBpm: songs.tempoBpm,
+        readyCount: sql<number>`(select count(*) from practice_status p where p.song_id = songs.id and p.status = 'ready')`,
+      })
+      .from(eventSongs)
+      .innerJoin(songs, eq(eventSongs.songId, songs.id))
+      .where(eq(eventSongs.eventId, eventId))
+      .orderBy(asc(eventSongs.position)),
+    db
+      .select({ id: songs.id, title: songs.title, artist: songs.artist })
+      .from(songs)
+      .where(ne(songs.status, "archived"))
+      .orderBy(asc(songs.title)),
   ]);
 
   const mine = attendance.find((a) => a.userId === user.id);
@@ -120,6 +148,18 @@ export default async function TerminDetailPage({
                 );
               })}
             </ul>
+          </section>
+
+          <section className="card p-5">
+            <h2 className="headline mb-3 text-lg">
+              {event.kind === "gig" ? "Programm-Fokus" : "Probe-Agenda"}
+            </h2>
+            <EventAgenda
+              eventId={event.id}
+              items={agendaItems}
+              songOptions={agendaOptions}
+              memberCount={allUsers.length}
+            />
           </section>
 
           <DeleteEventButtons eventId={event.id} isSeries={Boolean(event.seriesId)} />

@@ -19,7 +19,7 @@ Stand: 12.07.2026 · Diese Liste ist das zentrale Dokument für „Was kann die 
 - [x] **Metronom** (Web Audio) mit Tap-Tempo, vorbelegt mit Song-BPM
 
 ### Setlisten
-- [x] Beliebig viele Setlisten (Name, Datum, Notizen)
+- [x] Beliebig viele Setlisten (Name, Datum, Notizen), **duplizierbar** als Basis fürs nächste Programm
 - [x] Songs aus Repertoire/In-Probe hinzufügen, **Drag-&-Drop-Reihenfolge**
 - [x] Notiz pro Song (z.B. „Pause danach"), Gesamtdauer
 - [x] **Druck-/PDF-Ansicht** (weißes Blatt, Tonart/Capo/Tempo/Dauer)
@@ -31,6 +31,8 @@ Stand: 12.07.2026 · Diese Liste ist das zentrale Dokument für „Was kann die 
 - [x] Verknüpfung mit Setliste
 - [x] Optionale **E-Mail an die Band beim Anlegen** (Checkbox)
 - [x] Vergangene Termine einklappbar
+- [x] **Probe-Agenda**: Songs einem Termin zuordnen, mit „✓ x/y können's"-Anzeige
+- [x] **ICS-Kalender-Feed**: Termine als Abo in Handy-/Google-Kalender (geheime Token-URL)
 
 ### Mitglieder & System
 - [x] Login (Session-Cookie), alle Seiten geschützt, Datei-Downloads nur mit Login
@@ -40,20 +42,17 @@ Stand: 12.07.2026 · Diese Liste ist das zentrale Dokument für „Was kann die 
 - [x] E-Mail-Benachrichtigung bei neuem Vorschlag / Kommentar / Termin (wenn SMTP konfiguriert)
 - [x] Dashboard: heiße Vorschläge, in Probe, nächste Termine mit RSVP-Status, letzte Kommentare
 - [x] Mobile-taugliches, dunkles „Backstage"-Design
+- [x] **App-Icon/Favicon + PWA-Manifest** — „Zum Homescreen hinzufügen" wie eine echte App
 
 ## 🔜 Ideen / Roadmap (grob priorisiert)
 
 ### Schnelle Gewinne
-- [ ] **ICS-Kalender-Feed** für Termine — Abo im Handy-/Google-Kalender, Proben erscheinen automatisch
-- [ ] **Eigenes App-Icon/Favicon + PWA-Manifest** — „Zum Homescreen hinzufügen" wie eine echte App (aktuell noch Next.js-Standard-Icon!)
 - [ ] **Passwort-Reset per E-Mail** — sinnvoll, sobald SMTP eingerichtet ist
-- [ ] **Setliste duplizieren** — Gig-Programm als Ausgangspunkt fürs nächste
 - [ ] **Dubletten-Warnung** beim Songvorschlag („gibt's schon als…")
 
 ### Mittel
 - [ ] **Browser-Audio-Aufnahme** — Sprachmemo/Idee direkt am Song aufnehmen (MediaRecorder)
 - [ ] **Erinnerungs-Mail vor Terminen** (z.B. 2 Tage vorher) — braucht Cron-Job am Server
-- [ ] **Probe-Agenda**: Songs einem Termin zuordnen („heute proben wir: …")
 - [ ] **Sets & Pausen in Setlisten** (Set 1 / Pause / Set 2 mit Zwischensummen)
 - [ ] **Anwesenheits-Statistik** über alle Proben (wer war wie oft da)
 - [ ] **Serien-Termine gesammelt bearbeiten** (z.B. Uhrzeit der ganzen Serie ändern)

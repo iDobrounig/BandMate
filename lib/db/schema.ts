@@ -177,6 +177,17 @@ export const eventAttendance = sqliteTable(
   (t) => [primaryKey({ columns: [t.eventId, t.userId] })]
 );
 
+export const eventSongs = sqliteTable("event_songs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  eventId: integer("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  songId: integer("song_id")
+    .notNull()
+    .references(() => songs.id, { onDelete: "cascade" }),
+  position: integer("position").notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Song = typeof songs.$inferSelect;
 export type SongLink = typeof songLinks.$inferSelect;

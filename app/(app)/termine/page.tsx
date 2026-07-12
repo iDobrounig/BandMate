@@ -7,6 +7,8 @@ import { fetchEvents } from "@/lib/queries";
 import { EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { EventForm } from "@/components/event-forms";
+import { CalendarSubscribe } from "@/components/calendar-subscribe";
+import { calendarFeedPath } from "@/lib/calendar";
 
 export const metadata = { title: "Termine" };
 
@@ -130,10 +132,16 @@ export default async function TerminePage({
           </div>
         </div>
 
-        <section className="card h-fit p-5">
-          <h2 className="headline mb-4 text-lg">Neuer Termin</h2>
-          <EventForm setlistOptions={setlistOptions} />
-        </section>
+        <div className="space-y-6">
+          <section className="card h-fit p-5">
+            <h2 className="headline mb-4 text-lg">Neuer Termin</h2>
+            <EventForm setlistOptions={setlistOptions} />
+          </section>
+          <CalendarSubscribe
+            feedPath={calendarFeedPath()}
+            appUrl={process.env.APP_URL ?? null}
+          />
+        </div>
       </div>
     </div>
   );
