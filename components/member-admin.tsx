@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import {
   createUser,
+  updateUser,
   setUserPassword,
   toggleUserActive,
   setUserRole,
@@ -84,6 +85,47 @@ function ResetPasswordForm({ userId }: { userId: number }) {
   );
 }
 
+function EditMemberForm({ member }: { member: User }) {
+  const [state, action] = useActionState(updateUser, initial);
+  return (
+    <form action={action} className="mt-3 space-y-3 rounded-lg border border-line-soft p-3">
+      <input type="hidden" name="userId" value={member.id} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label className="label">Name</label>
+          <input className="input" name="name" defaultValue={member.name} required />
+        </div>
+        <div>
+          <label className="label">E-Mail</label>
+          <input
+            className="input"
+            name="email"
+            type="email"
+            defaultValue={member.email}
+            required
+          />
+        </div>
+        <div>
+          <label className="label">Instrument</label>
+          <input
+            className="input"
+            name="instrument"
+            defaultValue={member.instrument ?? ""}
+            list={`instruments-edit-${member.id}`}
+          />
+          <datalist id={`instruments-edit-${member.id}`}>
+            {INSTRUMENT_SUGGESTIONS.map((i) => (
+              <option key={i} value={i} />
+            ))}
+          </datalist>
+        </div>
+      </div>
+      <FormMsg state={state} />
+      <SubmitButton className="btn btn-sm">Speichern</SubmitButton>
+    </form>
+  );
+}
+
 export function MemberRow({
   member,
   isSelf,
@@ -92,6 +134,7 @@ export function MemberRow({
   isSelf: boolean;
 }) {
   const [showReset, setShowReset] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   return (
     <div className={`card p-4 ${member.active ? "" : "opacity-50"}`}>
@@ -115,12 +158,27 @@ export function MemberRow({
             {member.instrument ? ` · ${member.instrument}` : ""}
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => {
+              setShowEdit((v) => !v);
+              setShowReset(false);
+            }}
+          >
+            Bearbeiten
+          </button>
+        </div>
         {!isSelf && (
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => setShowReset((v) => !v)}
+              onClick={() => {
+                setShowReset((v) => !v);
+                setShowEdit(false);
+              }}
             >
               Passwort
             </button>
@@ -150,6 +208,7 @@ export function MemberRow({
           </div>
         )}
       </div>
+      {showEdit && <EditMemberForm member={member} />}
       {showReset && !isSelf && <ResetPasswordForm userId={member.id} />}
     </div>
   );

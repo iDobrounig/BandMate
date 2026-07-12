@@ -40,6 +40,34 @@ export async function createUser(
   return { success: `${name} wurde angelegt.` };
 }
 
+export async function updateUser(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  await requireAdmin();
+  const userId = Number(formData.get("userId"));
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const instrument = String(formData.get("instrument") ?? "").trim();
+
+  if (!name || !email) return { error: "Name und E-Mail sind Pflichtfelder." };
+  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Ungültige E-Mail-Adresse." };
+
+  const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
+  if (existing && existing.id !== userId) {
+    return { error: "Diese E-Mail-Adresse ist bereits vergeben." };
+  }
+
+  await db
+    .update(users)
+    .set({ name, email, instrument: instrument || null })
+    .where(eq(users.id, userId));
+  revalidatePath("/", "layout");
+  return { success: "Profil gespeichert." };
+}
+
 export async function setUserPassword(
   _prev: FormState,
   formData: FormData
