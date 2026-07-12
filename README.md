@@ -1,8 +1,19 @@
 # Bandraum
 
-Internes Band-Dashboard: Songvorschläge, Noten & Audio pro Song, Voting, Übe-Status, Kommentare und Setlisten.
+Selbst gehostetes Band-Dashboard: Songvorschläge mit Voting, Noten & Audio pro Song, Übe-Status, Bandchat, Setlisten, Probetermine mit Zu-/Absagen — alles an einem Ort, gebaut für kleine Bands (3–15 Leute).
 
-**Stack:** Next.js (App Router) · SQLite (better-sqlite3 + Drizzle) · Tailwind CSS · iron-session
+> **English:** Bandraum ("band room") is a self-hosted dashboard for bands: song suggestions with voting, sheet music & audio per song, practice status, comments, drag-and-drop setlists with print view, rehearsal/gig scheduling with RSVPs, an ICS calendar feed, a built-in metronome and a chord transposer. Single Node.js process, SQLite, no external services required. UI is currently German only — contributions welcome.
+
+**Stack:** Next.js (App Router) · SQLite (better-sqlite3 + Drizzle) · Tailwind CSS · iron-session — läuft als einzelner Node-Prozess, keine externen Dienste nötig.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/song.png" alt="Songseite mit Embeds, Übe-Status und Noten" /></td>
+    <td><img src="docs/screenshots/termine.png" alt="Termine mit Zu-/Absagen und Serien" /></td>
+  </tr>
+</table>
 
 ## Features
 
@@ -73,3 +84,7 @@ Checkliste vor dem Livegang: siehe [FEATURES.md](FEATURES.md), Abschnitt „Vor 
 | `npm run build` / `npm start` | Produktion |
 | `npm run seed` | Ersten Admin anlegen (no-op, wenn User existieren) |
 | `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
+
+## Lizenz
+
+[MIT](LICENSE) — frei nutzbar, auch für eure Band. Pull Requests willkommen.

@@ -135,7 +135,7 @@ export default async function DashboardPage() {
                       <p className="truncate text-sm text-mute">{song.artist ?? "—"}</p>
                     </div>
                     <span className="mono-display shrink-0 text-xs text-mute">
-                      ✓ {song.readyCount} können&rsquo;s
+                      {`✓ ${song.readyCount} können's`}
                     </span>
                   </Link>
                 ))}
