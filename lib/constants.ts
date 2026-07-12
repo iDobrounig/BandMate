@@ -1,4 +1,9 @@
-import type { SongStatus, PracticeState } from "@/lib/db/schema";
+import type {
+  SongStatus,
+  PracticeState,
+  EventKind,
+  AttendanceStatus,
+} from "@/lib/db/schema";
 
 export const SONG_STATUS: Record<
   SongStatus,
@@ -44,6 +49,46 @@ export const PRACTICE_STATUS: Record<
   },
   practicing: { label: "Übe noch", short: "übt", color: "bg-amber-400" },
   ready: { label: "Kann ich", short: "sitzt", color: "bg-emerald-400" },
+};
+
+export const EVENT_KIND: Record<
+  EventKind,
+  { label: string; badge: string; bar: string }
+> = {
+  rehearsal: {
+    label: "Probe",
+    badge: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+    bar: "bg-sky-400",
+  },
+  gig: {
+    label: "Gig",
+    badge: "bg-accent/15 text-accent-hi border-accent/40",
+    bar: "bg-accent",
+  },
+};
+
+export const ATTENDANCE_STATUS: Record<
+  AttendanceStatus,
+  { label: string; symbol: string; color: string; btnActive: string }
+> = {
+  yes: {
+    label: "Zusagen",
+    symbol: "✓",
+    color: "text-emerald-400",
+    btnActive: "border-emerald-500/60 bg-emerald-500/15 text-emerald-300",
+  },
+  maybe: {
+    label: "Vielleicht",
+    symbol: "?",
+    color: "text-amber-400",
+    btnActive: "border-amber-500/60 bg-amber-500/15 text-amber-300",
+  },
+  no: {
+    label: "Absagen",
+    symbol: "✗",
+    color: "text-red-400",
+    btnActive: "border-red-500/60 bg-red-500/15 text-red-300",
+  },
 };
 
 export const INSTRUMENT_SUGGESTIONS = [

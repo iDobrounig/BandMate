@@ -18,6 +18,17 @@ Internes Band-Dashboard: Songvorschläge, Noten & Audio pro Song, Voting, Übe-S
 - **Userverwaltung**: Admin legt Mitglieder an und setzt Passwörter; sonst dürfen alle alles
 - Optionale **E-Mail-Benachrichtigung** bei neuem Vorschlag/Kommentar (SMTP), pro User abschaltbar
 
+- **Termine**: Proben (auch als wöchentliche Serie) und Gigs mit Zu-/Absagen der Mitglieder, optionaler E-Mail beim Anlegen, Setlisten-Verknüpfung
+- **PDF-Noten-Viewer** direkt auf der Songseite
+- **Transponieren**: Akkordzeilen in den Lyrics live um Halbtöne verschieben (deutsch H/B und englisch B unterstützt), optional dauerhaft speichern
+
+## Roadmap / Ideen
+
+- Browser-Audio-Aufnahme (Sprachmemo pro Song via MediaRecorder)
+- Erinnerungs-Mails vor Terminen (braucht Cron-Job am Server)
+- Serien-Termine gesammelt bearbeiten
+- Anwesenheits-Statistik über alle Proben
+
 ## Lokal starten
 
 ```bash

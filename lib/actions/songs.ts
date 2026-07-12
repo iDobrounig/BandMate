@@ -130,6 +130,24 @@ export async function setSongStatus(songId: number, status: SongStatus) {
   revalidatePath("/", "layout");
 }
 
+/** Speichert clientseitig transponierte Lyrics (und ggf. die neue Tonart). */
+export async function saveTransposedLyrics(
+  songId: number,
+  lyricsChords: string,
+  songKey: string | null
+) {
+  await requireUser();
+  await db
+    .update(songs)
+    .set({
+      lyricsChords: lyricsChords.trim() ? lyricsChords : null,
+      songKey: songKey?.trim() || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(songs.id, songId));
+  revalidatePath(`/songs/${songId}`);
+}
+
 export async function deleteSong(songId: number) {
   await requireUser();
   const files = await db.query.attachments.findMany({

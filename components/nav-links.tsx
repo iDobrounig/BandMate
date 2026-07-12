@@ -13,6 +13,7 @@ export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
     { href: "/", label: "Dashboard" },
     { href: "/songs", label: "Songs" },
     { href: "/setlisten", label: "Setlisten" },
+    { href: "/termine", label: "Termine" },
     ...(isAdmin ? [{ href: "/mitglieder", label: "Mitglieder" }] : []),
   ];
 

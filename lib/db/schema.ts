@@ -142,6 +142,41 @@ export const setlistItems = sqliteTable("setlist_items", {
   note: text("note"),
 });
 
+export const events = sqliteTable("events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  kind: text("kind", { enum: ["rehearsal", "gig"] })
+    .notNull()
+    .default("rehearsal"),
+  date: text("date").notNull(), // ISO-Datum YYYY-MM-DD
+  startTime: text("start_time"), // HH:MM
+  location: text("location"),
+  notes: text("notes"),
+  setlistId: integer("setlist_id").references(() => setlists.id, {
+    onDelete: "set null",
+  }),
+  seriesId: text("series_id"), // gemeinsame ID für wöchentliche Serien
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const eventAttendance = sqliteTable(
+  "event_attendance",
+  {
+    eventId: integer("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    status: text("status", { enum: ["yes", "no", "maybe"] }).notNull(),
+    comment: text("comment"),
+  },
+  (t) => [primaryKey({ columns: [t.eventId, t.userId] })]
+);
+
 export type User = typeof users.$inferSelect;
 export type Song = typeof songs.$inferSelect;
 export type SongLink = typeof songLinks.$inferSelect;
@@ -152,3 +187,6 @@ export type SetlistItem = typeof setlistItems.$inferSelect;
 
 export type SongStatus = Song["status"];
 export type PracticeState = (typeof practiceStatus.$inferSelect)["status"];
+export type BandEvent = typeof events.$inferSelect;
+export type EventKind = BandEvent["kind"];
+export type AttendanceStatus = (typeof eventAttendance.$inferSelect)["status"];

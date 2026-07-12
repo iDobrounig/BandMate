@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   songs,
@@ -7,7 +7,11 @@ import {
   attachments,
   practiceStatus,
   users,
+  events,
+  setlists,
   type Song,
+  type BandEvent,
+  type AttendanceStatus,
 } from "@/lib/db/schema";
 
 export type SongListItem = Song & {
@@ -49,6 +53,50 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
     audioCount: r.audioCount,
     sheetCount: r.sheetCount,
     readyCount: r.readyCount,
+  }));
+}
+
+export type EventListItem = BandEvent & {
+  yesCount: number;
+  noCount: number;
+  maybeCount: number;
+  myStatus: AttendanceStatus | null;
+  setlistName: string | null;
+};
+
+/** Termine mit Zu-/Absage-Zählern und eigenem Status. */
+export async function fetchEvents(
+  currentUserId: number,
+  opts: { past?: boolean; limit?: number } = {}
+): Promise<EventListItem[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  let query = db
+    .select({
+      event: events,
+      setlistName: setlists.name,
+      yesCount: sql<number>`(select count(*) from event_attendance a where a.event_id = events.id and a.status = 'yes')`,
+      noCount: sql<number>`(select count(*) from event_attendance a where a.event_id = events.id and a.status = 'no')`,
+      maybeCount: sql<number>`(select count(*) from event_attendance a where a.event_id = events.id and a.status = 'maybe')`,
+      myStatus: sql<AttendanceStatus | null>`(select a.status from event_attendance a where a.event_id = events.id and a.user_id = ${currentUserId})`,
+    })
+    .from(events)
+    .leftJoin(setlists, eq(events.setlistId, setlists.id))
+    .where(opts.past ? lt(events.date, today) : gte(events.date, today))
+    .orderBy(
+      opts.past ? desc(events.date) : asc(events.date),
+      asc(events.startTime)
+    )
+    .$dynamic();
+  if (opts.limit) query = query.limit(opts.limit);
+
+  const rows = await query;
+  return rows.map((r) => ({
+    ...r.event,
+    setlistName: r.setlistName,
+    yesCount: r.yesCount,
+    noCount: r.noCount,
+    maybeCount: r.maybeCount,
+    myStatus: r.myStatus,
   }));
 }
 

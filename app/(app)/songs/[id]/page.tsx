@@ -8,6 +8,8 @@ import { VoteButtons } from "@/components/vote-buttons";
 import { PracticePicker } from "@/components/practice";
 import { CommentForm, DeleteCommentButton } from "@/components/comments";
 import { UploadForm, DeleteAttachmentButton } from "@/components/uploads";
+import { SheetViewer } from "@/components/sheet-viewer";
+import { TransposableLyrics } from "@/components/transpose";
 import { LinkEmbed } from "@/components/embeds";
 import { Metronome } from "@/components/metronome";
 import { SongStatusActions } from "@/components/song-actions";
@@ -160,9 +162,11 @@ export default async function SongDetailPage({
           {song.lyricsChords && (
             <section>
               <h2 className="headline mb-3 text-lg">Lyrics &amp; Akkorde</h2>
-              <pre className="card mono-display overflow-x-auto p-5 text-sm leading-relaxed whitespace-pre-wrap">
-                {song.lyricsChords}
-              </pre>
+              <TransposableLyrics
+                songId={song.id}
+                lyrics={song.lyricsChords}
+                songKey={song.songKey}
+              />
             </section>
           )}
 
@@ -248,22 +252,26 @@ export default async function SongDetailPage({
               {[...sheetsByInstrument.entries()].map(([instrument, instrumentFiles]) => (
                 <div key={instrument}>
                   <h3 className="label">{instrument}</h3>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {instrumentFiles.map((file) => (
-                      <li
-                        key={file.id}
-                        className="flex items-center justify-between gap-2 text-sm"
-                      >
-                        <a
-                          className="min-w-0 truncate text-accent-hi hover:underline"
-                          href={`/api/files/${file.id}`}
-                          target="_blank"
-                          rel="noopener"
-                        >
-                          𝄞 {file.originalName}
-                        </a>
-                        <DeleteAttachmentButton
-                          attachmentId={file.id}
+                      <li key={file.id} className="text-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <a
+                            className="min-w-0 truncate text-accent-hi hover:underline"
+                            href={`/api/files/${file.id}`}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            𝄞 {file.originalName}
+                          </a>
+                          <DeleteAttachmentButton
+                            attachmentId={file.id}
+                            name={file.originalName}
+                          />
+                        </div>
+                        <SheetViewer
+                          fileId={file.id}
+                          mime={file.mime}
                           name={file.originalName}
                         />
                       </li>

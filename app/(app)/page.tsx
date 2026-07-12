@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { desc, eq, gte, sql, asc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { songs, comments, users, setlists } from "@/lib/db/schema";
-import { fetchSongList } from "@/lib/queries";
-import { SONG_STATUS } from "@/lib/constants";
+import { songs, comments, users } from "@/lib/db/schema";
+import { fetchSongList, fetchEvents } from "@/lib/queries";
+import { SONG_STATUS, EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 
 export default async function DashboardPage() {
   const user = await requireUser();
 
-  const [allSongs, recentComments, upcomingSetlists] = await Promise.all([
+  const [allSongs, recentComments, upcomingEvents] = await Promise.all([
     fetchSongList(user.id),
     db
       .select({ comment: comments, userName: users.name, songTitle: songs.title })
@@ -19,12 +19,7 @@ export default async function DashboardPage() {
       .innerJoin(songs, eq(comments.songId, songs.id))
       .orderBy(desc(comments.createdAt))
       .limit(6),
-    db
-      .select()
-      .from(setlists)
-      .where(gte(setlists.eventDate, new Date().toISOString().slice(0, 10)))
-      .orderBy(asc(setlists.eventDate))
-      .limit(4),
+    fetchEvents(user.id, { limit: 4 }),
   ]);
 
   const suggestions = allSongs.filter((s) => s.status === "suggestion");
@@ -152,27 +147,50 @@ export default async function DashboardPage() {
         {/* Seitenspalte */}
         <div className="space-y-8">
           <section className="card p-5">
-            <h2 className="headline mb-3 text-lg">Nächste Termine</h2>
-            {upcomingSetlists.length === 0 ? (
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="headline text-lg">Nächste Termine</h2>
+              <Link href="/termine" className="text-sm text-mute hover:text-accent-hi">
+                alle →
+              </Link>
+            </div>
+            {upcomingEvents.length === 0 ? (
               <p className="text-sm text-faint">
-                Keine anstehenden Setlisten.{" "}
-                <Link href="/setlisten" className="text-accent-hi hover:underline">
+                Keine anstehenden Termine.{" "}
+                <Link href="/termine" className="text-accent-hi hover:underline">
                   Anlegen →
                 </Link>
               </p>
             ) : (
               <ul className="space-y-2">
-                {upcomingSetlists.map((setlist) => (
-                  <li key={setlist.id}>
+                {upcomingEvents.map((event) => (
+                  <li key={event.id}>
                     <Link
-                      href={`/setlisten/${setlist.id}`}
-                      className="flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 transition hover:bg-raise"
+                      href={`/termine/${event.id}`}
+                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-raise"
                     >
-                      <span className="min-w-0 truncate font-semibold">
-                        {setlist.name}
+                      <span
+                        className={`size-2 shrink-0 rounded-full ${EVENT_KIND[event.kind].bar}`}
+                        title={EVENT_KIND[event.kind].label}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold">
+                          {event.title}
+                        </span>
+                        <span className="mono-display block text-xs text-mute">
+                          {formatDate(event.date)}
+                          {event.startTime ? ` · ${event.startTime}` : ""}
+                        </span>
                       </span>
-                      <span className="mono-display shrink-0 text-xs text-mute">
-                        {formatDate(setlist.eventDate)}
+                      <span
+                        className={`mono-display shrink-0 text-xs ${
+                          event.myStatus
+                            ? ATTENDANCE_STATUS[event.myStatus].color
+                            : "text-faint"
+                        }`}
+                      >
+                        {event.myStatus
+                          ? ATTENDANCE_STATUS[event.myStatus].symbol
+                          : "offen"}
                       </span>
                     </Link>
                   </li>
