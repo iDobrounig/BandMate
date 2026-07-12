@@ -1,26 +1,95 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-body), sans-serif;
+  --font-mono: var(--font-mono), monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  /* Backstage-Palette: warmes Schwarz, Bühnenlicht-Amber */
+  --color-bg: #16130f;
+  --color-panel: #1f1b16;
+  --color-raise: #2a241d;
+  --color-line: #3a322a;
+  --color-line-soft: #2e2822;
+  --color-ink: #f3ecdf;
+  --color-mute: #a39682;
+  --color-faint: #6f6455;
+  --color-accent: #f2a51c;
+  --color-accent-hi: #ffc95e;
+  --color-accent-dim: #8a5f13;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  background-image: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    rgba(242, 165, 28, 0.06),
+    transparent 60%
+  );
+  background-repeat: no-repeat;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #1a1508;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line-soft bg-panel;
+  }
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-[0.14em] text-mute mb-1.5;
+  }
+  .input {
+    @apply w-full rounded-lg border border-line bg-raise/60 px-3 py-2 text-ink
+      placeholder:text-faint outline-none transition
+      focus:border-accent/60 focus:ring-2 focus:ring-accent/20;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line
+      bg-raise px-4 py-2 text-sm font-semibold text-ink transition cursor-pointer
+      hover:border-accent/50 hover:text-accent-hi
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply border-accent bg-accent text-[#1a1508]
+      hover:bg-accent-hi hover:border-accent-hi hover:text-[#1a1508];
+  }
+  .btn-sm {
+    @apply px-2.5 py-1 text-xs rounded-md;
+  }
+  .btn-danger {
+    @apply hover:border-red-500/60 hover:text-red-400;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5
+      text-xs font-semibold whitespace-nowrap;
+  }
+  .headline {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight text-balance;
+  }
+}
+
+/* Chords/Lyrics und Tuner-Ziffern */
+.mono-display {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Druckansicht */
+@media print {
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    background-image: none !important;
+  }
+  .print-hidden {
+    display: none !important;
+  }
 }

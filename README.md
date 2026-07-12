@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bandraum
 
-## Getting Started
+Internes Band-Dashboard: Songvorschläge, Noten & Audio pro Song, Voting, Übe-Status, Kommentare und Setlisten.
 
-First, run the development server:
+**Stack:** Next.js (App Router) · SQLite (better-sqlite3 + Drizzle) · Tailwind CSS · iron-session
+
+## Features
+
+- **Songs** mit Status-Workflow: Vorschlag → In Probe → Repertoire → Archiv
+- Tempo (BPM), Tonart, Capo, Dauer, Lyrics/Akkorde, Notizen
+- **Uploads**: Noten pro Instrument (PDF/Bilder, max. 20 MB) und Audio-Dateien (max. 50 MB) mit Player
+- **Links** mit YouTube-/Spotify-Embed
+- **Voting** (Daumen hoch/runter) auf Vorschläge
+- **Übe-Status** pro Mitglied („Noch nicht angeschaut / Übe noch / Kann ich")
+- **Bandchat**: Kommentare pro Song
+- **Setlisten** mit Drag-&-Drop-Reihenfolge, Gesamtdauer und Druck-/PDF-Ansicht
+- **Metronom** (Web Audio) mit Tap-Tempo, vorbelegt mit dem Song-Tempo
+- **Userverwaltung**: Admin legt Mitglieder an und setzt Passwörter; sonst dürfen alle alles
+- Optionale **E-Mail-Benachrichtigung** bei neuem Vorschlag/Kommentar (SMTP), pro User abschaltbar
+
+## Lokal starten
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env        # SESSION_SECRET setzen!
+npm run seed                # legt den ersten Admin an (gibt Passwort aus)
+npm run dev                 # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run seed` liest optional `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` aus der Umgebung/.env; ohne Angabe wird `admin@example.com` mit Zufallspasswort angelegt (wird in der Konsole ausgegeben). Nach dem ersten Login das Passwort im Profil ändern.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Daten
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Alle persistenten Daten liegen in `data/` (per `DATA_DIR` konfigurierbar):
 
-## Learn More
+- `data/band.db` — SQLite-Datenbank (WAL-Modus)
+- `data/uploads/<songId>/…` — hochgeladene Dateien
 
-To learn more about Next.js, take a look at the following resources:
+**Backup = dieses Verzeichnis sichern.** Es liegt nicht im Git.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Schema-Änderungen: `lib/db/schema.ts` anpassen, dann `npm run db:generate` — die Migration in `drizzle/` wird beim nächsten App-Start automatisch angewendet.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment (Webhosting mit Node.js)
 
-## Deploy on Vercel
+1. Repo auf den Server bringen, Node ≥ 20 wählen
+2. `.env` anlegen:
+   - `SESSION_SECRET` — Pflicht, mind. 32 Zeichen (`openssl rand -base64 32`)
+   - `APP_URL` — öffentliche URL (für Links in E-Mails)
+   - `DATA_DIR` — optional, absoluter Pfad zum Datenverzeichnis (sollte außerhalb des Deploy-Ordners liegen, damit Updates die Daten nicht anfassen)
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — optional für Mails
+3. ```bash
+   npm ci
+   npm run build
+   npm run seed        # nur beim ersten Mal
+   npm start           # bzw. Startbefehl im Hosting-Panel: "npm start"
+   ```
+4. Im Hosting-Panel (Plesk/cPanel) die App auf den Startbefehl `npm start` und den zugewiesenen Port zeigen lassen (`PORT`-Env wird von Next respektiert).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Befehl | Zweck |
+|---|---|
+| `npm run dev` | Entwicklung |
+| `npm run build` / `npm start` | Produktion |
+| `npm run seed` | Ersten Admin anlegen (no-op, wenn User existieren) |
+| `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
