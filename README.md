@@ -57,38 +57,68 @@ Alle persistenten Daten liegen in `data/` (per `DATA_DIR` konfigurierbar):
 
 Schema-Änderungen: `lib/db/schema.ts` anpassen, dann `npm run db:generate` — die Migration in `drizzle/` wird beim nächsten App-Start automatisch angewendet.
 
-## Deployment (Webhosting mit Node.js)
+## Produktiv-Deployment
 
-1. Repo auf den Server bringen, Node ≥ 20 wählen
-2. `.env` anlegen:
-   - `SESSION_SECRET` — Pflicht, mind. 32 Zeichen (`openssl rand -base64 32`)
-   - `APP_URL` — öffentliche URL (für Links in E-Mails)
-   - `DATA_DIR` — optional, absoluter Pfad zum Datenverzeichnis (sollte außerhalb des Deploy-Ordners liegen, damit Updates die Daten nicht anfassen)
-   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — optional für Mails
-3. Erstinstallation:
-   ```bash
-   npm install
-   npm run build
-   npm run seed        # nur beim ersten Mal — legt den Admin an
-   ```
-4. Läuft ein Reverse-Proxy davor (nginx/Apache): Upload-Limit auf ≥ 60 MB stellen (nginx: `client_max_body_size 60m`), sonst schlagen Audio-Uploads fehl.
+Die App läuft als **ein** Node-Prozess (Next.js `next start`) unter [PM2](https://pm2.keymetrics.io/), standardmäßig auf **Port 8059**, und wird üblicherweise über einen Reverse-Proxy (nginx/Apache) mit HTTPS nach außen gestellt. Voraussetzung: Node ≥ 20 und PM2 (`npm install -g pm2`) auf dem Server.
 
-Checkliste vor dem Livegang: siehe [FEATURES.md](FEATURES.md), Abschnitt „Vor dem ersten echten Deployment".
-
-### Betrieb mit PM2
-
-Die App läuft als einzelner Node-Prozess unter [PM2](https://pm2.keymetrics.io/). Konfiguration: [`ecosystem.config.js`](ecosystem.config.js) (Port 3000, fork-Modus, **eine** Instanz — wegen SQLite kein cluster-Modus).
+### 1. Erstinstallation
 
 ```bash
-pm2 start ecosystem.config.js   # einmalig starten
-pm2 save                        # aktuelle Prozessliste merken
-pm2 startup                     # PM2 beim Server-Boot automatisch starten (Anweisung ausführen)
-pm2 logs bandmate               # Logs ansehen
+git clone https://github.com/iDobrounig/BandMate.git
+cd BandMate
+cp .env.example .env          # anschließend ausfüllen (siehe unten)
+npm install
+npm run build
+npm run seed                  # nur beim ersten Mal — legt den Admin an (Passwort wird ausgegeben)
 ```
 
-Port oder Speicherlimit ändern: Werte in `ecosystem.config.js` anpassen, dann `pm2 restart ecosystem.config.js`.
+Pflicht- und optionale Werte in der `.env`:
 
-### Updates einspielen
+| Variable | | Zweck |
+|---|---|---|
+| `SESSION_SECRET` | **Pflicht** | Session-Verschlüsselung, mind. 32 Zeichen: `openssl rand -base64 32` |
+| `APP_URL` | empfohlen | öffentliche URL (z.B. `https://band.example.com`) — für Links in E-Mails |
+| `DATA_DIR` | empfohlen | absoluter Pfad zum Datenverzeichnis **außerhalb** des Clone-Ordners, damit `git pull` die Daten nie berührt (z.B. `/var/bandmate-data`) |
+| `SMTP_HOST` … `SMTP_FROM` | optional | E-Mail-Versand; ohne diese Werte werden keine Mails verschickt |
+
+> Der Port wird **nicht** über die `.env`, sondern in [`ecosystem.config.js`](ecosystem.config.js) gesetzt.
+
+### 2. Start mit PM2
+
+Konfiguration: [`ecosystem.config.js`](ecosystem.config.js) — Prozessname `bandmate`, Port 8059, fork-Modus, **eine** Instanz (wegen SQLite kein cluster-Modus, sonst Schreibkonflikte).
+
+```bash
+pm2 start ecosystem.config.js   # App starten
+pm2 save                        # aktuelle Prozessliste merken
+pm2 startup                     # PM2 beim Server-Boot autostarten (ausgegebenen Befehl ausführen)
+pm2 logs bandmate               # Logs ansehen
+pm2 status                      # Übersicht
+```
+
+Port oder Speicherlimit ändern: Werte in `ecosystem.config.js` anpassen, dann `pm2 restart ecosystem.config.js --update-env`.
+
+### 3. Reverse-Proxy (nginx-Beispiel)
+
+```nginx
+server {
+    server_name band.example.com;
+
+    client_max_body_size 60m;          # sonst scheitern Audio-Uploads (bis 50 MB)
+
+    location / {
+        proxy_pass http://127.0.0.1:8059;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+HTTPS anschließend z.B. per Certbot einrichten. (Apache: `ProxyPass / http://127.0.0.1:8059/` plus `LimitRequestBody 62914560`.)
+
+### 4. Updates einspielen
 
 Nach einem Push auf `main` auf dem Server im App-Verzeichnis:
 
@@ -96,7 +126,15 @@ Nach einem Push auf `main` auf dem Server im App-Verzeichnis:
 ./deploy.sh
 ```
 
-Das Script macht `git pull` → `npm install` → `npm run build` → `pm2 restart`. DB-Migrationen laufen automatisch beim Neustart. `data/` (SQLite + Uploads) und `.env` bleiben unangetastet.
+Das Script macht `git pull` → `npm install` → `npm run build` → `pm2 restart --update-env`. DB-Migrationen laufen automatisch beim Neustart; `data/` (SQLite + Uploads) und `.env` bleiben unangetastet.
+
+### Vor dem Livegang
+
+- `SESSION_SECRET` gesetzt? (sonst läuft die App mit unsicherem Dev-Geheimnis)
+- Seed-Admin `admin@example.com` nach dem ersten echten Login deaktivieren
+- Backup für das `DATA_DIR`-Verzeichnis einrichten (dort liegen DB + Uploads)
+
+Vollständige Checkliste: [FEATURES.md](FEATURES.md), Abschnitt „Vor dem ersten echten Deployment".
 
 ## Scripts
 

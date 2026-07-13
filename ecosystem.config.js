@@ -13,7 +13,7 @@ module.exports = {
       cwd: __dirname,
       // Next-Binary direkt starten (sauberes Signal-Handling durch PM2)
       script: "./node_modules/next/dist/bin/next",
-      args: "start -p 3000",
+      args: "start -p 8059",
       instances: 1,
       exec_mode: "fork",
       autorestart: true,
@@ -23,7 +23,7 @@ module.exports = {
       // Secrets aus dieser (eingecheckten) Datei heraus.
       env: {
         NODE_ENV: "production",
-        PORT: "3000",
+        PORT: "8059",
       },
     },
   ],
