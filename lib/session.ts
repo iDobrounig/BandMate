@@ -1,5 +1,5 @@
 import { getIronSession, type SessionOptions } from "iron-session";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 export type SessionData = {
   userId?: number;
@@ -27,5 +27,28 @@ export const sessionOptions: SessionOptions = {
 };
 
 export async function getSession() {
-  return getIronSession<SessionData>(await cookies(), sessionOptions);
+  let isSecure = false;
+
+  if (process.env.APP_URL?.startsWith("https://")) {
+    isSecure = true;
+  } else if (process.env.NODE_ENV === "production") {
+    try {
+      const headersList = await headers();
+      const proto = headersList.get("x-forwarded-proto");
+      isSecure = proto === "https";
+    } catch {
+      isSecure = false;
+    }
+  }
+
+  const options: SessionOptions = {
+    ...sessionOptions,
+    cookieOptions: {
+      ...sessionOptions.cookieOptions,
+      secure: isSecure,
+    },
+  };
+
+  return getIronSession<SessionData>(await cookies(), options);
 }
+
