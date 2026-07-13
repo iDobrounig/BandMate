@@ -25,7 +25,7 @@ export async function GET(
   return new Response(ics, {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": 'inline; filename="bandraum.ics"',
+      "Content-Disposition": 'inline; filename="bandmate.ics"',
       "Cache-Control": "no-cache",
     },
   });

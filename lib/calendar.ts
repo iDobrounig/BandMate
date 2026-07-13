@@ -59,17 +59,17 @@ export function buildIcs(eventList: BandEvent[], appUrl: string): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Bandraum//Termine//DE",
+    "PRODID:-//BandMate//Termine//DE",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:Bandraum",
+    "X-WR-CALNAME:BandMate",
     "X-WR-CALDESC:Proben und Gigs der Band",
   ];
 
   for (const event of eventList) {
     const kindLabel = event.kind === "gig" ? "Gig" : "Probe";
     lines.push("BEGIN:VEVENT");
-    lines.push(`UID:bandraum-${event.id}@bandraum`);
+    lines.push(`UID:bandmate-${event.id}@bandmate`);
     lines.push(`DTSTAMP:${dtstamp}`);
     if (event.startTime) {
       // Lokale Zeit ohne Zeitzone ("floating") — Kalender interpretiert lokal

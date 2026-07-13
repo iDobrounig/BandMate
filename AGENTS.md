@@ -4,7 +4,7 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# Projekt „Bandraum" — Hinweise für künftige Sessions
+# Projekt „BandMate" (früher „Bandraum") — Hinweise für künftige Sessions
 
 Internes Band-Dashboard (deutsche UI) für Ingos Band: Songvorschläge, Noten/Audio,
 Voting, Setlisten, Termine. Feature-Stand & Roadmap: `FEATURES.md`. Setup/Deploy: `README.md`.
@@ -43,7 +43,7 @@ Voting, Setlisten, Termine. Feature-Stand & Roadmap: `FEATURES.md`. Setup/Deploy
 - Textareas liefern CRLF (`\r\n`) — `lib/chords.ts` toleriert das; bei neuer Textverarbeitung dran denken.
 - Upload-Limit: `next.config.ts` `serverActions.bodySizeLimit: "60mb"`; better-sqlite3 steht in
   `serverExternalPackages`.
-- Dev-Server läuft über `.claude/launch.json` (`bandraum-dev`, Port 3000).
+- Dev-Server läuft über `.claude/launch.json` (`bandmate-dev`, Port 3000).
 
 ## Verifikation
 

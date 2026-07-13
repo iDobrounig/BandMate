@@ -47,7 +47,7 @@ export function notifyBand(opts: {
       await transporter().sendMail({
         from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
         bcc: recipients.map((r) => r.email),
-        subject: `[Bandraum] ${opts.subject}`,
+        subject: `[BandMate] ${opts.subject}`,
         text: opts.text,
       });
     } catch (err) {

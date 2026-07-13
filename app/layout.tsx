@@ -23,8 +23,8 @@ const mono = Spline_Sans_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Bandraum",
-    template: "%s · Bandraum",
+    default: "BandMate",
+    template: "%s · BandMate",
   },
   description: "Songvorschläge, Noten und Setlisten für die Band",
 };

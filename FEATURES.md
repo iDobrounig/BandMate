@@ -1,4 +1,4 @@
-# Bandraum — Feature-Liste & Roadmap
+# BandMate — Feature-Liste & Roadmap
 
 Stand: 12.07.2026 · Diese Liste ist das zentrale Dokument für „Was kann die App / was kommt als Nächstes".
 

@@ -15,7 +15,7 @@ export default async function LoginPage() {
           <p className="mono-display text-xs uppercase tracking-[0.4em] text-accent">
             ● rec
           </p>
-          <h1 className="headline mt-2 text-5xl">Bandraum</h1>
+          <h1 className="headline mt-2 text-5xl">BandMate</h1>
           <p className="mt-2 text-sm text-mute">
             Songs, Noten &amp; Setlisten — intern.
           </p>

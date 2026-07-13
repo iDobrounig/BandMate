@@ -15,7 +15,7 @@ export default async function AppLayout({
       <header className="print-hidden sticky top-0 z-40 border-b border-line-soft bg-bg/95">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Link href="/" className="headline text-xl leading-none text-accent">
-            Bandraum
+            BandMate
           </Link>
           <NavLinks isAdmin={user.role === "admin"} />
           <div className="ml-auto flex items-center gap-2">
@@ -41,7 +41,7 @@ export default async function AppLayout({
         {children}
       </main>
       <footer className="print-hidden border-t border-line-soft py-4 text-center text-xs text-faint">
-        Bandraum — internes Band-Dashboard
+        BandMate — internes Band-Dashboard
       </footer>
     </div>
   );

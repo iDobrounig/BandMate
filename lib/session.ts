@@ -17,7 +17,7 @@ if (!process.env.SESSION_SECRET && process.env.NODE_ENV === "production") {
 
 export const sessionOptions: SessionOptions = {
   password,
-  cookieName: "bandraum_session",
+  cookieName: "bandmate_session",
   ttl: 60 * 60 * 24 * 90, // 90 Tage
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",
