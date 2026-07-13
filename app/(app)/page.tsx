@@ -97,8 +97,11 @@ export default async function DashboardPage() {
                         </p>
                       </div>
                       {song.myVote === 0 && (
-                        <span className="badge border-accent/40 bg-accent/10 text-accent-hi">
-                          noch nicht abgestimmt
+                        <span className="badge shrink-0 border-accent/40 bg-accent/10 text-accent-hi">
+                          <span className="sm:hidden">offen</span>
+                          <span className="hidden sm:inline">
+                            noch nicht abgestimmt
+                          </span>
                         </span>
                       )}
                     </Link>
