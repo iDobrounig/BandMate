@@ -146,6 +146,10 @@ Vollständige Checkliste: [FEATURES.md](FEATURES.md), Abschnitt „Vor dem erste
 | `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
 | `./deploy.sh` | Produktiv-Update auf dem Server (pull, install, build, PM2-restart) |
 
+## Versionierung
+
+[SemVer](https://semver.org/lang/de/) (`MAJOR.MINOR.PATCH`), Git-Tags `vX.Y.Z`. Änderungen stehen im [CHANGELOG.md](CHANGELOG.md), der Release-Ablauf in [RELEASING.md](RELEASING.md).
+
 ## Lizenz
 
 [MIT](LICENSE) — frei nutzbar, auch für eure Band. Pull Requests willkommen.
