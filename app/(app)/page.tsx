@@ -50,7 +50,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-8">
+        <div className="space-y-8 min-w-0">
           {/* Top-Vorschläge */}
           <section>
             <div className="mb-3 flex items-baseline justify-between">
@@ -145,7 +145,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Seitenspalte */}
-        <div className="space-y-8">
+        <div className="space-y-8 min-w-0">
           <section className="card p-5">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="headline text-lg">Nächste Termine</h2>
