@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/lib/actions/auth";
 import { NavLinks } from "@/components/nav-links";
+import { IconUser, IconLogout } from "@/components/icons";
 
 export default async function AppLayout({
   children,
@@ -18,25 +19,28 @@ export default async function AppLayout({
             <Link href="/" className="headline text-xl leading-none text-accent">
               BandMate
             </Link>
-            <div className="flex items-center gap-2 sm:hidden">
+            <div className="flex items-center gap-1 sm:hidden">
               <Link
                 href="/profil"
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-mute transition hover:bg-raise hover:text-ink"
+                aria-label={`Profil von ${user.name}`}
+                title={user.name}
+                className="rounded-lg p-2 text-mute transition hover:bg-raise hover:text-ink"
               >
-                {user.name}
+                <IconUser className="size-5" />
               </Link>
               <form action={logout}>
                 <button
                   type="submit"
-                  className="rounded-lg px-2 py-1 text-sm text-faint transition hover:text-ink cursor-pointer"
+                  aria-label="Abmelden"
                   title="Abmelden"
+                  className="rounded-lg p-2 text-faint transition hover:bg-raise hover:text-ink cursor-pointer"
                 >
-                  Abmelden
+                  <IconLogout className="size-5" />
                 </button>
               </form>
             </div>
           </div>
-          <div className="w-full overflow-hidden sm:flex-1">
+          <div className="w-full min-w-0 sm:flex-1">
             <NavLinks isAdmin={user.role === "admin"} />
           </div>
           <div className="hidden ml-auto items-center gap-2 sm:flex">
