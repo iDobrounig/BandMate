@@ -65,16 +65,38 @@ Schema-Änderungen: `lib/db/schema.ts` anpassen, dann `npm run db:generate` — 
    - `APP_URL` — öffentliche URL (für Links in E-Mails)
    - `DATA_DIR` — optional, absoluter Pfad zum Datenverzeichnis (sollte außerhalb des Deploy-Ordners liegen, damit Updates die Daten nicht anfassen)
    - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — optional für Mails
-3. ```bash
-   npm ci
+3. Erstinstallation:
+   ```bash
+   npm install
    npm run build
-   npm run seed        # nur beim ersten Mal
-   npm start           # bzw. Startbefehl im Hosting-Panel: "npm start"
+   npm run seed        # nur beim ersten Mal — legt den Admin an
    ```
-4. Im Hosting-Panel (Plesk/cPanel) die App auf den Startbefehl `npm start` und den zugewiesenen Port zeigen lassen (`PORT`-Env wird von Next respektiert).
-5. Läuft ein Reverse-Proxy davor (nginx/Apache): Upload-Limit auf ≥ 60 MB stellen (nginx: `client_max_body_size 60m`), sonst schlagen Audio-Uploads fehl.
+4. Läuft ein Reverse-Proxy davor (nginx/Apache): Upload-Limit auf ≥ 60 MB stellen (nginx: `client_max_body_size 60m`), sonst schlagen Audio-Uploads fehl.
 
 Checkliste vor dem Livegang: siehe [FEATURES.md](FEATURES.md), Abschnitt „Vor dem ersten echten Deployment".
+
+### Betrieb mit PM2
+
+Die App läuft als einzelner Node-Prozess unter [PM2](https://pm2.keymetrics.io/). Konfiguration: [`ecosystem.config.js`](ecosystem.config.js) (Port 3000, fork-Modus, **eine** Instanz — wegen SQLite kein cluster-Modus).
+
+```bash
+pm2 start ecosystem.config.js   # einmalig starten
+pm2 save                        # aktuelle Prozessliste merken
+pm2 startup                     # PM2 beim Server-Boot automatisch starten (Anweisung ausführen)
+pm2 logs bandmate               # Logs ansehen
+```
+
+Port oder Speicherlimit ändern: Werte in `ecosystem.config.js` anpassen, dann `pm2 restart ecosystem.config.js`.
+
+### Updates einspielen
+
+Nach einem Push auf `main` auf dem Server im App-Verzeichnis:
+
+```bash
+./deploy.sh
+```
+
+Das Script macht `git pull` → `npm install` → `npm run build` → `pm2 restart`. DB-Migrationen laufen automatisch beim Neustart. `data/` (SQLite + Uploads) und `.env` bleiben unangetastet.
 
 ## Scripts
 
@@ -84,6 +106,7 @@ Checkliste vor dem Livegang: siehe [FEATURES.md](FEATURES.md), Abschnitt „Vor 
 | `npm run build` / `npm start` | Produktion |
 | `npm run seed` | Ersten Admin anlegen (no-op, wenn User existieren) |
 | `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
+| `./deploy.sh` | Produktiv-Update auf dem Server (pull, install, build, PM2-restart) |
 
 ## Lizenz
 
