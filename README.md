@@ -59,7 +59,13 @@ Schema-Änderungen: `lib/db/schema.ts` anpassen, dann `npm run db:generate` — 
 
 ## Produktiv-Deployment
 
-Die App läuft als **ein** Node-Prozess (Next.js `next start`) unter [PM2](https://pm2.keymetrics.io/), standardmäßig auf **Port 8059**, und wird üblicherweise über einen Reverse-Proxy (nginx/Apache) mit HTTPS nach außen gestellt. Voraussetzung: Node ≥ 20 und PM2 (`npm install -g pm2`) auf dem Server.
+Die App läuft als **ein** Node-Prozess (Next.js `next start`) unter [PM2](https://pm2.keymetrics.io/), standardmäßig auf **Port 8059**, und wird üblicherweise über einen Reverse-Proxy (nginx/Apache) mit HTTPS nach außen gestellt. Voraussetzung: Node ≥ 20.9 und PM2 (`npm install -g pm2`) auf dem Server.
+
+> **Mehrere Node-Versionen am Server?** Ein Aufruf wie `/usr/local/node22/bin/npm run build` genügt **nicht** — `npm` und `next` starten via `#!/usr/bin/env node` und nehmen dann das `node` aus dem PATH (oft eine ältere Default-Version). Stell die gewünschte Version dem PATH voran, dann nutzen `node`/`npm`/`next` einheitlich diese:
+> ```bash
+> export PATH="/usr/local/node22/bin:$PATH"
+> ```
+> Für `deploy.sh` und PM2 gibt es dafür die Variablen `NODE_BIN_DIR` bzw. `NODE_BIN` (siehe unten).
 
 ### 1. Erstinstallation
 
@@ -97,6 +103,12 @@ pm2 status                      # Übersicht
 
 Port oder Speicherlimit ändern: Werte in `ecosystem.config.js` anpassen, dann `pm2 restart ecosystem.config.js --update-env`.
 
+Läuft der PM2-Daemon unter einer zu alten Node-Version, die App aber soll Node 22 nutzen, den Interpreter beim Start festnageln:
+```bash
+NODE_BIN=/usr/local/node22/bin/node pm2 start ecosystem.config.js
+```
+Der Wert landet in `ecosystem.config.js` als `interpreter` und bleibt über `pm2 save` erhalten.
+
 ### 3. Reverse-Proxy (nginx-Beispiel)
 
 ```nginx
@@ -127,6 +139,12 @@ Nach einem Push auf `main` auf dem Server im App-Verzeichnis:
 ```
 
 Das Script macht `git pull` → `npm install` → `npm run build` → `pm2 restart --update-env`. DB-Migrationen laufen automatisch beim Neustart; `data/` (SQLite + Uploads) und `.env` bleiben unangetastet.
+
+Bei mehreren Node-Versionen die gewünschte übergeben (setzt PATH **und** den PM2-Interpreter):
+```bash
+NODE_BIN_DIR=/usr/local/node22/bin ./deploy.sh
+```
+Alternativ `NODE_BIN_DIR` fest oben in `deploy.sh` eintragen, dann genügt `./deploy.sh`.
 
 ### Vor dem Livegang
 

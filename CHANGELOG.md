@@ -6,7 +6,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
-_Noch nichts._
+### Behoben / Deployment
+- `.env.example` wird wieder ins Repo aufgenommen (`.gitignore`-Ausnahme).
+- Node-Version bei Multi-Version-Servern gezielt wählbar: `deploy.sh` respektiert
+  `NODE_BIN_DIR` (PATH), `ecosystem.config.js` den PM2-`interpreter` via `NODE_BIN`.
+  Behebt „Node.js version >=20.9.0 is required" beim Build trotz aufgerufenem node22-npm.
 
 ## [1.0.0] — 2026-07-13
 
