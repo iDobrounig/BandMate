@@ -50,50 +50,52 @@ export default async function TerminePage({
               <Link
                 key={event.id}
                 href={`/termine/${event.id}`}
-                className="card relative flex items-center gap-4 overflow-hidden p-4 pl-6 transition hover:border-accent/40"
+                className="card relative flex gap-3 overflow-hidden p-4 pl-6 transition hover:border-accent/40 sm:items-center sm:gap-4"
               >
                 <span
                   className={`absolute inset-y-0 left-0 w-1.5 ${kindMeta.bar}`}
                 />
-                <div className="mono-display w-24 shrink-0 text-sm">
+                <div className="mono-display w-20 shrink-0 text-sm sm:w-24">
                   <p className="font-bold">{formatDate(event.date)}</p>
                   <p className="text-xs text-mute">
                     {event.startTime ? `${event.startTime} Uhr` : ""}
                   </p>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-center gap-2 font-semibold">
-                    <span className="truncate">{event.title}</span>
-                    <span className={`badge ${kindMeta.badge}`}>{kindMeta.label}</span>
-                    {event.seriesId && (
-                      <span className="badge border-line text-faint" title="Teil einer Serie">
-                        ↻ Serie
-                      </span>
-                    )}
-                  </p>
-                  <p className="truncate text-sm text-mute">
-                    {[event.location, event.setlistName ? `Setliste: ${event.setlistName}` : null]
-                      .filter(Boolean)
-                      .join(" · ") || " "}
-                  </p>
-                </div>
-                <div className="mono-display shrink-0 space-y-0.5 text-right text-xs">
-                  <p>
-                    <span className="text-emerald-400">✓ {event.yesCount}</span>{" "}
-                    <span className="text-amber-400">? {event.maybeCount}</span>{" "}
-                    <span className="text-red-400">✗ {event.noCount}</span>
-                  </p>
-                  <p
-                    className={
-                      event.myStatus
-                        ? ATTENDANCE_STATUS[event.myStatus].color
-                        : "text-faint"
-                    }
-                  >
-                    {event.myStatus
-                      ? `Du: ${ATTENDANCE_STATUS[event.myStatus].symbol}`
-                      : "Du: offen"}
-                  </p>
+                <div className="flex flex-1 flex-col gap-1 min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-2 font-semibold">
+                      <span className="truncate">{event.title}</span>
+                      <span className={`badge ${kindMeta.badge}`}>{kindMeta.label}</span>
+                      {event.seriesId && (
+                        <span className="badge border-line text-faint" title="Teil einer Serie">
+                          ↻ Serie
+                        </span>
+                      )}
+                    </p>
+                    <p className="truncate text-sm text-mute">
+                      {[event.location, event.setlistName ? `Setliste: ${event.setlistName}` : null]
+                        .filter(Boolean)
+                        .join(" · ") || " "}
+                    </p>
+                  </div>
+                  <div className="mono-display shrink-0 flex items-center gap-3 text-xs sm:flex-col sm:items-end sm:gap-0.5 sm:text-right">
+                    <p>
+                      <span className="text-emerald-400">✓ {event.yesCount}</span>{" "}
+                      <span className="text-amber-400">? {event.maybeCount}</span>{" "}
+                      <span className="text-red-400">✗ {event.noCount}</span>
+                    </p>
+                    <p
+                      className={
+                        event.myStatus
+                          ? ATTENDANCE_STATUS[event.myStatus].color
+                          : "text-faint"
+                      }
+                    >
+                      {event.myStatus
+                        ? `Du: ${ATTENDANCE_STATUS[event.myStatus].symbol}`
+                        : "Du: offen"}
+                    </p>
+                  </div>
                 </div>
               </Link>
             );

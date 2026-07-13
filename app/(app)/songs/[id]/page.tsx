@@ -69,25 +69,29 @@ export default async function SongDetailPage({
         </div>
 
         {/* Tuner-Zeile: Tempo / Tonart / Capo / Dauer */}
-        <div className="card mono-display mt-4 flex flex-wrap items-center gap-x-8 gap-y-2 px-5 py-3 text-sm">
-          <span>
-            <span className="text-faint">TEMPO </span>
-            {song.tempoBpm ? `${song.tempoBpm} BPM` : "–"}
-          </span>
-          <span>
-            <span className="text-faint">TONART </span>
-            {song.songKey ?? "–"}
-          </span>
-          <span>
-            <span className="text-faint">CAPO </span>
-            {song.capo ?? "–"}
-          </span>
-          <span>
-            <span className="text-faint">DAUER </span>
-            {formatDuration(song.durationSeconds)}
-          </span>
-          <div className="ml-auto">
-            <Metronome initialBpm={song.tempoBpm} />
+        <div className="card mt-4 p-4 sm:px-5 sm:py-3">
+          <div className="mono-display flex flex-wrap items-center justify-between gap-4 text-sm sm:justify-start sm:gap-x-8">
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              <span>
+                <span className="text-faint">TEMPO </span>
+                {song.tempoBpm ? `${song.tempoBpm} BPM` : "–"}
+              </span>
+              <span>
+                <span className="text-faint">TONART </span>
+                {song.songKey ?? "–"}
+              </span>
+              <span>
+                <span className="text-faint">CAPO </span>
+                {song.capo ?? "–"}
+              </span>
+              <span>
+                <span className="text-faint">DAUER </span>
+                {formatDuration(song.durationSeconds)}
+              </span>
+            </div>
+            <div className="w-full sm:w-auto sm:ml-auto">
+              <Metronome initialBpm={song.tempoBpm} />
+            </div>
           </div>
         </div>
 

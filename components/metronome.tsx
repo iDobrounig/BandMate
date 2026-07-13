@@ -93,7 +93,7 @@ export function Metronome({ initialBpm }: { initialBpm: number | null }) {
   }
 
   return (
-    <div className="card inline-flex flex-wrap items-center gap-3 p-3">
+    <div className="card flex flex-wrap items-center gap-2 p-3 w-full sm:w-auto sm:inline-flex">
       <button
         type="button"
         onClick={running ? stop : start}

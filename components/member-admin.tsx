@@ -158,10 +158,10 @@ export function MemberRow({
             {member.instrument ? ` · ${member.instrument}` : ""}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0">
           <button
             type="button"
-            className="btn btn-sm"
+            className="btn btn-sm flex-1 sm:flex-none"
             onClick={() => {
               setShowEdit((v) => !v);
               setShowReset(false);
@@ -169,44 +169,44 @@ export function MemberRow({
           >
             Bearbeiten
           </button>
+          {!isSelf && (
+            <>
+              <button
+                type="button"
+                className="btn btn-sm flex-1 sm:flex-none"
+                onClick={() => {
+                  setShowReset((v) => !v);
+                  setShowEdit(false);
+                }}
+              >
+                Passwort
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm flex-1 sm:flex-none"
+                onClick={() =>
+                  setUserRole(member.id, member.role === "admin" ? "member" : "admin")
+                }
+              >
+                {member.role === "admin" ? "Admin entz." : "Admin geben"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-danger flex-1 sm:flex-none"
+                onClick={() => {
+                  if (
+                    member.active &&
+                    !confirm(`${member.name} wirklich deaktivieren?`)
+                  )
+                    return;
+                  void toggleUserActive(member.id);
+                }}
+              >
+                {member.active ? "Deaktivieren" : "Aktivieren"}
+              </button>
+            </>
+          )}
         </div>
-        {!isSelf && (
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => {
-                setShowReset((v) => !v);
-                setShowEdit(false);
-              }}
-            >
-              Passwort
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() =>
-                setUserRole(member.id, member.role === "admin" ? "member" : "admin")
-              }
-            >
-              {member.role === "admin" ? "Admin entfernen" : "Zum Admin machen"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-danger"
-              onClick={() => {
-                if (
-                  member.active &&
-                  !confirm(`${member.name} wirklich deaktivieren?`)
-                )
-                  return;
-                void toggleUserActive(member.id);
-              }}
-            >
-              {member.active ? "Deaktivieren" : "Aktivieren"}
-            </button>
-          </div>
-        )}
       </div>
       {showEdit && <EditMemberForm member={member} />}
       {showReset && !isSelf && <ResetPasswordForm userId={member.id} />}

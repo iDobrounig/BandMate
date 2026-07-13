@@ -85,21 +85,21 @@ export default async function SongsPage({
         ))}
       </div>
 
-      <form className="mt-4 flex flex-wrap gap-2" action="/songs" method="get">
+      <form className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap" action="/songs" method="get">
         <input type="hidden" name="status" value={activeStatus} />
         <input
-          className="input max-w-64"
+          className="input w-full sm:max-w-64"
           type="search"
           name="q"
           defaultValue={params.q ?? ""}
           placeholder="Titel oder Interpret suchen …"
         />
-        <select className="input max-w-40" name="sort" defaultValue={sort}>
+        <select className="input w-full sm:max-w-40" name="sort" defaultValue={sort}>
           <option value="votes">Nach Votes</option>
           <option value="title">Nach Titel</option>
           <option value="neueste">Neueste zuerst</option>
         </select>
-        <button className="btn" type="submit">
+        <button className="btn w-full sm:w-auto" type="submit">
           Filtern
         </button>
       </form>
@@ -138,11 +138,18 @@ export default async function SongsPage({
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{song.title}</p>
-                <p className="truncate text-sm text-mute">
-                  {song.artist ?? "—"}
-                  {song.suggestedByName && activeStatus === "suggestion"
-                    ? ` · Vorschlag von ${song.suggestedByName}`
-                    : ""}
+                <p className="truncate text-sm text-mute flex flex-wrap items-center gap-x-1.5">
+                  <span>
+                    {song.artist ?? "—"}
+                    {song.suggestedByName && activeStatus === "suggestion"
+                      ? ` · Vorschlag von ${song.suggestedByName}`
+                      : ""}
+                  </span>
+                  <span className="sm:hidden text-xs text-faint">
+                    {song.tempoBpm && ` · ${song.tempoBpm} BPM`}
+                    {song.songKey && ` · ${song.songKey}`}
+                    {song.capo && ` (Capo ${song.capo})`}
+                  </span>
                 </p>
               </div>
               <div className="mono-display hidden shrink-0 gap-4 text-xs text-mute sm:flex">

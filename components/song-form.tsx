@@ -99,32 +99,34 @@ export function SongForm({
 
       <div>
         <label className="label">Links (YouTube, Spotify, Tabs, …)</label>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {linkRows.map((row) => (
-            <div key={row.id} className="flex gap-2">
+            <div key={row.id} className="flex flex-col gap-2 border-b border-line-soft/40 pb-3 sm:flex-row sm:border-0 sm:pb-0">
               <input
-                className="input flex-[2]"
+                className="input sm:flex-[2]"
                 name="linkUrl"
                 type="url"
                 defaultValue={row.url}
                 placeholder="https://…"
               />
-              <input
-                className="input flex-1"
-                name="linkLabel"
-                defaultValue={row.label}
-                placeholder="Bezeichnung (optional)"
-              />
-              {linkRows.length > 1 && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-danger self-center"
-                  onClick={() => removeRow(row.id)}
-                  title="Link entfernen"
-                >
-                  ✕
-                </button>
-              )}
+              <div className="flex gap-2 w-full sm:flex-1">
+                <input
+                  className="input flex-1"
+                  name="linkLabel"
+                  defaultValue={row.label}
+                  placeholder="Bezeichnung (optional)"
+                />
+                {linkRows.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger self-center px-3"
+                    onClick={() => removeRow(row.id)}
+                    title="Link entfernen"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

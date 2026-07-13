@@ -82,7 +82,7 @@ export function TransposableLyrics({
           </>
         )}
       </div>
-      <pre className="card mono-display overflow-x-auto p-5 text-sm leading-relaxed whitespace-pre-wrap">
+      <pre className="card mono-display overflow-x-auto p-4 sm:p-5 text-xs sm:text-sm leading-relaxed whitespace-pre">
         {shown}
       </pre>
     </div>

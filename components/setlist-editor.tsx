@@ -60,58 +60,70 @@ function SortableRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`card flex items-center gap-3 p-3 ${
+      className={`card flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-3 ${
         isDragging ? "z-10 border-accent/60 shadow-lg" : ""
       }`}
     >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        className="cursor-grab touch-none px-1 text-lg text-faint hover:text-ink active:cursor-grabbing"
-        title="Ziehen zum Umsortieren"
-      >
-        ⠿
-      </button>
-      <span className="mono-display w-6 shrink-0 text-right text-sm text-faint">
-        {index + 1}.
-      </span>
-      <div className="min-w-0 flex-1">
-        <a
-          href={`/songs/${item.songId}`}
-          className="block truncate font-semibold hover:text-accent-hi"
+      <div className="flex items-center gap-3 w-full sm:w-auto sm:flex-1 min-w-0">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab touch-none px-1 text-lg text-faint hover:text-ink active:cursor-grabbing shrink-0"
+          title="Ziehen zum Umsortieren"
         >
-          {item.title}
-        </a>
-        <p className="mono-display truncate text-xs text-mute">
-          {[
-            item.artist,
-            item.songKey,
-            item.tempoBpm ? `${item.tempoBpm} BPM` : null,
-            item.durationSeconds ? formatDuration(item.durationSeconds) : null,
-          ]
-            .filter(Boolean)
-            .join(" · ") || "—"}
-        </p>
+          ⠿
+        </button>
+        <span className="mono-display w-6 shrink-0 text-right text-sm text-faint">
+          {index + 1}.
+        </span>
+        <div className="min-w-0 flex-1">
+          <a
+            href={`/songs/${item.songId}`}
+            className="block truncate font-semibold hover:text-accent-hi"
+          >
+            {item.title}
+          </a>
+          <p className="mono-display truncate text-xs text-mute">
+            {[
+              item.artist,
+              item.songKey,
+              item.tempoBpm ? `${item.tempoBpm} BPM` : null,
+              item.durationSeconds ? formatDuration(item.durationSeconds) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "—"}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="px-2 text-faint transition hover:text-red-400 cursor-pointer sm:hidden shrink-0 text-lg"
+          onClick={() => onRemove(item.id)}
+          title="Aus Setliste entfernen"
+        >
+          ✕
+        </button>
       </div>
-      <input
-        className="input hidden max-w-44 py-1 text-xs sm:block"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        onBlur={() => {
-          if (note !== (item.note ?? ""))
-            void updateSetlistItemNote(item.id, note);
-        }}
-        placeholder="Notiz (z.B. Pause danach)"
-      />
-      <button
-        type="button"
-        className="px-1 text-faint transition hover:text-red-400 cursor-pointer"
-        onClick={() => onRemove(item.id)}
-        title="Aus Setliste entfernen"
-      >
-        ✕
-      </button>
+      <div className="flex gap-2 w-full sm:w-auto sm:ml-auto shrink-0">
+        <input
+          className="input flex-1 sm:max-w-44 py-1 text-xs"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          onBlur={() => {
+            if (note !== (item.note ?? ""))
+              void updateSetlistItemNote(item.id, note);
+          }}
+          placeholder="Notiz (z.B. Pause danach)"
+        />
+        <button
+          type="button"
+          className="hidden px-1 text-faint transition hover:text-red-400 cursor-pointer sm:block"
+          onClick={() => onRemove(item.id)}
+          title="Aus Setliste entfernen"
+        >
+          ✕
+        </button>
+      </div>
     </div>
   );
 }
@@ -163,9 +175,9 @@ export function SetlistEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center">
         <select
-          className="input max-w-md flex-1"
+          className="input w-full sm:max-w-md sm:flex-1"
           value={selectedSong}
           onChange={(e) => setSelectedSong(e.target.value)}
         >
@@ -180,7 +192,7 @@ export function SetlistEditor({
         </select>
         <button
           type="button"
-          className="btn"
+          className="btn w-full sm:w-auto"
           disabled={!selectedSong}
           onClick={() => {
             const songId = Number(selectedSong);
