@@ -15,27 +15,31 @@ Im Zweifel: Ändert sich für die Band sichtbar etwas Neues → MINOR. Nur repar
 
 ## Einen Release erstellen
 
+Voraussetzung: [GitHub CLI](https://cli.github.com/) installiert und eingeloggt
+(`gh auth login`).
+
 1. **`CHANGELOG.md` pflegen** — Einträge aus dem `[Unreleased]`-Abschnitt unter eine neue
    Versionsüberschrift mit Datum verschieben.
-2. **Version taggen** (im Projektverzeichnis):
+2. **Version taggen + Release veröffentlichen** (im Projektverzeichnis):
    ```bash
    ./scripts/release.sh minor      # oder: major | patch
    ```
    Das Script erhöht die Version in `package.json`, committet („Release vX.Y.Z"),
-   erstellt den annotierten Git-Tag `vX.Y.Z` und pusht Commit + Tag.
+   erstellt den annotierten Git-Tag `vX.Y.Z`, pusht Commit + Tag und legt mit `gh`
+   direkt den GitHub-Release an (Notes aus dem `CHANGELOG.md`-Abschnitt der Version).
 
-   Manuell ginge es genauso:
-   ```bash
-   npm version minor --no-git-tag-version
-   git commit -am "Release v1.1.0"
-   git tag -a v1.1.0 -m "v1.1.0"
-   git push && git push --tags
-   ```
-3. **GitHub-Release anlegen** — auf GitHub unter **Releases → Draft a new release**
-   den soeben gepushten Tag `vX.Y.Z` wählen, als Titel den Tag, als Beschreibung den
-   passenden `CHANGELOG.md`-Abschnitt einfügen, **Publish**.
-   (Mit installiertem [`gh`](https://cli.github.com/) in einem Schritt:
-   `gh release create v1.1.0 --title v1.1.0 --notes-from-tag`.)
+### Manuell (ohne Script)
+
+```bash
+npm version minor --no-git-tag-version
+git commit -am "Release v1.1.0"
+git tag -a v1.1.0 -m "v1.1.0"
+git push && git push origin v1.1.0
+gh release create v1.1.0 --title v1.1.0 --notes-file <(sed -n '/## \[1.1.0\]/,/## \[/p' CHANGELOG.md)
+```
+
+Ohne `gh` alternativ über die Weboberfläche: **Releases → Draft a new release**, Tag
+`vX.Y.Z` wählen, Titel = Tag, Beschreibung = passender `CHANGELOG.md`-Abschnitt, **Publish**.
 
 ## Auf dem Server auf eine bestimmte Version aktualisieren
 

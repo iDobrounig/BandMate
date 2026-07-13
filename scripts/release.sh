@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Erstellt einen neuen Release: Version erhöhen, committen, Tag pushen.
+# Erstellt einen neuen Release: Version erhöhen, committen, Tag pushen,
+# GitHub-Release via gh anlegen.
 # CHANGELOG.md VORHER aktualisieren (siehe RELEASING.md).
 # Aufruf: ./scripts/release.sh <major|minor|patch>
 set -euo pipefail
@@ -9,6 +10,11 @@ cd "$(dirname "$0")/.."
 level="${1:-}"
 if [[ ! "$level" =~ ^(major|minor|patch)$ ]]; then
   echo "Usage: ./scripts/release.sh <major|minor|patch>" >&2
+  exit 1
+fi
+
+if ! command -v gh >/dev/null 2>&1; then
+  echo "GitHub CLI (gh) nicht gefunden — bitte installieren und 'gh auth login'." >&2
   exit 1
 fi
 
@@ -29,6 +35,18 @@ git tag -a "$version" -m "$version"
 git push
 git push origin "$version"
 
-echo "✓ $version getaggt und gepusht."
-echo "  Jetzt auf GitHub unter Releases aus dem Tag $version einen Release erstellen"
-echo "  (Beschreibung = CHANGELOG-Abschnitt). Siehe RELEASING.md."
+# Release-Notes aus dem passenden CHANGELOG-Abschnitt ziehen
+notes="$(awk -v hdr="## [$version]" '
+  index($0, hdr) == 1 { grab = 1; next }
+  grab && index($0, "## [") == 1 { exit }
+  grab { print }
+' CHANGELOG.md)"
+
+if [[ -z "${notes//[[:space:]]/}" ]]; then
+  echo "  Kein CHANGELOG-Abschnitt für $version gefunden — Release mit Auto-Notes." >&2
+  gh release create "$version" --title "$version" --generate-notes
+else
+  gh release create "$version" --title "$version" --notes "$notes"
+fi
+
+echo "✓ $version getaggt, gepusht und als GitHub-Release veröffentlicht."
