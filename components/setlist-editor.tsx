@@ -174,10 +174,10 @@ export function SetlistEditor({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-0">
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center">
         <select
-          className="input w-full sm:max-w-md sm:flex-1"
+          className="input w-full min-w-0 sm:max-w-md sm:flex-1"
           value={selectedSong}
           onChange={(e) => setSelectedSong(e.target.value)}
         >
