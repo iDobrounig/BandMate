@@ -6,7 +6,9 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
-_Noch nichts._
+### Behoben
+- `scripts/release.sh` findet die CHANGELOG-Notes jetzt korrekt (Tag hat
+  `v`-Präfix, Überschrift nicht) — Releases bekommen wieder die richtigen Notes.
 
 ## [1.1.0] — 2026-07-13
 

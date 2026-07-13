@@ -36,7 +36,8 @@ git push
 git push origin "$version"
 
 # Release-Notes aus dem passenden CHANGELOG-Abschnitt ziehen
-notes="$(awk -v hdr="## [$version]" '
+# (CHANGELOG-Überschriften ohne "v"-Präfix: "## [1.1.0]")
+notes="$(awk -v hdr="## [${version#v}]" '
   index($0, hdr) == 1 { grab = 1; next }
   grab && index($0, "## [") == 1 { exit }
   grab { print }
