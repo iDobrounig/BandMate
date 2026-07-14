@@ -88,7 +88,7 @@ export default async function SetlistDetailPage({
           items={items}
           songOptions={songOptions}
         />
-        <section className="card h-fit p-5">
+        <section className="min-w-0 card h-fit p-5">
           <h2 className="headline mb-4 text-lg">Details bearbeiten</h2>
           <SetlistForm setlist={setlist} />
         </section>

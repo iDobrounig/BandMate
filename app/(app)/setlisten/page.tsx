@@ -28,7 +28,7 @@ export default async function SetlistenPage() {
       </p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           {lists.length === 0 && (
             <div className="card p-10 text-center text-mute">
               Noch keine Setlisten. Leg rechts die erste an!
@@ -54,7 +54,7 @@ export default async function SetlistenPage() {
           ))}
         </div>
 
-        <section className="card h-fit p-5">
+        <section className="min-w-0 card h-fit p-5">
           <h2 className="headline mb-4 text-lg">Neue Setliste</h2>
           <SetlistForm />
         </section>

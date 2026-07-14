@@ -216,7 +216,7 @@ export default async function SongDetailPage({
         </div>
 
         {/* Seitenspalte */}
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           {/* Übe-Status */}
           <section className="card p-5">
             <h2 className="headline mb-3 text-lg">Mein Übe-Status</h2>

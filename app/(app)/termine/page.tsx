@@ -38,7 +38,7 @@ export default async function TerminePage({
       </p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           {upcoming.length === 0 && (
             <div className="card p-10 text-center text-mute">
               Keine anstehenden Termine. Leg rechts den nächsten an!
@@ -134,7 +134,7 @@ export default async function TerminePage({
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <section className="card h-fit p-5">
             <h2 className="headline mb-4 text-lg">Neuer Termin</h2>
             <EventForm setlistOptions={setlistOptions} />

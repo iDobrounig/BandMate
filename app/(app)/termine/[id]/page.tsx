@@ -110,7 +110,7 @@ export default async function TerminDetailPage({
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           <section className="card p-5">
             <h2 className="headline mb-3 text-lg">Bist du dabei?</h2>
             <AttendanceButtons
@@ -165,7 +165,7 @@ export default async function TerminDetailPage({
           <DeleteEventButtons eventId={event.id} isSeries={Boolean(event.seriesId)} />
         </div>
 
-        <section className="card h-fit p-5">
+        <section className="min-w-0 card h-fit p-5">
           <h2 className="headline mb-4 text-lg">Termin bearbeiten</h2>
           <EventForm event={event} setlistOptions={setlistOptions} />
           {event.seriesId && (
