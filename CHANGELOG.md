@@ -6,7 +6,19 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
+_Noch nichts._
+
+## [1.2.0] — 2026-07-14
+
+### Hinzugefügt
+- Mobile **Menüleiste mit Icons** (Dashboard, Songs, Setlisten, Termine,
+  Mitglieder) samt Icons für Profil und Abmelden. Auf großen Bildschirmen
+  bleiben die gewohnten Text-Einträge.
+
 ### Behoben
+- Horizontaler Überlauf am Handy bei langen Datei-, Song- und Setlistennamen
+  auf den zweispaltigen Seiten (Song-Detail, Termine, Setlisten): alle
+  Grid-Spalten mit `min-w-0` gehärtet, `truncate` greift wieder.
 - `scripts/release.sh` findet die CHANGELOG-Notes jetzt korrekt (Tag hat
   `v`-Präfix, Überschrift nicht) — Releases bekommen wieder die richtigen Notes.
 
@@ -64,6 +76,7 @@ Erster stabiler Release — die App geht in den produktiven Bandbetrieb.
 - E-Mail-Benachrichtigungen (optional, SMTP), Dashboard, dunkles Design, PWA/App-Icon
 - Deployment mit PM2 (`ecosystem.config.js`, Port 8059) und `deploy.sh`
 
-[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.2.0
 [1.1.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.1.0
 [1.0.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.0.0
