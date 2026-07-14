@@ -8,6 +8,7 @@ import type { SongStatus } from "@/lib/db/schema";
 export const metadata = { title: "Songs" };
 
 type Search = { status?: string; q?: string; sort?: string };
+type Tab = "all" | SongStatus;
 
 export default async function SongsPage({
   searchParams,
@@ -16,20 +17,30 @@ export default async function SongsPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
-  const activeStatus = (
+  const activeTab: Tab =
+    params.status === "all" ||
     STATUS_ORDER.includes(params.status as SongStatus)
-      ? params.status
-      : "suggestion"
-  ) as SongStatus;
+      ? (params.status as Tab)
+      : "suggestion";
   const q = (params.q ?? "").toLowerCase().trim();
-  const sort = params.sort ?? (activeStatus === "suggestion" ? "votes" : "title");
+  const sort =
+    params.sort ??
+    (activeTab === "all"
+      ? "status"
+      : activeTab === "suggestion"
+        ? "votes"
+        : "title");
 
   const all = await fetchSongList(user.id);
-  const counts = Object.fromEntries(
-    STATUS_ORDER.map((s) => [s, all.filter((song) => song.status === s).length])
-  );
+  const counts: Record<string, number> = {
+    all: all.length,
+    ...Object.fromEntries(
+      STATUS_ORDER.map((s) => [s, all.filter((song) => song.status === s).length])
+    ),
+  };
 
-  let list = all.filter((song) => song.status === activeStatus);
+  let list =
+    activeTab === "all" ? [...all] : all.filter((song) => song.status === activeTab);
   if (q) {
     list = list.filter(
       (song) =>
@@ -40,12 +51,16 @@ export default async function SongsPage({
   list.sort((a, b) => {
     if (sort === "votes") return b.upvotes - b.downvotes - (a.upvotes - a.downvotes);
     if (sort === "neueste") return b.createdAt.getTime() - a.createdAt.getTime();
+    if (sort === "status") {
+      const d = STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status);
+      if (d !== 0) return d;
+    }
     return a.title.localeCompare(b.title, "de");
   });
 
   const query = (overrides: Partial<Search>) => {
     const p = new URLSearchParams();
-    const merged = { status: activeStatus, q: params.q, sort: params.sort, ...overrides };
+    const merged = { status: activeTab, q: params.q, sort: params.sort, ...overrides };
     if (merged.status) p.set("status", merged.status);
     if (merged.q) p.set("q", merged.q);
     if (merged.sort) p.set("sort", merged.sort);
@@ -67,26 +82,26 @@ export default async function SongsPage({
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-line-soft pb-px">
-        {STATUS_ORDER.map((status) => (
+        {(["all", ...STATUS_ORDER] as Tab[]).map((tab) => (
           <Link
-            key={status}
-            href={query({ status, sort: undefined })}
+            key={tab}
+            href={query({ status: tab, sort: undefined })}
             className={`rounded-t-lg border-b-2 px-4 py-2 text-sm font-semibold transition ${
-              status === activeStatus
+              tab === activeTab
                 ? "border-accent text-accent-hi"
                 : "border-transparent text-mute hover:text-ink"
             }`}
           >
-            {SONG_STATUS[status].label}
+            {tab === "all" ? "Alle" : SONG_STATUS[tab].label}
             <span className="mono-display ml-1.5 text-xs text-faint">
-              {counts[status]}
+              {counts[tab]}
             </span>
           </Link>
         ))}
       </div>
 
       <form className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap" action="/songs" method="get">
-        <input type="hidden" name="status" value={activeStatus} />
+        <input type="hidden" name="status" value={activeTab} />
         <input
           className="input w-full sm:max-w-64"
           type="search"
@@ -95,6 +110,7 @@ export default async function SongsPage({
           placeholder="Titel oder Interpret suchen …"
         />
         <select className="input w-full sm:max-w-40" name="sort" defaultValue={sort}>
+          {activeTab === "all" && <option value="status">Nach Status</option>}
           <option value="votes">Nach Votes</option>
           <option value="title">Nach Titel</option>
           <option value="neueste">Neueste zuerst</option>
@@ -109,9 +125,11 @@ export default async function SongsPage({
           <div className="card p-10 text-center text-mute">
             {q
               ? "Nichts gefunden."
-              : activeStatus === "suggestion"
-                ? "Noch keine Vorschläge — mach den ersten!"
-                : `Noch keine Songs im Status „${SONG_STATUS[activeStatus].label}".`}
+              : activeTab === "all"
+                ? "Noch keine Songs angelegt."
+                : activeTab === "suggestion"
+                  ? "Noch keine Vorschläge — mach den ersten!"
+                  : `Noch keine Songs im Status „${SONG_STATUS[activeTab].label}".`}
           </div>
         )}
         {list.map((song) => {
@@ -122,7 +140,16 @@ export default async function SongsPage({
               href={`/songs/${song.id}`}
               className="card flex items-center gap-4 p-4 transition hover:border-accent/40"
             >
-              {activeStatus === "suggestion" && (
+              {activeTab === "all" ? (
+                <span
+                  className={`badge shrink-0 ${SONG_STATUS[song.status].badge}`}
+                >
+                  <span
+                    className={`size-1.5 rounded-full ${SONG_STATUS[song.status].dot}`}
+                  />
+                  {SONG_STATUS[song.status].label}
+                </span>
+              ) : activeTab === "suggestion" ? (
                 <div
                   className={`mono-display w-12 shrink-0 text-center text-xl font-bold ${
                     score > 0
@@ -135,13 +162,14 @@ export default async function SongsPage({
                 >
                   {score > 0 ? `+${score}` : score}
                 </div>
-              )}
+              ) : null}
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{song.title}</p>
                 <p className="truncate text-sm text-mute flex flex-wrap items-center gap-x-1.5">
                   <span>
                     {song.artist ?? "—"}
-                    {song.suggestedByName && activeStatus === "suggestion"
+                    {song.suggestedByName &&
+                    (activeTab === "suggestion" || activeTab === "all")
                       ? ` · Vorschlag von ${song.suggestedByName}`
                       : ""}
                   </span>
