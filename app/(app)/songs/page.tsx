@@ -4,6 +4,19 @@ import { fetchSongList } from "@/lib/queries";
 import { SONG_STATUS, STATUS_ORDER } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
 import type { SongStatus } from "@/lib/db/schema";
+import {
+  IconLightbulb,
+  IconRepeat,
+  IconCheckCircle,
+  IconArchive,
+} from "@/components/icons";
+
+const STATUS_ICON: Record<SongStatus, (p: { className?: string }) => React.ReactNode> = {
+  suggestion: IconLightbulb,
+  rehearsing: IconRepeat,
+  repertoire: IconCheckCircle,
+  archived: IconArchive,
+};
 
 export const metadata = { title: "Songs" };
 
@@ -21,7 +34,7 @@ export default async function SongsPage({
     params.status === "all" ||
     STATUS_ORDER.includes(params.status as SongStatus)
       ? (params.status as Tab)
-      : "suggestion";
+      : "all";
   const q = (params.q ?? "").toLowerCase().trim();
   const sort =
     params.sort ??
@@ -141,14 +154,23 @@ export default async function SongsPage({
               className="card flex items-center gap-4 p-4 transition hover:border-accent/40"
             >
               {activeTab === "all" ? (
-                <span
-                  className={`badge shrink-0 ${SONG_STATUS[song.status].badge}`}
-                >
-                  <span
-                    className={`size-1.5 rounded-full ${SONG_STATUS[song.status].dot}`}
-                  />
-                  {SONG_STATUS[song.status].label}
-                </span>
+                (() => {
+                  const StatusIcon = STATUS_ICON[song.status];
+                  const meta = SONG_STATUS[song.status];
+                  return (
+                    <span
+                      className={`badge shrink-0 ${meta.badge}`}
+                      title={meta.label}
+                      aria-label={meta.label}
+                    >
+                      <StatusIcon className="size-4 sm:hidden" />
+                      <span
+                        className={`hidden size-1.5 rounded-full sm:block ${meta.dot}`}
+                      />
+                      <span className="hidden sm:inline">{meta.label}</span>
+                    </span>
+                  );
+                })()
               ) : activeTab === "suggestion" ? (
                 <div
                   className={`mono-display w-12 shrink-0 text-center text-xl font-bold ${

@@ -98,3 +98,44 @@ export function IconLogout({ className }: IconProps) {
     </Svg>
   );
 }
+
+// Song-Status-Icons (für die kompakte Mobil-Darstellung)
+export function IconLightbulb({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+      <path d="M12 2a7 7 0 0 0-4 12.7c.5.4.9 1 1 1.6l.2 1.7h5.6l.2-1.7c.1-.6.5-1.2 1-1.6A7 7 0 0 0 12 2Z" />
+    </Svg>
+  );
+}
+
+export function IconRepeat({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <polyline points="17 1 21 5 17 9" />
+      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+      <polyline points="7 23 3 19 7 15" />
+      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+    </Svg>
+  );
+}
+
+export function IconCheckCircle({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </Svg>
+  );
+}
+
+export function IconArchive({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <polyline points="21 8 21 21 3 21 3 8" />
+      <rect x="1" y="3" width="22" height="5" />
+      <line x1="10" y1="12" x2="14" y2="12" />
+    </Svg>
+  );
+}
