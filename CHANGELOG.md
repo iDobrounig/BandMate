@@ -8,6 +8,19 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.3.0] — 2026-07-15
+
+### Hinzugefügt
+- **„Alle"-Tab** in der Songliste: zeigt alle Songs statusübergreifend in einer
+  Liste, jede Zeile mit farbigem Status-Badge. Default-Sortierung „Nach Status"
+  (gruppiert Vorschlag→Archiv), zusätzlich Votes/Titel/Neueste; Suche inklusive.
+
+### Geändert
+- Beim Öffnen von **Songs** startet jetzt der „Alle"-Tab (statt Vorschlag).
+- Status-Badge im Alle-Tab am Handy als **Icon** (Glühbirne = Vorschlag,
+  Loop = In Probe, Haken = Repertoire, Box = Archiv), ab Tablet/Desktop wieder
+  mit Text-Label — mehr Platz für den Songtitel.
+
 ## [1.2.0] — 2026-07-14
 
 ### Hinzugefügt
@@ -76,7 +89,8 @@ Erster stabiler Release — die App geht in den produktiven Bandbetrieb.
 - E-Mail-Benachrichtigungen (optional, SMTP), Dashboard, dunkles Design, PWA/App-Icon
 - Deployment mit PM2 (`ecosystem.config.js`, Port 8059) und `deploy.sh`
 
-[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.3.0
 [1.2.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.2.0
 [1.1.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.1.0
 [1.0.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.0.0
