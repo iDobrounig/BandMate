@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { sendTestMail } from "@/lib/mail";
 import type { FormState } from "@/lib/actions/auth";
 
 export async function createUser(
@@ -100,4 +101,17 @@ export async function setUserRole(userId: number, role: "admin" | "member") {
   if (userId === admin.id) return; // eigene Admin-Rolle nicht entziehen
   await db.update(users).set({ role }).where(eq(users.id, userId));
   revalidatePath("/mitglieder");
+}
+
+export async function sendTestEmail(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  await requireAdmin();
+  const to = String(formData.get("to") ?? "").trim();
+  if (!to) return { error: "Bitte eine E-Mail-Adresse angeben." };
+
+  const result = await sendTestMail(to);
+  if (!result.ok) return { error: result.error };
+  return { success: `Test-Mail an ${to} gesendet.` };
 }

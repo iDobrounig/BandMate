@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { NewMemberForm, MemberRow } from "@/components/member-admin";
+import { SmtpTestForm } from "@/components/smtp-test";
 
 export const metadata = { title: "Mitglieder" };
 
@@ -30,6 +31,11 @@ export default async function MitgliederPage() {
             isSelf={member.id === admin.id}
           />
         ))}
+      </section>
+
+      <section className="card mt-8 p-5">
+        <h2 className="headline mb-4 text-lg">SMTP-Verbindung testen</h2>
+        <SmtpTestForm adminEmail={admin.email} />
       </section>
     </div>
   );

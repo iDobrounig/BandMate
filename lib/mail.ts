@@ -43,7 +43,12 @@ export function notifyBand(opts: {
               : undefined
           )
         );
-      if (recipients.length === 0) return;
+      if (recipients.length === 0) {
+        console.log(
+          `[mail] keine Empfänger für "${opts.subject}" — Auslöser ausgeschlossen oder niemand mit aktivierter Benachrichtigung`
+        );
+        return;
+      }
       await transporter().sendMail({
         from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
         bcc: recipients.map((r) => r.email),
@@ -54,4 +59,35 @@ export function notifyBand(opts: {
       console.error("E-Mail-Versand fehlgeschlagen:", err);
     }
   })();
+}
+
+/**
+ * Prüft die SMTP-Verbindung und verschickt eine echte Test-Mail.
+ * Für die Admin-Diagnose auf /mitglieder — wirft nie, liefert stattdessen
+ * ein Ergebnis-Objekt mit deutscher Klartext-Fehlermeldung.
+ */
+export async function sendTestMail(
+  toEmail: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!smtpConfigured) {
+    return {
+      ok: false,
+      error:
+        "SMTP_HOST ist nicht gesetzt. Bitte .env prüfen und die App danach neu starten (pm2 restart --update-env).",
+    };
+  }
+  try {
+    const t = transporter();
+    await t.verify();
+    await t.sendMail({
+      from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
+      to: toEmail,
+      subject: "[BandMate] Test-E-Mail",
+      text: "Diese Test-Mail bestätigt, dass der SMTP-Versand von BandMate funktioniert.",
+    });
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: `SMTP-Fehler: ${message}` };
+  }
 }
