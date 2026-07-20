@@ -8,6 +8,18 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.6.0] — 2026-07-20
+
+### Hinzugefügt
+- **SMTP-Test-Funktion** auf `/mitglieder` (nur Admin): prüft die
+  SMTP-Verbindung und verschickt eine echte Test-Mail, Erfolg/Fehler
+  erscheinen direkt in der UI — kein Server-Log-Zugriff mehr nötig, um
+  E-Mail-Probleme zu diagnostizieren.
+
+### Behoben
+- `notifyBand()` loggt jetzt auch den bisher stillen Fall „keine Empfänger"
+  (z.B. wenn der Auslöser der einzige benachrichtigungsfähige aktive User ist).
+
 ## [1.5.0] — 2026-07-20
 
 ### Hinzugefügt
@@ -104,7 +116,8 @@ Erster stabiler Release — die App geht in den produktiven Bandbetrieb.
 - E-Mail-Benachrichtigungen (optional, SMTP), Dashboard, dunkles Design, PWA/App-Icon
 - Deployment mit PM2 (`ecosystem.config.js`, Port 8059) und `deploy.sh`
 
-[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.6.0
 [1.5.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.5.0
 [1.4.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.4.0
 [1.3.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.3.0
