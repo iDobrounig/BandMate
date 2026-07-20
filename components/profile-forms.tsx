@@ -29,6 +29,22 @@ export function ProfileForm({ user }: { user: User }) {
         />
       </div>
       <div>
+        <label className="label" htmlFor="email">
+          E-Mail
+        </label>
+        <input
+          className="input"
+          id="email"
+          name="email"
+          type="email"
+          defaultValue={user.email}
+          required
+        />
+        <p className="mt-1 text-xs text-faint">
+          Diese Adresse dient auch zum Anmelden.
+        </p>
+      </div>
+      <div>
         <label className="label" htmlFor="instrument">
           Instrument
         </label>

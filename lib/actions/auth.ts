@@ -44,12 +44,23 @@ export async function updateProfile(
 ): Promise<FormState> {
   const user = await requireUser();
   const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const instrument = String(formData.get("instrument") ?? "").trim();
   const notifyByEmail = formData.get("notifyByEmail") === "on";
-  if (!name) return { error: "Name darf nicht leer sein." };
+
+  if (!name || !email) return { error: "Name und E-Mail sind Pflichtfelder." };
+  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Ungültige E-Mail-Adresse." };
+
+  const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
+  if (existing && existing.id !== user.id) {
+    return { error: "Diese E-Mail-Adresse ist bereits vergeben." };
+  }
+
   await db
     .update(users)
-    .set({ name, instrument: instrument || null, notifyByEmail })
+    .set({ name, email, instrument: instrument || null, notifyByEmail })
     .where(eq(users.id, user.id));
   revalidatePath("/", "layout");
   return { success: "Profil gespeichert." };
