@@ -8,6 +8,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.4.0] — 2026-07-20
+
+### Hinzugefügt
+- Mitglieder können ihre **E-Mail-Adresse selbst im Profil ändern**
+  (`/profil`), mit denselben Prüfungen wie beim Admin (Pflichtfeld, Format,
+  Eindeutigkeit). Wirkt sofort, kein Re-Login nötig; die neue Adresse gilt
+  gleich für den nächsten Login.
+
 ## [1.3.0] — 2026-07-15
 
 ### Hinzugefügt
@@ -89,7 +97,8 @@ Erster stabiler Release — die App geht in den produktiven Bandbetrieb.
 - E-Mail-Benachrichtigungen (optional, SMTP), Dashboard, dunkles Design, PWA/App-Icon
 - Deployment mit PM2 (`ecosystem.config.js`, Port 8059) und `deploy.sh`
 
-[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.4.0
 [1.3.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.3.0
 [1.2.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.2.0
 [1.1.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.1.0
