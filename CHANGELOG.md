@@ -8,6 +8,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.5.0] — 2026-07-20
+
+### Hinzugefügt
+- Admin kann beim Bearbeiten eines Mitglieds (`/mitglieder`) jetzt auch die
+  **E-Mail-Benachrichtigung** aktivieren/deaktivieren — dieselbe Einstellung,
+  die jedes Mitglied auch selbst im eigenen Profil steuern kann.
+
 ## [1.4.0] — 2026-07-20
 
 ### Hinzugefügt
@@ -97,7 +104,8 @@ Erster stabiler Release — die App geht in den produktiven Bandbetrieb.
 - E-Mail-Benachrichtigungen (optional, SMTP), Dashboard, dunkles Design, PWA/App-Icon
 - Deployment mit PM2 (`ecosystem.config.js`, Port 8059) und `deploy.sh`
 
-[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.5.0
 [1.4.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.4.0
 [1.3.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.3.0
 [1.2.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.2.0
