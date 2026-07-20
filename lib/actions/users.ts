@@ -51,6 +51,7 @@ export async function updateUser(
     .trim()
     .toLowerCase();
   const instrument = String(formData.get("instrument") ?? "").trim();
+  const notifyByEmail = formData.get("notifyByEmail") === "on";
 
   if (!name || !email) return { error: "Name und E-Mail sind Pflichtfelder." };
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Ungültige E-Mail-Adresse." };
@@ -62,7 +63,7 @@ export async function updateUser(
 
   await db
     .update(users)
-    .set({ name, email, instrument: instrument || null })
+    .set({ name, email, instrument: instrument || null, notifyByEmail })
     .where(eq(users.id, userId));
   revalidatePath("/", "layout");
   return { success: "Profil gespeichert." };

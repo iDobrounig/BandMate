@@ -120,6 +120,15 @@ function EditMemberForm({ member }: { member: User }) {
           </datalist>
         </div>
       </div>
+      <label className="flex items-center gap-2 text-sm text-mute">
+        <input
+          type="checkbox"
+          name="notifyByEmail"
+          defaultChecked={member.notifyByEmail}
+          className="size-4 accent-(--color-accent)"
+        />
+        E-Mail bei neuen Vorschlägen &amp; Kommentaren
+      </label>
       <FormMsg state={state} />
       <SubmitButton className="btn btn-sm">Speichern</SubmitButton>
     </form>
