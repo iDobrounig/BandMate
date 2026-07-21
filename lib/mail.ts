@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { buildEmailHtml, buildEmailText } from "@/lib/email-template";
 
 const smtpConfigured = Boolean(process.env.SMTP_HOST);
 
@@ -22,7 +23,12 @@ function transporter() {
  */
 export function notifyBand(opts: {
   subject: string;
-  text: string;
+  heading: string;
+  intro: string;
+  highlight?: string;
+  details?: string[];
+  quote?: string;
+  cta: { label: string; url: string };
   excludeUserId?: number;
 }) {
   if (!smtpConfigured) {
@@ -53,7 +59,8 @@ export function notifyBand(opts: {
         from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
         bcc: recipients.map((r) => r.email),
         subject: `[BandMate] ${opts.subject}`,
-        text: opts.text,
+        text: buildEmailText(opts),
+        html: buildEmailHtml({ ...opts, preheader: opts.intro }),
       });
     } catch (err) {
       console.error("E-Mail-Versand fehlgeschlagen:", err);
@@ -79,11 +86,17 @@ export async function sendTestMail(
   try {
     const t = transporter();
     await t.verify();
+    const content = {
+      heading: "Test-E-Mail",
+      intro:
+        "Diese Test-Mail bestätigt, dass der SMTP-Versand von BandMate funktioniert.",
+    };
     await t.sendMail({
       from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
       to: toEmail,
       subject: "[BandMate] Test-E-Mail",
-      text: "Diese Test-Mail bestätigt, dass der SMTP-Versand von BandMate funktioniert.",
+      text: buildEmailText(content),
+      html: buildEmailHtml({ ...content, preheader: content.intro }),
     });
     return { ok: true };
   } catch (err) {

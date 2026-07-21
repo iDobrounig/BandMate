@@ -86,9 +86,13 @@ export async function createSong(
 
   notifyBand({
     subject: `Neuer Songvorschlag: ${fields.title}`,
-    text: `${user.name} hat einen neuen Song vorgeschlagen:\n\n${fields.title}${
-      fields.artist ? ` – ${fields.artist}` : ""
-    }\n\nJetzt anhören und abstimmen: ${process.env.APP_URL ?? ""}/songs/${song.id}`,
+    heading: "Neuer Songvorschlag",
+    intro: `${user.name} hat einen neuen Song vorgeschlagen:`,
+    highlight: `${fields.title}${fields.artist ? ` – ${fields.artist}` : ""}`,
+    cta: {
+      label: "Jetzt anhören und abstimmen",
+      url: `${process.env.APP_URL ?? ""}/songs/${song.id}`,
+    },
     excludeUserId: user.id,
   });
 

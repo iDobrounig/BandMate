@@ -61,9 +61,13 @@ export async function addComment(
   if (song) {
     notifyBand({
       subject: `Neuer Kommentar zu „${song.title}"`,
-      text: `${user.name} schreibt zu „${song.title}":\n\n${body}\n\nAntworten: ${
-        process.env.APP_URL ?? ""
-      }/songs/${songId}`,
+      heading: "Neuer Kommentar",
+      intro: `${user.name} schreibt zu „${song.title}":`,
+      quote: body,
+      cta: {
+        label: "Antworten",
+        url: `${process.env.APP_URL ?? ""}/songs/${songId}`,
+      },
       excludeUserId: user.id,
     });
   }

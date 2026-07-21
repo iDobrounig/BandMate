@@ -89,9 +89,16 @@ export async function createEvent(
         : `${formatDate(dates[0])}${fields.startTime ? `, ${fields.startTime} Uhr` : ""}`;
     notifyBand({
       subject: `Neuer Termin: ${fields.title} (${kindLabel})`,
-      text: `${user.name} hat einen neuen Termin angelegt:\n\n${fields.title} (${kindLabel})\n${when}${
-        fields.location ? `\nOrt: ${fields.location}` : ""
-      }\n\nZu-/Absagen: ${process.env.APP_URL ?? ""}/termine/${inserted[0].id}`,
+      heading: "Neuer Termin",
+      intro: `${user.name} hat einen neuen Termin angelegt:`,
+      highlight: `${fields.title} (${kindLabel})`,
+      details: [when, fields.location ? `Ort: ${fields.location}` : null].filter(
+        (l): l is string => Boolean(l)
+      ),
+      cta: {
+        label: "Zu-/Absagen",
+        url: `${process.env.APP_URL ?? ""}/termine/${inserted[0].id}`,
+      },
       excludeUserId: user.id,
     });
   }
