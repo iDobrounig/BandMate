@@ -8,6 +8,15 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.7.0] — 2026-07-21
+
+### Geändert
+- **E-Mail-Design überarbeitet**: Benachrichtigungs-Mails (neuer Songvorschlag,
+  neuer Termin, neuer Kommentar) sowie die SMTP-Test-Mail kommen jetzt als
+  strukturiertes HTML mit Kopfzeile (Logo, Wortmarke), Akzentfarbe und
+  Fußzeile (Link zu den Benachrichtigungs-Einstellungen) statt als reiner
+  Klartext — Klartext-Alternative bleibt für Mail-Clients ohne HTML erhalten.
+
 ## [1.6.0] — 2026-07-20
 
 ### Hinzugefügt
@@ -116,7 +125,8 @@ Erster stabiler Release — die App geht in den produktiven Bandbetrieb.
 - E-Mail-Benachrichtigungen (optional, SMTP), Dashboard, dunkles Design, PWA/App-Icon
 - Deployment mit PM2 (`ecosystem.config.js`, Port 8059) und `deploy.sh`
 
-[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.7.0
 [1.6.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.6.0
 [1.5.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.5.0
 [1.4.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.4.0
