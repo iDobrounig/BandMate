@@ -8,6 +8,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.9.0] — 2026-07-22
+
+### Hinzugefügt
+- **Passwort vergessen / zurücksetzen**: Mitglieder können sich auf
+  `/passwort-vergessen` (verlinkt von der Anmeldeseite) einen Reset-Link per
+  E-Mail schicken lassen und auf `/passwort-zuruecksetzen` selbst ein neues
+  Passwort vergeben — ohne den Admin fragen zu müssen. Link ist eine Stunde
+  gültig und nur einmal verwendbar; die Anfrage-Seite zeigt bewusst immer
+  dieselbe Meldung, egal ob die E-Mail-Adresse registriert ist.
+
 ## [1.8.0] — 2026-07-22
 
 ### Hinzugefügt
@@ -133,7 +143,8 @@ Erster stabiler Release — die App geht in den produktiven Bandbetrieb.
 - E-Mail-Benachrichtigungen (optional, SMTP), Dashboard, dunkles Design, PWA/App-Icon
 - Deployment mit PM2 (`ecosystem.config.js`, Port 8059) und `deploy.sh`
 
-[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.9.0
 [1.8.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.8.0
 [1.7.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.7.0
 [1.6.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.6.0
