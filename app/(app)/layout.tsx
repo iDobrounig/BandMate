@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/lib/actions/auth";
 import { NavLinks } from "@/components/nav-links";
-import { IconUser, IconLogout } from "@/components/icons";
+import { IconUser, IconLogout, IconHelp } from "@/components/icons";
 
 export default async function AppLayout({
   children,
@@ -20,6 +20,14 @@ export default async function AppLayout({
               BandMate
             </Link>
             <div className="flex items-center gap-1 sm:hidden">
+              <Link
+                href="/hilfe"
+                aria-label="Hilfe"
+                title="Hilfe"
+                className="rounded-lg p-2 text-mute transition hover:bg-raise hover:text-ink"
+              >
+                <IconHelp className="size-5" />
+              </Link>
               <Link
                 href="/profil"
                 aria-label={`Profil von ${user.name}`}
@@ -44,6 +52,14 @@ export default async function AppLayout({
             <NavLinks isAdmin={user.role === "admin"} />
           </div>
           <div className="hidden ml-auto items-center gap-2 sm:flex">
+            <Link
+              href="/hilfe"
+              aria-label="Hilfe"
+              title="Hilfe"
+              className="rounded-lg p-2 text-mute transition hover:bg-raise hover:text-ink"
+            >
+              <IconHelp className="size-5" />
+            </Link>
             <Link
               href="/profil"
               className="rounded-lg px-3 py-1.5 text-sm font-semibold text-mute transition hover:bg-raise hover:text-ink"
