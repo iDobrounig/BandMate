@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { LoginForm } from "@/components/login-form";
+import { RequestResetForm } from "@/components/reset-forms";
 
-export const metadata = { title: "Anmelden" };
+export const metadata = { title: "Passwort vergessen" };
 
-export default async function LoginPage() {
+export default async function PasswortVergessenPage() {
   const user = await currentUser();
   if (user) redirect("/");
 
@@ -18,19 +17,17 @@ export default async function LoginPage() {
           </p>
           <h1 className="headline mt-2 text-5xl">BandMate</h1>
           <p className="mt-2 text-sm text-mute">
-            Songs, Noten &amp; Setlisten — intern.
+            Gib deine E-Mail-Adresse ein, wir schicken dir einen Link zum
+            Zurücksetzen.
           </p>
         </div>
         <div className="card p-6">
-          <LoginForm />
+          <RequestResetForm />
         </div>
         <p className="mt-4 text-center text-xs text-faint">
-          <Link href="/passwort-vergessen" className="underline">
-            Passwort vergessen?
-          </Link>
-        </p>
-        <p className="mt-2 text-center text-xs text-faint">
-          Kein Zugang? Frag den Admin eurer Band.
+          <a href="/login" className="underline">
+            Zurück zur Anmeldung
+          </a>
         </p>
       </div>
     </main>

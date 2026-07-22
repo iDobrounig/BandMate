@@ -104,3 +104,36 @@ export async function sendTestMail(
     return { ok: false, error: `SMTP-Fehler: ${message}` };
   }
 }
+
+/**
+ * Verschickt den Passwort-Reset-Link an eine einzelne Adresse. Wirft nie —
+ * Fehler werden geloggt, der Aufrufer (requestPasswordReset) ignoriert das
+ * Ergebnis bewusst, um kein Timing-/Fehler-Seitenkanal-Leck über die
+ * Existenz eines Accounts zu erzeugen.
+ */
+export async function sendPasswordResetMail(
+  toEmail: string,
+  resetUrl: string
+): Promise<void> {
+  if (!smtpConfigured) {
+    console.log(`[mail deaktiviert] Passwort-Reset für ${toEmail}`);
+    return;
+  }
+  try {
+    const content = {
+      heading: "Passwort zurücksetzen",
+      intro:
+        "Du hast ein neues Passwort für dein BandMate-Konto angefordert. Der Link ist eine Stunde gültig.",
+      cta: { label: "Neues Passwort vergeben", url: resetUrl },
+    };
+    await transporter().sendMail({
+      from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
+      to: toEmail,
+      subject: "[BandMate] Passwort zurücksetzen",
+      text: buildEmailText(content),
+      html: buildEmailHtml({ ...content, preheader: content.intro }),
+    });
+  } catch (err) {
+    console.error("Passwort-Reset-Mail fehlgeschlagen:", err);
+  }
+}

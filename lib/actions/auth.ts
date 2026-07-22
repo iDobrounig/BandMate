@@ -1,5 +1,6 @@
 "use server";
 
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -8,6 +9,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { requireUser } from "@/lib/auth";
+import { sendPasswordResetMail } from "@/lib/mail";
 
 export type FormState = { error?: string; success?: string };
 
@@ -88,4 +90,75 @@ export async function changePassword(
     .set({ passwordHash: bcrypt.hashSync(next, 10) })
     .where(eq(users.id, user.id));
   return { success: "Passwort geändert." };
+}
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 Stunde
+
+export async function requestPasswordReset(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const generic: FormState = {
+    success:
+      "Falls diese E-Mail-Adresse bei uns registriert ist, wurde eine Mail mit einem Link verschickt.",
+  };
+  if (!email) return generic;
+
+  const user = await db.query.users.findFirst({ where: eq(users.email, email) });
+  if (!user || !user.active) {
+    console.log(`[passwort-vergessen] Keine aktive Adresse gefunden: ${email}`);
+    return generic;
+  }
+
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+  await db
+    .update(users)
+    .set({ resetToken: token, resetTokenExpiresAt: expiresAt })
+    .where(eq(users.id, user.id));
+
+  const resetUrl = `${process.env.APP_URL ?? ""}/passwort-zuruecksetzen?token=${token}`;
+  await sendPasswordResetMail(user.email, resetUrl);
+
+  return generic;
+}
+
+export async function resetPassword(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const token = String(formData.get("token") ?? "");
+  const next = String(formData.get("next") ?? "");
+  const repeat = String(formData.get("repeat") ?? "");
+
+  if (!token) return { error: "Ungültiger oder abgelaufener Link." };
+
+  const user = await db.query.users.findFirst({ where: eq(users.resetToken, token) });
+  if (
+    !user ||
+    !user.resetTokenExpiresAt ||
+    user.resetTokenExpiresAt.getTime() < Date.now()
+  ) {
+    return { error: "Ungültiger oder abgelaufener Link. Bitte erneut anfordern." };
+  }
+  if (next.length < 8) {
+    return { error: "Das neue Passwort braucht mindestens 8 Zeichen." };
+  }
+  if (next !== repeat) {
+    return { error: "Die Wiederholung stimmt nicht überein." };
+  }
+
+  await db
+    .update(users)
+    .set({
+      passwordHash: bcrypt.hashSync(next, 10),
+      resetToken: null,
+      resetTokenExpiresAt: null,
+    })
+    .where(eq(users.id, user.id));
+
+  return { success: "Passwort geändert. Du kannst dich jetzt anmelden." };
 }

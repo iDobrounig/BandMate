@@ -18,6 +18,10 @@ export const users = sqliteTable("users", {
     .notNull()
     .default(true),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
+  // Unverschlüsselt gespeichert — kein Hashing-Präzedenzfall im Projekt,
+  // geringer Wert als Angriffsziel bei einer Handvoll interner Nutzer.
+  resetToken: text("reset_token"),
+  resetTokenExpiresAt: integer("reset_token_expires_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),

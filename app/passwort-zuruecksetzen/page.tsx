@@ -1,13 +1,17 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { LoginForm } from "@/components/login-form";
+import { ResetPasswordForm } from "@/components/reset-forms";
 
-export const metadata = { title: "Anmelden" };
+export const metadata = { title: "Passwort zurücksetzen" };
 
-export default async function LoginPage() {
+export default async function PasswortZuruecksetzenPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ token?: string }>;
+}) {
   const user = await currentUser();
   if (user) redirect("/");
+  const { token } = await searchParams;
 
   return (
     <main className="flex flex-1 items-center justify-center p-6">
@@ -18,20 +22,12 @@ export default async function LoginPage() {
           </p>
           <h1 className="headline mt-2 text-5xl">BandMate</h1>
           <p className="mt-2 text-sm text-mute">
-            Songs, Noten &amp; Setlisten — intern.
+            Neues Passwort vergeben.
           </p>
         </div>
         <div className="card p-6">
-          <LoginForm />
+          <ResetPasswordForm token={token} />
         </div>
-        <p className="mt-4 text-center text-xs text-faint">
-          <Link href="/passwort-vergessen" className="underline">
-            Passwort vergessen?
-          </Link>
-        </p>
-        <p className="mt-2 text-center text-xs text-faint">
-          Kein Zugang? Frag den Admin eurer Band.
-        </p>
       </div>
     </main>
   );
