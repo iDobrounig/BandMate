@@ -8,6 +8,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.8.0] — 2026-07-22
+
+### Hinzugefügt
+- **Hilfe-Seite** (`/hilfe`, verlinkt über ein Icon im Header): Kurzanleitung
+  für Bandmitglieder zu Songs, Setlisten, Termine und Profil, jeweils mit
+  Screenshots — erweiterbar um weitere Abschnitte, wenn neue Features
+  dazukommen.
+
 ## [1.7.0] — 2026-07-21
 
 ### Geändert
@@ -125,7 +133,8 @@ Erster stabiler Release — die App geht in den produktiven Bandbetrieb.
 - E-Mail-Benachrichtigungen (optional, SMTP), Dashboard, dunkles Design, PWA/App-Icon
 - Deployment mit PM2 (`ecosystem.config.js`, Port 8059) und `deploy.sh`
 
-[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/iDobrounig/BandMate/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.8.0
 [1.7.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.7.0
 [1.6.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.6.0
 [1.5.0]: https://github.com/iDobrounig/BandMate/releases/tag/v1.5.0
