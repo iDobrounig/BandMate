@@ -95,10 +95,12 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   `TZ` in `ecosystem.config.js` (Default `Europe/Vienna`, per Env überschreibbar),
   Hinweis im README unter „Vor dem Livegang".
 
-- [ ] *(optional, empfohlen)* **Minimaler Test-Rahmen**
-  Vitest + eine Handvoll Tests für `lib/chords.ts`, `lib/format.ts` und die neuen
-  Soft-Delete-Queries. Kein Vollausbau — nur genug, um beim Umbau destruktiver Pfade nicht
-  blind zu sein.
+- [x] **Minimaler Test-Rahmen** — *erledigt 23.07.2026*
+  Vitest mit Test-DB in einem Temp-`DATA_DIR` (`tests/setup.ts`), Fixtures mit einem
+  vollständigen Bandzustand und 14 Tests gegen `fetchSongList`, `fetchSongDetail`,
+  `fetchSetlists` und `fetchEvents`. `npm test`. Per Mutationsprobe bestätigt, dass die
+  Tests bei echten Fehlern anschlagen. Aus der Kür wurde eine Voraussetzung: der
+  Papierkorb-Umbau berührt 26 Lesestellen, das ist nicht durchklickbar.
 
 ### Welle 1 — Aktivierung *(die App muss sich melden)*
 

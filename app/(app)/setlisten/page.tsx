@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { setlists } from "@/lib/db/schema";
+import { fetchSetlists } from "@/lib/queries";
 import { formatDate, formatDuration } from "@/lib/format";
 import { SetlistForm } from "@/components/setlist-forms";
 
@@ -11,14 +9,7 @@ export const metadata = { title: "Setlisten" };
 export default async function SetlistenPage() {
   await requireUser();
 
-  const lists = await db
-    .select({
-      setlist: setlists,
-      songCount: sql<number>`(select count(*) from setlist_items i where i.setlist_id = setlists.id)`,
-      totalSeconds: sql<number>`coalesce((select sum(s.duration_seconds) from setlist_items i join songs s on s.id = i.song_id where i.setlist_id = setlists.id), 0)`,
-    })
-    .from(setlists)
-    .orderBy(desc(setlists.createdAt));
+  const lists = await fetchSetlists();
 
   return (
     <div>
@@ -34,7 +25,7 @@ export default async function SetlistenPage() {
               Noch keine Setlisten. Leg rechts die erste an!
             </div>
           )}
-          {lists.map(({ setlist, songCount, totalSeconds }) => (
+          {lists.map((setlist) => (
             <Link
               key={setlist.id}
               href={`/setlisten/${setlist.id}`}
@@ -47,8 +38,12 @@ export default async function SetlistenPage() {
                 </p>
               </div>
               <div className="mono-display shrink-0 text-right text-sm text-mute">
-                <p>{songCount} Songs</p>
-                <p className="text-xs text-faint">{formatDuration(totalSeconds)}</p>
+                <p>
+                  {setlist.songCount} {setlist.songCount === 1 ? "Song" : "Songs"}
+                </p>
+                <p className="text-xs text-faint">
+                  {formatDuration(setlist.totalSeconds)}
+                </p>
               </div>
             </Link>
           ))}

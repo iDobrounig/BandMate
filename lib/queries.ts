@@ -10,6 +10,7 @@ import {
   events,
   setlists,
   type Song,
+  type Setlist,
   type BandEvent,
   type AttendanceStatus,
 } from "@/lib/db/schema";
@@ -53,6 +54,29 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
     audioCount: r.audioCount,
     sheetCount: r.sheetCount,
     readyCount: r.readyCount,
+  }));
+}
+
+export type SetlistListItem = Setlist & {
+  songCount: number;
+  totalSeconds: number;
+};
+
+/** Setlisten-Übersicht mit Anzahl Songs und Gesamtdauer. */
+export async function fetchSetlists(): Promise<SetlistListItem[]> {
+  const rows = await db
+    .select({
+      setlist: setlists,
+      songCount: sql<number>`(select count(*) from setlist_items i where i.setlist_id = setlists.id)`,
+      totalSeconds: sql<number>`coalesce((select sum(s.duration_seconds) from setlist_items i join songs s on s.id = i.song_id where i.setlist_id = setlists.id), 0)`,
+    })
+    .from(setlists)
+    .orderBy(desc(setlists.createdAt));
+
+  return rows.map((r) => ({
+    ...r.setlist,
+    songCount: r.songCount,
+    totalSeconds: r.totalSeconds,
   }));
 }
 
