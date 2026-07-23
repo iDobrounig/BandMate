@@ -8,8 +8,12 @@ import {
   notificationLog,
   notificationRuns,
 } from "@/lib/db/schema";
-import { fetchRecipients, type Recipient } from "@/lib/notifications";
-import { sendMailTo, isSmtpConfigured, type MailContent } from "@/lib/mail";
+import { fetchRecipients } from "@/lib/notifications";
+import {
+  createBatchMailer,
+  isSmtpConfigured,
+  type MailContent,
+} from "@/lib/mail";
 import { formatDate } from "@/lib/format";
 import { EVENT_KIND } from "@/lib/constants";
 
@@ -228,16 +232,51 @@ export async function runReminders(
           set: { status, error, sentAt: new Date() },
         });
 
-    for (const p of geplant) {
-      try {
-        await sendMailTo(p.email, p.subject, p.content);
-        await schreibeLog(p, "ok", null);
-        sent++;
-      } catch (err) {
-        errors++;
-        const message = err instanceof Error ? err.message : String(err);
-        await schreibeLog(p, "fehler", message.slice(0, 500));
+    // Eine gepoolte Verbindung für den ganzen Lauf, statt pro Empfänger neu.
+    // Ohne SMTP wirft createBatchMailer sofort — dann wird jeder geplante
+    // Versand als „fehler" protokolliert (und beim nächsten Lauf erneut
+    // versucht), statt still gar nichts zu tun.
+    let mailer: ReturnType<typeof createBatchMailer> | null = null;
+    try {
+      mailer = createBatchMailer();
+    } catch {
+      mailer = null;
+    }
+
+    // Ein transientes SMTP-Problem („Greeting never received") würde die
+    // 2-Tages-Erinnerung endgültig verlieren — der nächste Lauf holt sie nicht
+    // nach, weil der Termin dann nur noch einen Tag entfernt ist (andere Sorte).
+    // Deshalb je Mail bis zu zwei Versuche mit kurzer Pause.
+    const sendeEinmal = async (p: PlannedSend): Promise<void> => {
+      // Kein SMTP ist kein transienter Fehler — nicht wiederholen.
+      if (!mailer) throw new Error("SMTP nicht konfiguriert");
+      let letzter: unknown;
+      for (let versuch = 1; versuch <= 2; versuch++) {
+        try {
+          await mailer.send(p.email, p.subject, p.content);
+          return;
+        } catch (err) {
+          letzter = err;
+          if (versuch < 2) await new Promise((r) => setTimeout(r, 750));
+        }
       }
+      throw letzter;
+    };
+
+    try {
+      for (const p of geplant) {
+        try {
+          await sendeEinmal(p);
+          await schreibeLog(p, "ok", null);
+          sent++;
+        } catch (err) {
+          errors++;
+          const message = err instanceof Error ? err.message : String(err);
+          await schreibeLog(p, "fehler", message.slice(0, 500));
+        }
+      }
+    } finally {
+      mailer?.close();
     }
   } finally {
     const note = !isSmtpConfigured()

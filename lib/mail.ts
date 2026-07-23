@@ -5,7 +5,7 @@ import { buildEmailHtml, buildEmailText } from "@/lib/email-template";
 
 const smtpConfigured = Boolean(process.env.SMTP_HOST);
 
-function transporter() {
+function transporter(extra?: nodemailer.TransportOptions) {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT ?? 587),
@@ -13,8 +13,40 @@ function transporter() {
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       : undefined,
-  });
+    ...extra,
+  } as nodemailer.TransportOptions);
 }
+
+/**
+ * Ein wiederverwendbarer Versender für viele Einzelmails (Erinnerungen,
+ * Digest). Hält EINE gepoolte Verbindung offen, statt sie pro Empfänger neu
+ * aufzubauen — genau das führte im Test zu „Greeting never received", wenn
+ * schnell hintereinander frische Verbindungen geöffnet wurden.
+ *
+ * `close()` am Ende nicht vergessen, sonst hängt der Prozess an der offenen
+ * Verbindung. Wirft beim Anlegen, wenn kein SMTP konfiguriert ist.
+ */
+export function createBatchMailer() {
+  if (!smtpConfigured) throw new Error("SMTP nicht konfiguriert");
+  const t = transporter({ pool: true, maxConnections: 1 } as nodemailer.TransportOptions);
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER;
+  return {
+    async send(toEmail: string, subject: string, content: MailContent) {
+      await t.sendMail({
+        from,
+        to: toEmail,
+        subject: `[BandMate] ${subject}`,
+        text: buildEmailText(content),
+        html: buildEmailHtml({ ...content, preheader: content.intro }),
+      });
+    },
+    close() {
+      t.close();
+    },
+  };
+}
+
+export type BatchMailer = ReturnType<typeof createBatchMailer>;
 
 /**
  * Benachrichtigt alle aktiven Mitglieder, die für DIESEN Ereignistyp „sofort"
@@ -72,35 +104,6 @@ export type MailContent = {
   quote?: string;
   cta?: { label: string; url: string };
 };
-
-/**
- * Verschickt eine Mail an eine EINZELNE Adresse und wartet auf das Ergebnis —
- * anders als notifyBand (fire-and-forget, bcc an alle). Für die
- * zeitgesteuerten Mails, die pro Empfänger ins Versand-Log schreiben müssen:
- * nur wer wirklich eine Mail bekam, darf als „erledigt" gelten, sonst holt der
- * nächste Lauf sie nicht nach.
- *
- * Wirft im Fehlerfall — der Aufrufer (lib/reminders.ts) fängt das ab und
- * vermerkt den Fehler im Log, ohne den ganzen Lauf abzubrechen.
- */
-export async function sendMailTo(
-  toEmail: string,
-  subject: string,
-  content: MailContent
-): Promise<void> {
-  if (!smtpConfigured) {
-    // Kein SMTP: als erfolgreich behandeln wäre falsch (nichts ging raus),
-    // als Fehler auch (nichts ist kaputt). Der Aufrufer erkennt das hieran.
-    throw new Error("SMTP nicht konfiguriert");
-  }
-  await transporter().sendMail({
-    from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
-    to: toEmail,
-    subject: `[BandMate] ${subject}`,
-    text: buildEmailText(content),
-    html: buildEmailHtml({ ...content, preheader: content.intro }),
-  });
-}
 
 export function isSmtpConfigured(): boolean {
   return smtpConfigured;
