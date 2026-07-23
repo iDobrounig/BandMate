@@ -7,6 +7,12 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 ## [Unreleased]
 
 ### Hinzugefügt
+- **Termin-Erinnerungen per E-Mail** (`npm run notify:reminders`, für den täglichen
+  Cron): zwei Tage vor einem Termin an alle, die noch nicht zu- oder abgesagt
+  haben, und am Vortag mit Ort, Zeit und Probe-Agenda an alle Zusagenden. Der
+  Lauf ist idempotent — ein doppelter Aufruf verschickt nichts doppelt, ein
+  ausgefallener Tag wird nicht nachgeholt. Jeder Versand wird protokolliert; ein
+  vorübergehendes SMTP-Problem heilt sich beim nächsten Lauf von selbst.
 - **Benachrichtigungen je Ereignistyp einstellbar** (`/profil`, für Admins auch
   unter `/mitglieder`): Termin-Erinnerungen, neue Termine, geänderte Termine,
   neue Songvorschläge und Kommentare lassen sich einzeln auf **Sofort**,

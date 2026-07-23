@@ -128,12 +128,12 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Dabei zusätzlich die RFC-5545-Zeilenfaltung nachgeholt, die vorher fehlte.
   10 Tests für `buildIcs`, per Mutationsprobe abgesichert.
 
-- [ ] **Erinnerungs-Mail vor Terminen**
-  Cron-Job (`scripts/reminders.ts`, täglich früh): für jeden Termin in genau 2 Tagen eine
-  Mail an alle aktiven Mitglieder **ohne Rückmeldung** — „Du hast für Probe am … noch nicht
-  zugesagt", mit Direktlink. Zusätzlich am Vortag eine Zusammenfassung an alle Zusagenden
-  (Ort, Uhrzeit, Probe-Agenda). Idempotent halten (Versand-Log-Tabelle), damit ein doppelter
-  Cron-Lauf keine Doppel-Mails erzeugt.
+- [x] **Erinnerungs-Mail vor Terminen** — *erledigt 23.07.2026*
+  `npm run notify:reminders` (Cron): zwei Tage vorher an Unentschiedene, am Vortag an
+  Zusagende (mit Ort, Zeit, Agenda). Idempotent über das Versand-Log
+  (`notification_log`, Unique-Index je Empfänger/Termin/Sorte); ein Fehlversuch blockiert
+  den nächsten Lauf nicht. Jeder Lauf wird in `notification_runs` festgehalten — Grundlage
+  für die Statuszeile aus dem nächsten Häppchen. 12 Tests, per Mutationsprobe abgesichert.
 
 - [ ] **Wochen-Digest**
   Sonntagabend eine Mail pro Mitglied: nächste Termine mit eigenem RSVP-Stand, neue

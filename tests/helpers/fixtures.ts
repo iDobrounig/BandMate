@@ -12,6 +12,9 @@ import {
   events,
   eventAttendance,
   eventSongs,
+  notificationSettings,
+  notificationLog,
+  notificationRuns,
 } from "@/lib/db/schema";
 
 /** Datum relativ zu heute als ISO-Tag — hält Termin-Tests unabhängig vom Kalender. */
@@ -23,6 +26,12 @@ export function isoTag(offsetTage: number): string {
 
 /** Leert alle Tabellen. Reihenfolge: Kinder vor Eltern (FKs sind eingeschaltet). */
 export async function leeren() {
+  // notificationLog/-settings hängen per Cascade an users, notificationRuns
+  // aber an nichts — deshalb hier alle drei ausdrücklich leeren, sonst
+  // akkumulieren die Läufe über Tests hinweg.
+  await db.delete(notificationLog);
+  await db.delete(notificationRuns);
+  await db.delete(notificationSettings);
   await db.delete(eventSongs);
   await db.delete(eventAttendance);
   await db.delete(events);

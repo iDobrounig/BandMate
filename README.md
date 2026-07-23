@@ -28,7 +28,7 @@ Selbst gehostetes Band-Dashboard: Songvorschläge mit Voting, Noten & Audio pro 
 - **Metronom** (Web Audio) mit Tap-Tempo, vorbelegt mit dem Song-Tempo
 - **Userverwaltung**: Admin legt Mitglieder an und setzt Passwörter; sonst dürfen alle alles
 - **Papierkorb**: Gelöschtes bleibt 30 Tage wiederherstellbar, dazu „Rückgängig" direkt nach dem Löschen
-- Optionale **E-Mail-Benachrichtigung** bei neuem Vorschlag/Kommentar (SMTP), pro User abschaltbar
+- **Benachrichtigungen** je Ereignistyp einstellbar (sofort / im Wochen-Digest / nie), plus Termin-Erinnerungen per Cron
 
 - **Termine**: Proben (auch als wöchentliche Serie) und Gigs mit Zu-/Absagen der Mitglieder, optionaler E-Mail beim Anlegen, Setlisten-Verknüpfung
 - **PDF-Noten-Viewer** direkt auf der Songseite
@@ -106,6 +106,22 @@ Gelöschtes landet 30 Tage im [Papierkorb](#papierkorb) und wird danach endgült
 ```
 
 > Der Job läuft **nach** dem nächtlichen Backup (3:30), damit der Zustand vor dem endgültigen Löschen noch in einer Sicherung steckt.
+
+### Termin-Erinnerungen
+
+Ein täglicher Lauf schickt zwei Sorten Erinnerungen (siehe [Benachrichtigungen](#benachrichtigungen)): zwei Tage vor einem Termin an alle, die noch nicht zu- oder abgesagt haben, und am Vortag an alle Zusagenden. Der Lauf ist idempotent — ein doppelter Aufruf verschickt nichts doppelt, ein ausgefallener Tag wird nicht nachgeholt.
+
+```cron
+0 6 * * * cd /pfad/zu/BandMate && npm run notify:reminders >> /var/log/bandmate-notify.log 2>&1
+```
+
+> Braucht konfiguriertes SMTP. Ohne läuft der Job durch, verschickt aber nichts und meldet das im Log.
+
+## Benachrichtigungen
+
+Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** eine Mail bekommt, alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Admin kann das auch unter `/mitglieder` für andere setzen. Voraussetzung für jeden Versand ist konfiguriertes SMTP (siehe oben); den Test dazu gibt es auf `/mitglieder`.
+
+Zwei Kanäle laufen unabhängig vom Mailversand: der **ICS-Feed** bringt native Kalender-Erinnerungen mit (Vortag und zwei Stunden vorher), und die zeitgesteuerten **Termin-Erinnerungen** kommen vom Cron-Job oben.
 
 ## Papierkorb
 

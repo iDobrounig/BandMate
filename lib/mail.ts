@@ -64,6 +64,48 @@ export function notifyBand(opts: {
   })();
 }
 
+export type MailContent = {
+  heading: string;
+  intro: string;
+  highlight?: string;
+  details?: string[];
+  quote?: string;
+  cta?: { label: string; url: string };
+};
+
+/**
+ * Verschickt eine Mail an eine EINZELNE Adresse und wartet auf das Ergebnis —
+ * anders als notifyBand (fire-and-forget, bcc an alle). Für die
+ * zeitgesteuerten Mails, die pro Empfänger ins Versand-Log schreiben müssen:
+ * nur wer wirklich eine Mail bekam, darf als „erledigt" gelten, sonst holt der
+ * nächste Lauf sie nicht nach.
+ *
+ * Wirft im Fehlerfall — der Aufrufer (lib/reminders.ts) fängt das ab und
+ * vermerkt den Fehler im Log, ohne den ganzen Lauf abzubrechen.
+ */
+export async function sendMailTo(
+  toEmail: string,
+  subject: string,
+  content: MailContent
+): Promise<void> {
+  if (!smtpConfigured) {
+    // Kein SMTP: als erfolgreich behandeln wäre falsch (nichts ging raus),
+    // als Fehler auch (nichts ist kaputt). Der Aufrufer erkennt das hieran.
+    throw new Error("SMTP nicht konfiguriert");
+  }
+  await transporter().sendMail({
+    from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
+    to: toEmail,
+    subject: `[BandMate] ${subject}`,
+    text: buildEmailText(content),
+    html: buildEmailHtml({ ...content, preheader: content.intro }),
+  });
+}
+
+export function isSmtpConfigured(): boolean {
+  return smtpConfigured;
+}
+
 /**
  * Prüft die SMTP-Verbindung und verschickt eine echte Test-Mail.
  * Für die Admin-Diagnose auf /mitglieder — wirft nie, liefert stattdessen
