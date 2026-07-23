@@ -40,9 +40,31 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Werte aus der .env lesen — dieselbe Datei, aus der die App ihr DATA_DIR
+# bezieht. Ohne das würde dieses Script auf einem Server, wo DATA_DIR nur in
+# der .env steht, das falsche Verzeichnis sichern (oder gar nichts finden).
+#
+# Bewusst KEIN `source .env`: die Datei enthält Secrets und würde dabei als
+# Shell-Code ausgeführt. Hier wird nur der Wert der gesuchten Zuweisung
+# herausgeschnitten.
+ENV_FILE="$REPO_DIR/.env"
+env_datei_wert() {
+  [[ -f "$ENV_FILE" ]] || return 0
+  sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" "$ENV_FILE" \
+    | tail -1 \
+    | sed -e 's/[[:space:]]\{1,\}#.*$//' -e 's/[[:space:]]*$//' \
+          -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'\$/\1/"
+}
+
+# Reihenfolge: gesetzte Umgebungsvariable > .env > Default. So kann eine
+# Cron-Zeile weiterhin alles überschreiben.
+DATA_DIR="${DATA_DIR:-$(env_datei_wert DATA_DIR)}"
 DATA_DIR="${DATA_DIR:-$REPO_DIR/data}"
+BACKUP_DIR="${BACKUP_DIR:-$(env_datei_wert BACKUP_DIR)}"
 BACKUP_DIR="${BACKUP_DIR:-$(dirname "$DATA_DIR")/bandmate-backups}"
+RETENTION_DAYS="${RETENTION_DAYS:-$(env_datei_wert RETENTION_DAYS)}"
 RETENTION_DAYS="${RETENTION_DAYS:-35}"
+KEEP_MIN="${KEEP_MIN:-$(env_datei_wert KEEP_MIN)}"
 KEEP_MIN="${KEEP_MIN:-3}"
 
 DB_FILE="$DATA_DIR/band.db"

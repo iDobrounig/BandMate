@@ -63,17 +63,26 @@ es nicht. Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026
 - Setlisten-Übersicht schrieb „1 Songs".
 
 ### Hinweis für den Server
-Nach `./deploy.sh` zwei Cron-Jobs einrichten (Reihenfolge ist Absicht — der
-Papierkorb wird erst geleert, wenn der Zustand davor gesichert ist):
+Neu in der `.env` (siehe [.env.example](.env.example)) — alle optional:
+`BACKUP_DIR`, `RETENTION_DAYS`, `KEEP_MIN`. `BACKUP_DIR` sollte auf einer
+**anderen Platte** liegen als `DATA_DIR`, sonst nimmt ein Plattenschaden beides
+mit. `./scripts/backup.sh` und `npm run trash:purge` lesen dieselbe `.env` wie
+die App, es muss also nichts doppelt gepflegt werden.
 
-```cron
-30 3 * * * cd /pfad/zu/BandMate && DATA_DIR=… BACKUP_DIR=… ./scripts/backup.sh >> /var/log/bandmate-backup.log 2>&1
-0  4 * * * cd /pfad/zu/BandMate && DATA_DIR=…              npm run trash:purge  >> /var/log/bandmate-purge.log  2>&1
+Vor dem ersten `./deploy.sh` das Backup einmal von Hand ausführen — schlägt es
+fehl, bricht das Deployment ab (mit Absicht):
+
+```bash
+./scripts/backup.sh
 ```
 
-`BACKUP_DIR` auf eine **andere Platte** als `DATA_DIR` legen. Den Backup-Befehl
-einmal von Hand ausführen, bevor `./deploy.sh` läuft: schlägt er fehl, bricht das
-Deployment ab (mit Absicht).
+Danach zwei Cron-Jobs einrichten (die Reihenfolge ist Absicht — der Papierkorb
+wird erst geleert, wenn der Zustand davor gesichert ist):
+
+```cron
+30 3 * * * cd /pfad/zu/BandMate && ./scripts/backup.sh  >> /var/log/bandmate-backup.log 2>&1
+0  4 * * * cd /pfad/zu/BandMate && npm run trash:purge  >> /var/log/bandmate-purge.log  2>&1
+```
 
 ## [1.9.0] — 2026-07-22
 

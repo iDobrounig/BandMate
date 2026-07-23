@@ -77,6 +77,8 @@ $BACKUP_DIR/latest -> neuester Lauf
 
 Unveränderte Uploads werden nicht neu gepackt, sondern als Hardlink auf den Vorlauf gelegt — eine unveränderte Upload-Sammlung kostet über die ganze Aufbewahrungszeit nur einmal Platz statt einmal pro Nacht.
 
+Alle vier Werte stehen in der `.env` — dieselbe Datei, aus der die App ihr `DATA_DIR` bezieht. Das Script liest sie selbst, es muss also nichts doppelt gepflegt werden. Eine gesetzte Umgebungsvariable (z.B. in der Cron-Zeile) hat Vorrang vor der `.env`.
+
 | Variable | Default | Zweck |
 |---|---|---|
 | `DATA_DIR` | `<repo>/data` | wie in der App |
@@ -90,7 +92,7 @@ Unveränderte Uploads werden nicht neu gepackt, sondern als Hardlink auf den Vor
 crontab -e
 ```
 ```cron
-30 3 * * * cd /pfad/zu/BandMate && DATA_DIR=/var/bandmate-data BACKUP_DIR=/mnt/backup/bandmate ./scripts/backup.sh >> /var/log/bandmate-backup.log 2>&1
+30 3 * * * cd /pfad/zu/BandMate && ./scripts/backup.sh >> /var/log/bandmate-backup.log 2>&1
 ```
 
 Das Script beendet sich bei jedem Problem mit Exit-Code ≠ 0 und räumt einen halbfertigen Lauf wieder weg — ein unvollständiges Backup bleibt nie als scheinbar gültiges stehen. Cron schickt die Ausgabe fehlgeschlagener Läufe per Mail, wenn `MAILTO` gesetzt ist.
@@ -100,7 +102,7 @@ Das Script beendet sich bei jedem Problem mit Exit-Code ≠ 0 und räumt einen h
 Gelöschtes landet 30 Tage im [Papierkorb](#papierkorb) und wird danach endgültig entfernt. Das Aufräumen passiert automatisch, sobald jemand `/papierkorb` öffnet — als Cron-Job wird es unabhängig davon erledigt:
 
 ```cron
-0 4 * * * cd /pfad/zu/BandMate && DATA_DIR=/var/bandmate-data npm run trash:purge >> /var/log/bandmate-purge.log 2>&1
+0 4 * * * cd /pfad/zu/BandMate && npm run trash:purge >> /var/log/bandmate-purge.log 2>&1
 ```
 
 > Der Job läuft **nach** dem nächtlichen Backup (3:30), damit der Zustand vor dem endgültigen Löschen noch in einer Sicherung steckt.
@@ -172,6 +174,7 @@ Pflicht- und optionale Werte in der `.env`:
 | `SESSION_SECRET` | **Pflicht** | Session-Verschlüsselung, mind. 32 Zeichen: `openssl rand -base64 32` |
 | `APP_URL` | empfohlen | öffentliche URL (z.B. `https://band.example.com`) — für Links in E-Mails |
 | `DATA_DIR` | empfohlen | absoluter Pfad zum Datenverzeichnis **außerhalb** des Clone-Ordners, damit `git pull` die Daten nie berührt (z.B. `/var/bandmate-data`) |
+| `BACKUP_DIR` | empfohlen | Ablage der Backups, am besten auf einer **anderen Platte** als `DATA_DIR` (siehe „Backup & Restore") |
 | `SMTP_HOST` … `SMTP_FROM` | optional | E-Mail-Versand; ohne diese Werte werden keine Mails verschickt |
 
 > Der Port wird **nicht** über die `.env`, sondern in [`ecosystem.config.js`](ecosystem.config.js) gesetzt.
