@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { fetchSongDetail } from "@/lib/queries";
+import { fetchSongDetail, fetchSongReferences } from "@/lib/queries";
 import { SONG_STATUS, PRACTICE_STATUS } from "@/lib/constants";
 import { formatDuration, formatDateTime, formatBytes } from "@/lib/format";
 import { VoteButtons } from "@/components/vote-buttons";
@@ -24,6 +24,7 @@ export default async function SongDetailPage({
   const { id } = await params;
   const data = await fetchSongDetail(Number(id));
   if (!data) notFound();
+  const refs = await fetchSongReferences(Number(id));
 
   const { song, links, files, comments, votes, practice, allUsers, suggestedByName } =
     data;
@@ -96,7 +97,13 @@ export default async function SongDetailPage({
         </div>
 
         <div className="mt-4">
-          <SongStatusActions songId={song.id} status={song.status} title={song.title} />
+          <SongStatusActions
+            songId={song.id}
+            status={song.status}
+            title={song.title}
+            setlistCount={refs.setlistCount}
+            agendaCount={refs.agendaCount}
+          />
         </div>
       </div>
 

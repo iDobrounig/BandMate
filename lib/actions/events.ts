@@ -124,16 +124,19 @@ export async function updateEvent(
 }
 
 export async function deleteEvent(eventId: number, scope: "single" | "series") {
-  await requireUser();
+  const user = await requireUser();
   const event = await db.query.events.findFirst({ where: eq(events.id, eventId) });
   if (!event) return;
+  // Identischer Zeitstempel für die ganze Serie — daran erkennt der Papierkorb,
+  // was gesammelt weggeworfen wurde, und zeigt einen Eintrag statt zwölf.
+  const geloescht = { deletedAt: new Date(), deletedById: user.id };
   if (scope === "series" && event.seriesId) {
-    await db.delete(events).where(eq(events.seriesId, event.seriesId));
+    await db.update(events).set(geloescht).where(eq(events.seriesId, event.seriesId));
   } else {
-    await db.delete(events).where(eq(events.id, eventId));
+    await db.update(events).set(geloescht).where(eq(events.id, eventId));
   }
   revalidatePath("/", "layout");
-  redirect("/termine");
+  redirect(`/termine?undo=event:${eventId}`);
 }
 
 /** Song auf die Probe-Agenda eines Termins setzen. */

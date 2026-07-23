@@ -72,11 +72,15 @@ export function DeleteSetlistButton({
       disabled={pending}
       className="btn btn-sm btn-danger"
       onClick={() => {
-        if (confirm(`Setliste „${name}" löschen? (Die Songs bleiben erhalten.)`))
+        if (
+          confirm(
+            `Setliste „${name}" in den Papierkorb legen?\n\nDie Songs selbst bleiben unberührt.`
+          )
+        )
           startTransition(() => deleteSetlist(setlistId));
       }}
     >
-      Löschen
+      In den Papierkorb
     </button>
   );
 }

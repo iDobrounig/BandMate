@@ -84,6 +84,24 @@ export async function fetchServableAttachment(attachmentId: number) {
   return row?.attachment ?? null;
 }
 
+/**
+ * Wo taucht der Song sonst noch auf? Für den Löschdialog (Entwurf E5): Weil
+ * Verweise beim Soft Delete stehen bleiben und die Queries sie nur ausblenden,
+ * schrumpft eine Setliste beim Löschen scheinbar grundlos. Der Dialog sagt
+ * vorher, was passieren wird.
+ */
+export async function fetchSongReferences(songId: number) {
+  const [zeile] = await db
+    .select({
+      setlistCount: sql<number>`(select count(*) from setlist_items i join setlists sl on sl.id = i.setlist_id where i.song_id = ${songId} and sl.deleted_at is null)`,
+      agendaCount: sql<number>`(select count(*) from event_songs es join events e on e.id = es.event_id where es.song_id = ${songId} and e.deleted_at is null)`,
+    })
+    .from(songs)
+    .where(eq(songs.id, songId))
+    .limit(1);
+  return zeile ?? { setlistCount: 0, agendaCount: 0 };
+}
+
 export type SetlistListItem = Setlist & {
   songCount: number;
   totalSeconds: number;

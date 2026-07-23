@@ -27,6 +27,7 @@ Selbst gehostetes Band-Dashboard: Songvorschläge mit Voting, Noten & Audio pro 
 - **Setlisten** mit Drag-&-Drop-Reihenfolge, Gesamtdauer und Druck-/PDF-Ansicht
 - **Metronom** (Web Audio) mit Tap-Tempo, vorbelegt mit dem Song-Tempo
 - **Userverwaltung**: Admin legt Mitglieder an und setzt Passwörter; sonst dürfen alle alles
+- **Papierkorb**: Gelöschtes bleibt 30 Tage wiederherstellbar, dazu „Rückgängig" direkt nach dem Löschen
 - Optionale **E-Mail-Benachrichtigung** bei neuem Vorschlag/Kommentar (SMTP), pro User abschaltbar
 
 - **Termine**: Proben (auch als wöchentliche Serie) und Gigs mit Zu-/Absagen der Mitglieder, optionaler E-Mail beim Anlegen, Setlisten-Verknüpfung
@@ -93,6 +94,26 @@ crontab -e
 ```
 
 Das Script beendet sich bei jedem Problem mit Exit-Code ≠ 0 und räumt einen halbfertigen Lauf wieder weg — ein unvollständiges Backup bleibt nie als scheinbar gültiges stehen. Cron schickt die Ausgabe fehlgeschlagener Läufe per Mail, wenn `MAILTO` gesetzt ist.
+
+### Papierkorb aufräumen
+
+Gelöschtes landet 30 Tage im [Papierkorb](#papierkorb) und wird danach endgültig entfernt. Das Aufräumen passiert automatisch, sobald jemand `/papierkorb` öffnet — als Cron-Job wird es unabhängig davon erledigt:
+
+```cron
+0 4 * * * cd /pfad/zu/BandMate && DATA_DIR=/var/bandmate-data npm run trash:purge >> /var/log/bandmate-purge.log 2>&1
+```
+
+> Der Job läuft **nach** dem nächtlichen Backup (3:30), damit der Zustand vor dem endgültigen Löschen noch in einer Sicherung steckt.
+
+## Papierkorb
+
+Songs, Setlisten, Termine und hochgeladene Dateien werden nicht sofort gelöscht, sondern landen für **30 Tage** im Papierkorb (`/papierkorb`, im Footer verlinkt). Jedes Mitglied kann von dort wiederherstellen; endgültig löschen darf nur ein Admin — das ist die einzige Aktion in BandMate, die sich durch nichts mehr rückgängig machen lässt.
+
+Direkt nach dem Löschen erscheint zusätzlich ein **„Rückgängig"** auf der jeweiligen Liste. Die beiden Wege decken verschiedene Fälle ab: der Fehltipp fällt sofort auf, dass etwas fehlt oft erst Wochen später.
+
+Verweise bleiben beim Löschen erhalten und werden nur ausgeblendet. Ein gelöschter Song verschwindet also aus Setlisten und Probe-Agenden, taucht bei einer Wiederherstellung aber an genau derselben Stelle wieder auf.
+
+> **Der Papierkorb ist kein Backup.** Er schützt 30 Tage lang gegen versehentliches Löschen. Gegen Platten- oder Serverausfälle hilft nur die Datensicherung — und deren Aufbewahrung (`RETENTION_DAYS`, 35 Tage) muss **länger** sein als die Papierkorb-Frist, sonst liegt eine endgültig entfernte Datei in keinem Backup mehr. Wer eine der beiden Zahlen ändert, muss die andere mitdenken.
 
 ### Restore
 
@@ -234,6 +255,8 @@ Vollständige Checkliste: [FEATURES.md](FEATURES.md), Abschnitt „Vor dem erste
 | `npm run seed` | Ersten Admin anlegen (no-op, wenn User existieren) |
 | `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
 | `./scripts/backup.sh` | Backup von DB + Uploads (für Cron; siehe „Backup & Restore") |
+| `npm test` | Tests (Vitest, Query-Ebene) |
+| `npm run trash:purge` | Papierkorb endgültig aufräumen (für Cron) |
 | `./deploy.sh` | Produktiv-Update auf dem Server (pull, install, build, Snapshot, PM2-restart) |
 
 ## Versionierung

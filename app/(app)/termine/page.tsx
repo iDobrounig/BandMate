@@ -10,13 +10,14 @@ import { formatDate } from "@/lib/format";
 import { EventForm } from "@/components/event-forms";
 import { CalendarSubscribe } from "@/components/calendar-subscribe";
 import { calendarFeedPath } from "@/lib/calendar";
+import { UndoBanner } from "@/components/undo-banner";
 
 export const metadata = { title: "Termine" };
 
 export default async function TerminePage({
   searchParams,
 }: {
-  searchParams: Promise<{ vergangene?: string }>;
+  searchParams: Promise<{ vergangene?: string; undo?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -34,6 +35,7 @@ export default async function TerminePage({
 
   return (
     <div>
+      <UndoBanner undo={params.undo} />
       <h1 className="headline text-3xl">Termine</h1>
       <p className="mt-1 text-sm text-mute">
         Proben und Gigs — mit Zu- und Absagen der Band.

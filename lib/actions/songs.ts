@@ -4,11 +4,11 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { songs, songLinks, attachments, type SongStatus } from "@/lib/db/schema";
+import { songs, songLinks, type SongStatus } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { detectLinkKind } from "@/lib/links";
 import { parseDuration } from "@/lib/format";
-import { saveUpload, deleteStoredFile } from "@/lib/files";
+import { saveUpload } from "@/lib/files";
 import { notifyBand } from "@/lib/mail";
 import type { FormState } from "@/lib/actions/auth";
 
@@ -152,15 +152,16 @@ export async function saveTransposedLyrics(
   revalidatePath(`/songs/${songId}`);
 }
 
+/**
+ * Legt den Song in den Papierkorb. Die Dateien bleiben auf der Platte, bis
+ * endgültig gelöscht wird — siehe lib/trash.ts.
+ */
 export async function deleteSong(songId: number) {
-  await requireUser();
-  const files = await db.query.attachments.findMany({
-    where: eq(attachments.songId, songId),
-  });
-  for (const file of files) {
-    deleteStoredFile(songId, file.storedName);
-  }
-  await db.delete(songs).where(eq(songs.id, songId));
+  const user = await requireUser();
+  await db
+    .update(songs)
+    .set({ deletedAt: new Date(), deletedById: user.id })
+    .where(eq(songs.id, songId));
   revalidatePath("/", "layout");
-  redirect("/songs");
+  redirect(`/songs?undo=song:${songId}`);
 }

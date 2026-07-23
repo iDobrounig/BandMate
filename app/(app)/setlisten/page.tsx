@@ -3,16 +3,22 @@ import { requireUser } from "@/lib/auth";
 import { fetchSetlists } from "@/lib/queries";
 import { formatDate, formatDuration } from "@/lib/format";
 import { SetlistForm } from "@/components/setlist-forms";
+import { UndoBanner } from "@/components/undo-banner";
 
 export const metadata = { title: "Setlisten" };
 
-export default async function SetlistenPage() {
+export default async function SetlistenPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ undo?: string }>;
+}) {
   await requireUser();
 
-  const lists = await fetchSetlists();
+  const [lists, params] = await Promise.all([fetchSetlists(), searchParams]);
 
   return (
     <div>
+      <UndoBanner undo={params.undo} />
       <h1 className="headline text-3xl">Setlisten</h1>
       <p className="mt-1 text-sm text-mute">
         Programme für Gigs und Proben — zusammengestellt aus dem Repertoire.

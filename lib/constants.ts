@@ -108,6 +108,14 @@ export const INSTRUMENT_SUGGESTIONS = [
   "Alle",
 ];
 
+/**
+ * Aufbewahrung im Papierkorb. Muss KÜRZER bleiben als `RETENTION_DAYS` in
+ * `scripts/backup.sh` (35) — sonst liegt eine endgültig gelöschte Datei in
+ * keinem Backup mehr, weil die Läufe aus ihrer Lebenszeit längst rotiert sind.
+ * Siehe docs/specs/2026-07-23-papierkorb-design.md.
+ */
+export const TRASH_RETENTION_DAYS = 30;
+
 export const AUDIO_MAX_BYTES = 50 * 1024 * 1024;
 export const SHEET_MAX_BYTES = 20 * 1024 * 1024;
 

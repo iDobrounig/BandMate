@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { uploadAttachment, deleteAttachment } from "@/lib/actions/attachments";
+import { restoreItem } from "@/lib/actions/trash";
 import type { FormState } from "@/lib/actions/auth";
 import { SubmitButton, FormMsg } from "@/components/form";
 import { INSTRUMENT_SUGGESTIONS } from "@/lib/constants";
@@ -63,6 +64,11 @@ export function UploadForm({
   );
 }
 
+/**
+ * Löschen legt die Datei in den Papierkorb. Hier gibt es keinen Redirect, an
+ * den sich ein `?undo=` hängen ließe — also merkt sich die Komponente selbst,
+ * dass gerade gelöscht wurde, und bietet das „Rückgängig" an Ort und Stelle an.
+ */
 export function DeleteAttachmentButton({
   attachmentId,
   name,
@@ -71,14 +77,40 @@ export function DeleteAttachmentButton({
   name: string;
 }) {
   const [pending, startTransition] = useTransition();
+  const [geloescht, setGeloescht] = useState(false);
+
+  if (geloescht) {
+    return (
+      <span className="flex items-center gap-2 text-xs text-faint">
+        im Papierkorb
+        <button
+          type="button"
+          disabled={pending}
+          className="text-accent-hi underline cursor-pointer disabled:opacity-50"
+          onClick={() =>
+            startTransition(async () => {
+              await restoreItem("attachment", attachmentId);
+              setGeloescht(false);
+            })
+          }
+        >
+          Rückgängig
+        </button>
+      </span>
+    );
+  }
+
   return (
     <button
       type="button"
       disabled={pending}
       className="link-danger text-xs"
       onClick={() => {
-        if (confirm(`„${name}" wirklich löschen?`))
-          startTransition(() => deleteAttachment(attachmentId));
+        if (confirm(`„${name}" in den Papierkorb legen?`))
+          startTransition(async () => {
+            await deleteAttachment(attachmentId);
+            setGeloescht(true);
+          });
       }}
     >
       löschen

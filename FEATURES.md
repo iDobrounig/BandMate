@@ -76,21 +76,16 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Auto-Migration die DB anfasst. Schlägt er fehl, bricht das Deployment ab, bevor etwas
   verändert wurde (`SKIP_BACKUP=1` als bewusster Notausgang).
 
-- [ ] **Papierkorb statt hartem Löschen (Soft Delete)** — *Leseseite fertig 23.07.2026,
-  Schreibseite offen. Entwurf:
+- [x] **Papierkorb statt hartem Löschen (Soft Delete)** — *erledigt 23.07.2026. Entwurf:
   [docs/specs/2026-07-23-papierkorb-design.md](docs/specs/2026-07-23-papierkorb-design.md)*
   `deletedAt`/`deletedById` auf `songs`, `setlists`, `events`, `attachments` (Kommentare
-  bleiben Hartlöschung). Verweise aus Setlisten und Probe-Agenden bleiben stehen, die Queries
-  filtern — dadurch ist Wiederherstellen trivial korrekt. `/papierkorb` für alle sichtbar,
-  30 Tage Frist, endgültig löschen nur Admin. Zusätzlich ein sofortiges „Rückgängig" direkt
-  nach dem Löschen. Dateien erst beim Purge von der Platte.
-  **Erledigt:** Migration 0004 (`deletedAt`/`deletedById` auf vier Tabellen),
-  `lib/db/filters.ts`, alle Lesestellen inkl. der drei Zähl-Subqueries, ICS-Feed und
-  Datei-Route. 9 zusätzliche Tests, per Mutationsprobe abgesichert. Die App verhält sich
-  unverändert, solange nichts gelöscht ist.
-  **Offen:** Löschpfade auf Soft Delete umstellen, `restore*`/`purge*`-Actions,
-  `/papierkorb`, Undo-Band, Löschdialog mit Verweisanzeige, `scripts/purge-trash.js`,
-  Hilfe-Seite.
+  bleiben bewusst Hartlöschung). Verweise aus Setlisten und Probe-Agenden bleiben stehen und
+  werden nur ausgeblendet — dadurch ist Wiederherstellen trivial korrekt. `/papierkorb` für
+  alle sichtbar (Footer-Link), 30 Tage Frist, endgültig löschen nur Admin. Zusätzlich ein
+  „Rückgängig"-Band direkt nach dem Löschen und ein Löschdialog, der vorher nennt, in wie
+  vielen Setlisten und Agenden der Song vorkommt. Dateien verlassen die Platte erst beim
+  endgültigen Löschen. Aufräumen per `npm run trash:purge` (Cron) und beim Öffnen von
+  `/papierkorb`. 27 Tests, per Mutationsprobe abgesichert.
 
 - [x] **Löschen-Buttons auf Touchgeräten erkennbar machen** — *erledigt 23.07.2026*
   `.btn-danger` trägt jetzt dauerhaft rote Kontur und Schrift, Hover nur noch als

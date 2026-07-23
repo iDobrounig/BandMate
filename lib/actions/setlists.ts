@@ -84,10 +84,13 @@ export async function duplicateSetlist(setlistId: number) {
 }
 
 export async function deleteSetlist(setlistId: number) {
-  await requireUser();
-  await db.delete(setlists).where(eq(setlists.id, setlistId));
-  revalidatePath("/setlisten");
-  redirect("/setlisten");
+  const user = await requireUser();
+  await db
+    .update(setlists)
+    .set({ deletedAt: new Date(), deletedById: user.id })
+    .where(eq(setlists.id, setlistId));
+  revalidatePath("/", "layout");
+  redirect(`/setlisten?undo=setlist:${setlistId}`);
 }
 
 export async function addSongToSetlist(setlistId: number, songId: number) {

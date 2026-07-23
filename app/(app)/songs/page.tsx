@@ -4,6 +4,7 @@ import { fetchSongList } from "@/lib/queries";
 import { SONG_STATUS, STATUS_ORDER } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
 import type { SongStatus } from "@/lib/db/schema";
+import { UndoBanner } from "@/components/undo-banner";
 import {
   IconLightbulb,
   IconRepeat,
@@ -20,7 +21,7 @@ const STATUS_ICON: Record<SongStatus, (p: { className?: string }) => React.React
 
 export const metadata = { title: "Songs" };
 
-type Search = { status?: string; q?: string; sort?: string };
+type Search = { status?: string; q?: string; sort?: string; undo?: string };
 type Tab = "all" | SongStatus;
 
 export default async function SongsPage({
@@ -82,6 +83,7 @@ export default async function SongsPage({
 
   return (
     <div>
+      <UndoBanner undo={params.undo} />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="headline text-3xl">Songs</h1>

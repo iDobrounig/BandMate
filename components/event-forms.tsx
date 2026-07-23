@@ -175,11 +175,11 @@ export function DeleteEventButtons({
         disabled={pending}
         className="btn btn-sm btn-danger"
         onClick={() => {
-          if (confirm("Diesen Termin löschen?"))
+          if (confirm("Diesen Termin in den Papierkorb legen?"))
             startTransition(() => deleteEvent(eventId, "single"));
         }}
       >
-        {isSeries ? "Nur diesen Termin löschen" : "Termin löschen"}
+        {isSeries ? "Nur diesen Termin" : "In den Papierkorb"}
       </button>
       {isSeries && (
         <button
@@ -187,11 +187,15 @@ export function DeleteEventButtons({
           disabled={pending}
           className="btn btn-sm btn-danger"
           onClick={() => {
-            if (confirm("Wirklich die GANZE Serie löschen?"))
+            if (
+            confirm(
+              "Die GANZE Serie in den Papierkorb legen?\n\nAlle Termine der Serie landen als ein Eintrag dort und lassen sich gemeinsam zurückholen."
+            )
+          )
               startTransition(() => deleteEvent(eventId, "series"));
           }}
         >
-          Ganze Serie löschen
+          Ganze Serie
         </button>
       )}
     </div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/lib/actions/auth";
 import { NavLinks } from "@/components/nav-links";
-import { IconUser, IconLogout, IconHelp } from "@/components/icons";
+import { IconUser, IconLogout, IconHelp, IconTrash } from "@/components/icons";
 
 export default async function AppLayout({
   children,
@@ -82,7 +82,15 @@ export default async function AppLayout({
         {children}
       </main>
       <footer className="print-hidden border-t border-line-soft py-4 text-center text-xs text-faint">
-        BandMate — internes Band-Dashboard
+        <span>BandMate — internes Band-Dashboard</span>
+        <span className="mx-2">·</span>
+        <Link
+          href="/papierkorb"
+          className="inline-flex items-center gap-1 transition hover:text-mute"
+        >
+          <IconTrash className="size-3.5" />
+          Papierkorb
+        </Link>
       </footer>
     </div>
   );

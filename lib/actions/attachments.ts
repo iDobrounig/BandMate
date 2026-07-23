@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { attachments } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
-import { saveUpload, deleteStoredFile } from "@/lib/files";
+import { saveUpload } from "@/lib/files";
 import type { FormState } from "@/lib/actions/auth";
 
 export async function uploadAttachment(
@@ -35,13 +35,19 @@ export async function uploadAttachment(
   return { success: "Datei hochgeladen." };
 }
 
+/**
+ * Legt die Datei in den Papierkorb. Sie bleibt auf der Platte, bis endgültig
+ * gelöscht wird — das „Rückgängig" in der Songseite hängt daran.
+ */
 export async function deleteAttachment(attachmentId: number) {
-  await requireUser();
+  const user = await requireUser();
   const attachment = await db.query.attachments.findFirst({
     where: eq(attachments.id, attachmentId),
   });
   if (!attachment) return;
-  deleteStoredFile(attachment.songId, attachment.storedName);
-  await db.delete(attachments).where(eq(attachments.id, attachmentId));
+  await db
+    .update(attachments)
+    .set({ deletedAt: new Date(), deletedById: user.id })
+    .where(eq(attachments.id, attachmentId));
   revalidatePath(`/songs/${attachment.songId}`);
 }

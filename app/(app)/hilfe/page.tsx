@@ -11,7 +11,7 @@ function HilfeSection({
   title: string;
   intro: string;
   bullets: string[];
-  images: { src: string; alt: string }[];
+  images?: { src: string; alt: string }[];
 }) {
   return (
     <section id={id} className="card scroll-mt-20 p-5 sm:p-6">
@@ -25,7 +25,7 @@ function HilfeSection({
       </ul>
 
       <div className="mt-5 space-y-4">
-        {images.map((img) => (
+        {(images ?? []).map((img) => (
           <img
             key={img.src}
             src={img.src}
@@ -59,6 +59,9 @@ export default function HilfePage() {
         </a>
         <a href="#profil" className="btn btn-sm">
           Profil
+        </a>
+        <a href="#papierkorb" className="btn btn-sm">
+          Papierkorb
         </a>
       </nav>
 
@@ -141,10 +144,24 @@ export default function HilfePage() {
           bullets={[
             "Name, E-Mail-Adresse und Instrument selbst ändern",
             "Eigenes Passwort ändern",
-            "E-Mail-Benachrichtigungen bei neuen Vorschlägen und Kommentaren an- oder abschalten",
+            "E-Mail-Benachrichtigungen (neue Vorschläge, Kommentare, Termine) an- oder abschalten",
+            "Passwort vergessen? Auf der Anmeldeseite „Passwort vergessen?\" — der Link kommt per E-Mail und gilt eine Stunde",
           ]}
           images={[
             { src: "/hilfe/profil.png", alt: "Profilseite mit Stammdaten und Passwort ändern" },
+          ]}
+        />
+        <HilfeSection
+          id="papierkorb"
+          title="Papierkorb"
+          intro="Nichts ist sofort weg: Gelöschtes lässt sich 30 Tage lang zurückholen."
+          bullets={[
+            "Songs, Setlisten, Termine und hochgeladene Dateien landen beim Löschen im Papierkorb — erreichbar über den Link ganz unten auf jeder Seite",
+            "Direkt nach dem Löschen erscheint oben auf der Liste ein „Rückgängig\" — der schnellste Weg, wenn du danebengetippt hast",
+            "Wiederherstellen darf jedes Mitglied; endgültig löschen nur ein Admin",
+            "Ein gelöschter Song verschwindet aus Setlisten und Probe-Agenden — beim Wiederherstellen steht er wieder an genau derselben Stelle",
+            "Nach 30 Tagen wird endgültig gelöscht, auch die Noten und Aufnahmen",
+            "Der Papierkorb ist kein Backup: er schützt gegen versehentliches Löschen, nicht gegen einen Serverausfall",
           ]}
         />
       </div>
