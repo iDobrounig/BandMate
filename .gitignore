@@ -45,3 +45,7 @@ next-env.d.ts
 
 # BandMate-Daten (SQLite + Uploads)
 /data/
+
+# Backups — liegen produktiv außerhalb des Repos, im Dev-Default (DATA_DIR=./data)
+# aber daneben. Auf keinen Fall einchecken.
+/bandmate-backups/

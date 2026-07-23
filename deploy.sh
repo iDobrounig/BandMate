@@ -26,7 +26,22 @@ npm install
 echo "→ Produktions-Build erstellen"
 npm run build   # baut Server-Code UND CSS (kein separates build:css nötig)
 
-# DB-Migrationen laufen automatisch beim App-Start (lib/db/index.ts).
+# DB-Migrationen laufen automatisch beim App-Start (lib/db/index.ts) — der
+# Neustart unten ist also der Punkt, ab dem die DB verändert wird. Deshalb
+# davor ein Snapshot: schlägt eine Migration fehl, ist der Weg zurück ein
+# einzelnes cp statt einer Nacht Bastelei.
+if [[ "${SKIP_BACKUP:-}" == "1" ]]; then
+  echo "→ Snapshot übersprungen (SKIP_BACKUP=1)"
+else
+  echo "→ Snapshot vor der Migration"
+  if ! ./scripts/backup.sh --label pre-deploy; then
+    echo >&2
+    echo "✗ Snapshot fehlgeschlagen — Deployment abgebrochen, BEVOR Migrationen laufen." >&2
+    echo "  Ursache beheben (meist: DATA_DIR/BACKUP_DIR falsch oder Platte voll)." >&2
+    echo "  Nur wenn du weißt was du tust:  SKIP_BACKUP=1 ./deploy.sh" >&2
+    exit 1
+  fi
+fi
 
 echo "→ App neu starten (PM2)"
 pm2 restart ecosystem.config.js --update-env

@@ -63,17 +63,18 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 > Bandhistorie liegen in einer SQLite-Datei plus einem Upload-Ordner — ohne Sicherung, ohne
 > Papierkorb, ohne Rollback.
 
-- [ ] **Automatisches Backup**
-  Script `scripts/backup.sh`: `sqlite3 .backup` der DB (WAL-sicher, kein Kopieren der
-  laufenden Datei!) + `tar` über `data/uploads/`, Ablage in `$BACKUP_DIR` mit Datumsstempel,
-  Rotation über N Tage (Default 14). Als täglicher Cron-Job dokumentiert im README.
-  Zusätzlich: Restore-Anleitung schreiben **und einmal durchspielen** — ein Backup, das nie
-  zurückgespielt wurde, ist kein Backup.
+- [x] **Automatisches Backup** — *erledigt 23.07.2026*
+  `scripts/backup.sh` + `scripts/backup-db.js`: DB über die SQLite-Online-Backup-API
+  (WAL-sicher), anschließend mit `PRAGMA integrity_check` geprüft, dazu `uploads.tar.gz`
+  und ein `MANIFEST.txt` mit Zeilenzahlen. Unveränderte Uploads werden als Hardlink auf den
+  Vorlauf gelegt statt neu gepackt. Rotation nach `RETENTION_DAYS` (14) mit Untergrenze
+  `KEEP_MIN` (3). Sperre gegen Parallelläufe inkl. Erkennung verwaister Sperren,
+  Aufräumen halbfertiger Läufe bei Abbruch. Cron-Beispiel und Restore-Anleitung im README.
 
-- [ ] **Pre-Migration-Snapshot in `deploy.sh`**
-  Vor `pm2 restart` (also bevor die Auto-Migration in `lib/db/index.ts` läuft) einen
-  Snapshot ziehen und den Pfad ausgeben. Bei fehlgeschlagener Migration ist der Weg zurück
-  dann ein einzelner `cp`.
+- [x] **Pre-Migration-Snapshot in `deploy.sh`** — *erledigt 23.07.2026*
+  `./scripts/backup.sh --label pre-deploy` läuft direkt vor `pm2 restart`, also bevor die
+  Auto-Migration die DB anfasst. Schlägt er fehl, bricht das Deployment ab, bevor etwas
+  verändert wurde (`SKIP_BACKUP=1` als bewusster Notausgang).
 
 - [ ] **Papierkorb statt hartem Löschen (Soft Delete)**
   Spalte `deletedAt` auf `songs`, `setlists`, `events`, `attachments`, `comments`. Alle
@@ -82,14 +83,15 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   erst beim endgültigen Löschen entfernen (heute: sofort, `lib/actions/songs.ts:158`).
   *Achtung: berührt alle Listen-Queries — nach dem Backup umsetzen, nicht davor.*
 
-- [ ] **Löschen-Buttons auf Touchgeräten erkennbar machen**
-  `.btn-danger` färbt heute **nur bei `:hover`** (`app/globals.css`). Auf dem Handy ist
-  „Löschen" optisch identisch mit „Speichern". Fix: dauerhafte rote Kontur/Schrift, Hover
-  nur als Verstärkung. Einzeiler mit der größten Sicherheitswirkung im Projekt.
+- [x] **Löschen-Buttons auf Touchgeräten erkennbar machen** — *erledigt 23.07.2026*
+  `.btn-danger` trägt jetzt dauerhaft rote Kontur und Schrift, Hover nur noch als
+  Verstärkung. Neue Klasse `.link-danger` für die Text-/✕-Varianten in Listenzeilen, die
+  dasselbe Problem hatten. In der Mitgliederverwaltung nur noch in der zerstörenden
+  Richtung („Deaktivieren", nicht „Aktivieren").
 
-- [ ] **Zeitzone festnageln**
-  `TZ: "Europe/Vienna"` in `ecosystem.config.js` (`env`). Ohne das nutzt `toLocaleString`
-  die Server-Zeitzone — auf einem UTC-VPS sind alle Kommentar-Zeitstempel 1–2 h falsch.
+- [x] **Zeitzone festnageln** — *erledigt 23.07.2026*
+  `TZ` in `ecosystem.config.js` (Default `Europe/Vienna`, per Env überschreibbar),
+  Hinweis im README unter „Vor dem Livegang".
 
 - [ ] *(optional, empfohlen)* **Minimaler Test-Rahmen**
   Vitest + eine Handvoll Tests für `lib/chords.ts`, `lib/format.ts` und die neuen

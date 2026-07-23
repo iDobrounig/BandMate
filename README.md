@@ -53,9 +53,75 @@ Alle persistenten Daten liegen in `data/` (per `DATA_DIR` konfigurierbar):
 - `data/band.db` — SQLite-Datenbank (WAL-Modus)
 - `data/uploads/<songId>/…` — hochgeladene Dateien
 
-**Backup = dieses Verzeichnis sichern.** Es liegt nicht im Git.
-
 Schema-Änderungen: `lib/db/schema.ts` anpassen, dann `npm run db:generate` — die Migration in `drizzle/` wird beim nächsten App-Start automatisch angewendet.
+
+## Backup & Restore
+
+> **Wichtig:** Ein simples `cp band.db` ist **kein** gültiges Backup. Die App läuft im WAL-Modus — frisch geschriebene Daten stehen dann noch in `band.db-wal`, und eine Kopie mitten in einem Schreibvorgang kann zerrissen sein. `scripts/backup.sh` nutzt deshalb die Online-Backup-API von SQLite und prüft das Ergebnis anschließend mit `PRAGMA integrity_check`.
+
+```bash
+./scripts/backup.sh                      # normaler Lauf
+./scripts/backup.sh --label pre-deploy   # Snapshot vor einem Deploy
+```
+
+Pro Lauf entsteht ein Verzeichnis:
+
+```
+$BACKUP_DIR/2026-07-23_030000/
+  band.db          geprüfte Kopie der Datenbank
+  uploads.tar.gz   Noten und Audio-Dateien
+  MANIFEST.txt     Zeitpunkt, Version, Zeilenzahlen, Prüfergebnis
+$BACKUP_DIR/latest -> neuester Lauf
+```
+
+Unveränderte Uploads werden nicht neu gepackt, sondern als Hardlink auf den Vorlauf gelegt — 14 Nächte ohne neue Datei kosten einmal Platz statt vierzehnmal.
+
+| Variable | Default | Zweck |
+|---|---|---|
+| `DATA_DIR` | `<repo>/data` | wie in der App |
+| `BACKUP_DIR` | `<DATA_DIR>/../bandmate-backups` | Ablage der Backups — **auf eine andere Platte legen**, sonst nimmt ein Plattenschaden beides mit |
+| `RETENTION_DAYS` | `14` | Aufbewahrung |
+| `KEEP_MIN` | `3` | so viele Läufe bleiben immer erhalten, egal wie alt |
+
+### Als Cron-Job
+
+```bash
+crontab -e
+```
+```cron
+30 3 * * * cd /pfad/zu/BandMate && DATA_DIR=/var/bandmate-data BACKUP_DIR=/mnt/backup/bandmate ./scripts/backup.sh >> /var/log/bandmate-backup.log 2>&1
+```
+
+Das Script beendet sich bei jedem Problem mit Exit-Code ≠ 0 und räumt einen halbfertigen Lauf wieder weg — ein unvollständiges Backup bleibt nie als scheinbar gültiges stehen. Cron schickt die Ausgabe fehlgeschlagener Läufe per Mail, wenn `MAILTO` gesetzt ist.
+
+### Restore
+
+Bewusst **kein** Script: Zurückspielen überschreibt Daten und soll eine überlegte Handlung sein, kein Einzeiler, den man nachts versehentlich auslöst.
+
+```bash
+# 1. App stoppen — sonst schreibt sie weiter in die alte DB
+pm2 stop bandmate
+
+# 2. Aktuellen Stand beiseitelegen statt löschen (falls das Backup doch älter ist als gedacht)
+mv /var/bandmate-data /var/bandmate-data.kaputt-$(date +%F)
+mkdir -p /var/bandmate-data
+
+# 3. Aus dem gewünschten Lauf zurückspielen
+SRC=/mnt/backup/bandmate/latest          # oder ein konkretes Verzeichnis
+cat "$SRC/MANIFEST.txt"                  # erst schauen: Zeitpunkt und Zeilenzahlen plausibel?
+cp "$SRC/band.db" /var/bandmate-data/band.db
+tar xzf "$SRC/uploads.tar.gz" -C /var/bandmate-data
+
+# 4. Gegenprüfen
+sqlite3 /var/bandmate-data/band.db "pragma integrity_check; select count(*) from songs;"
+
+# 5. Starten — Migrationen laufen beim Start automatisch an
+pm2 start ecosystem.config.js
+```
+
+Es gibt **keine** `band.db-wal`/`band.db-shm` im Backup und es sollen auch keine zurückkopiert werden: die Backup-Datei ist bereits in sich vollständig, alte WAL-Reste würden sie nur beschädigen.
+
+Dieser Ablauf wurde am 23.07.2026 einmal vollständig durchgespielt (Restore in ein leeres Verzeichnis, Upload-Prüfsummen identisch, App startet inkl. Migrationen). **Nach jeder Änderung an Schema oder Backup-Script erneut proben** — ein Backup, das nie zurückgespielt wurde, ist kein Backup.
 
 ## Produktiv-Deployment
 
@@ -138,7 +204,9 @@ Nach einem Push auf `main` auf dem Server im App-Verzeichnis:
 ./deploy.sh
 ```
 
-Das Script macht `git pull` → `npm install` → `npm run build` → `pm2 restart --update-env`. DB-Migrationen laufen automatisch beim Neustart; `data/` (SQLite + Uploads) und `.env` bleiben unangetastet.
+Das Script macht `git pull` → `npm install` → `npm run build` → **Snapshot** → `pm2 restart --update-env`. DB-Migrationen laufen automatisch beim Neustart; `data/` (SQLite + Uploads) und `.env` bleiben unangetastet.
+
+Der Snapshot (`./scripts/backup.sh --label pre-deploy`) läuft direkt vor dem Neustart — also bevor eine neue Migration die DB anfasst. Schlägt er fehl, bricht das Deployment ab, **bevor** etwas verändert wurde. Notfalls überspringbar mit `SKIP_BACKUP=1 ./deploy.sh`, aber dann ohne Netz.
 
 Bei mehreren Node-Versionen die gewünschte übergeben (setzt PATH **und** den PM2-Interpreter):
 ```bash
@@ -150,7 +218,7 @@ Alternativ `NODE_BIN_DIR` fest oben in `deploy.sh` eintragen, dann genügt `./de
 
 - `SESSION_SECRET` gesetzt? (sonst läuft die App mit unsicherem Dev-Geheimnis)
 - Seed-Admin `admin@example.com` nach dem ersten echten Login deaktivieren
-- Backup für das `DATA_DIR`-Verzeichnis einrichten (dort liegen DB + Uploads)
+- Backup als Cron-Job einrichten und **einmal einen Restore proben** (→ Abschnitt „Backup & Restore"). `BACKUP_DIR` auf eine andere Platte legen als `DATA_DIR`
 - Zeitzone prüfen: `ecosystem.config.js` setzt `TZ` auf `Europe/Vienna`. Steht der Server
   woanders, den Wert dort anpassen oder `TZ` beim Start mitgeben — sonst zeigt die App
   alle Zeitstempel in der Server-Zeitzone an.
@@ -165,7 +233,8 @@ Vollständige Checkliste: [FEATURES.md](FEATURES.md), Abschnitt „Vor dem erste
 | `npm run build` / `npm start` | Produktion |
 | `npm run seed` | Ersten Admin anlegen (no-op, wenn User existieren) |
 | `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
-| `./deploy.sh` | Produktiv-Update auf dem Server (pull, install, build, PM2-restart) |
+| `./scripts/backup.sh` | Backup von DB + Uploads (für Cron; siehe „Backup & Restore") |
+| `./deploy.sh` | Produktiv-Update auf dem Server (pull, install, build, Snapshot, PM2-restart) |
 
 ## Versionierung
 
