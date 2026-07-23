@@ -67,7 +67,7 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   `scripts/backup.sh` + `scripts/backup-db.js`: DB über die SQLite-Online-Backup-API
   (WAL-sicher), anschließend mit `PRAGMA integrity_check` geprüft, dazu `uploads.tar.gz`
   und ein `MANIFEST.txt` mit Zeilenzahlen. Unveränderte Uploads werden als Hardlink auf den
-  Vorlauf gelegt statt neu gepackt. Rotation nach `RETENTION_DAYS` (14) mit Untergrenze
+  Vorlauf gelegt statt neu gepackt. Rotation nach `RETENTION_DAYS` (35) mit Untergrenze
   `KEEP_MIN` (3). Sperre gegen Parallelläufe inkl. Erkennung verwaister Sperren,
   Aufräumen halbfertiger Läufe bei Abbruch. Cron-Beispiel und Restore-Anleitung im README.
 
@@ -76,12 +76,14 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Auto-Migration die DB anfasst. Schlägt er fehl, bricht das Deployment ab, bevor etwas
   verändert wurde (`SKIP_BACKUP=1` als bewusster Notausgang).
 
-- [ ] **Papierkorb statt hartem Löschen (Soft Delete)**
-  Spalte `deletedAt` auf `songs`, `setlists`, `events`, `attachments`, `comments`. Alle
-  Queries filtern `deletedAt IS NULL`. Neue Admin-Seite `/papierkorb`: gelöschte Objekte der
-  letzten 30 Tage mit „Wiederherstellen" und „Endgültig löschen". Dateien auf der Platte
-  erst beim endgültigen Löschen entfernen (heute: sofort, `lib/actions/songs.ts:158`).
-  *Achtung: berührt alle Listen-Queries — nach dem Backup umsetzen, nicht davor.*
+- [ ] **Papierkorb statt hartem Löschen (Soft Delete)** — *Entwurf abgestimmt 23.07.2026:
+  [docs/specs/2026-07-23-papierkorb-design.md](docs/specs/2026-07-23-papierkorb-design.md)*
+  `deletedAt`/`deletedById` auf `songs`, `setlists`, `events`, `attachments` (Kommentare
+  bleiben Hartlöschung). Verweise aus Setlisten und Probe-Agenden bleiben stehen, die Queries
+  filtern — dadurch ist Wiederherstellen trivial korrekt. `/papierkorb` für alle sichtbar,
+  30 Tage Frist, endgültig löschen nur Admin. Zusätzlich ein sofortiges „Rückgängig" direkt
+  nach dem Löschen. Dateien erst beim Purge von der Platte.
+  Umfang: 26 Lesestellen + 3 SQL-Subqueries + 4 Löschpfade — deshalb zuerst der Test-Rahmen.
 
 - [x] **Löschen-Buttons auf Touchgeräten erkennbar machen** — *erledigt 23.07.2026*
   `.btn-danger` trägt jetzt dauerhaft rote Kontur und Schrift, Hover nur noch als

@@ -10,8 +10,8 @@
 #   $BACKUP_DIR/latest -> neuestes Verzeichnis
 #
 # Unveränderte Uploads werden NICHT neu gepackt, sondern als Hardlink auf das
-# Archiv des Vorlaufs gelegt — 14 Nächte ohne neue Datei kosten so einmal Platz
-# statt vierzehnmal.
+# Archiv des Vorlaufs gelegt — eine unveränderte Upload-Sammlung kostet über die
+# ganze Aufbewahrungszeit nur einmal Platz statt einmal pro Nacht.
 #
 # Aufruf:
 #   ./scripts/backup.sh                 normaler (nächtlicher) Lauf
@@ -20,7 +20,8 @@
 # Umgebungsvariablen (alle optional):
 #   DATA_DIR        wie in der App (Default: <repo>/data)
 #   BACKUP_DIR      Zielverzeichnis  (Default: <DATA_DIR>/../bandmate-backups)
-#   RETENTION_DAYS  Aufbewahrung in Tagen (Default: 14)
+#   RETENTION_DAYS  Aufbewahrung in Tagen (Default: 35 — muss länger sein als
+#                   die Papierkorb-Frist, siehe README)
 #   KEEP_MIN        so viele Läufe bleiben IMMER erhalten (Default: 3)
 #
 # Restore: siehe README, Abschnitt „Backup & Restore".
@@ -41,7 +42,7 @@ done
 
 DATA_DIR="${DATA_DIR:-$REPO_DIR/data}"
 BACKUP_DIR="${BACKUP_DIR:-$(dirname "$DATA_DIR")/bandmate-backups}"
-RETENTION_DAYS="${RETENTION_DAYS:-14}"
+RETENTION_DAYS="${RETENTION_DAYS:-35}"
 KEEP_MIN="${KEEP_MIN:-3}"
 
 DB_FILE="$DATA_DIR/band.db"

@@ -74,13 +74,13 @@ $BACKUP_DIR/2026-07-23_030000/
 $BACKUP_DIR/latest -> neuester Lauf
 ```
 
-Unveränderte Uploads werden nicht neu gepackt, sondern als Hardlink auf den Vorlauf gelegt — 14 Nächte ohne neue Datei kosten einmal Platz statt vierzehnmal.
+Unveränderte Uploads werden nicht neu gepackt, sondern als Hardlink auf den Vorlauf gelegt — eine unveränderte Upload-Sammlung kostet über die ganze Aufbewahrungszeit nur einmal Platz statt einmal pro Nacht.
 
 | Variable | Default | Zweck |
 |---|---|---|
 | `DATA_DIR` | `<repo>/data` | wie in der App |
 | `BACKUP_DIR` | `<DATA_DIR>/../bandmate-backups` | Ablage der Backups — **auf eine andere Platte legen**, sonst nimmt ein Plattenschaden beides mit |
-| `RETENTION_DAYS` | `14` | Aufbewahrung |
+| `RETENTION_DAYS` | `35` | Aufbewahrung. Bewusst länger als die 30-Tage-Frist des Papierkorbs — sonst liegt eine endgültig gepurgte Datei in keinem Backup mehr |
 | `KEEP_MIN` | `3` | so viele Läufe bleiben immer erhalten, egal wie alt |
 
 ### Als Cron-Job
