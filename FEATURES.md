@@ -113,6 +113,19 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 > **Warum:** BandMate ist heute eine reine Pull-App — es passiert nur etwas, wenn jemand
 > aktiv die Seite öffnet. Ohne Rückholkanal ist der typische Verlauf: Woche 1 begeistert,
 > Woche 4 nur noch der Betreiber, Monat 3 tot.
+>
+> **Entwurf abgestimmt 23.07.2026:**
+> [docs/specs/2026-07-23-benachrichtigungen-design.md](docs/specs/2026-07-23-benachrichtigungen-design.md)
+> — System-Cron als Auslöser, Schalter je Ereignistyp (sofort/gesammelt/nie),
+> Statuszeile fürs Admin-Dashboard, zwei Erinnerungen mit verschiedenem Zweck.
+> Verschärft durch den Betrieb: Der SMTP-Versand war wochenlang still kaputt. Bei
+> Erinnerungen wäre das schlimmer als heute — dann verlässt sich die Band darauf.
+
+- [ ] **Kalender-Erinnerungen (`VALARM`) im ICS-Feed**
+  Termine kommen heute ohne Wecker im abonnierten Kalender an. Zwei Alarme je Termin
+  (Vortag und zwei Stunden vorher) geben jedem Mitglied eine native Handy-Erinnerung —
+  ohne Berechtigung, ohne Service Worker, unabhängig vom Mailversand. Fünf Zeilen in
+  `lib/calendar.ts`, der billigste Gewinn dieser Welle.
 
 - [ ] **Erinnerungs-Mail vor Terminen**
   Cron-Job (`scripts/reminders.ts`, täglich früh): für jeden Termin in genau 2 Tagen eine
@@ -202,7 +215,14 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 
 ### Später / bei Bedarf
 
-- [ ] Web-Push-Benachrichtigungen (statt/zusätzlich zu E-Mail)
+- [ ] **Web-Push-Benachrichtigungen** (zusätzlich zu E-Mail, nicht statt)
+  Machbar und nicht besonders komplex (~300–400 Zeilen mit `web-push`), aber zwei harte
+  Einschränkungen: Auf iOS funktioniert Push **nur**, wenn die Seite vorher über „Zum
+  Homescreen hinzufügen" installiert wurde — sonst bekommt die Person stillschweigend
+  nichts. Und eine einmal abgelehnte Berechtigung lässt sich nicht erneut erfragen.
+  Damit ist Push die unzuverlässigere Zustellung, nicht die zuverlässigere. Die
+  `channel`-Spalte aus Welle 1 hält den Platz frei, sodass es ohne zweite
+  Schema-Migration dazukommt.
 - [ ] Login-Rate-Limit + Rate-Limit auf „Passwort vergessen" (Mail-Bombe gegen bekannte Adresse)
 - [ ] Pro-Mitglied-Token für den ICS-Feed statt eines gemeinsamen (heute nur global widerrufbar)
 - [ ] ICS-Zeilenfaltung nach RFC 5545 (75 Oktette)
