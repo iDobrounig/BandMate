@@ -49,3 +49,7 @@ next-env.d.ts
 # Backups — liegen produktiv außerhalb des Repos, im Dev-Default (DATA_DIR=./data)
 # aber daneben. Auf keinen Fall einchecken.
 /bandmate-backups/
+
+# Was scripts/restore.sh beiseitelegt (<DATA_DIR>.vor-restore-<Zeitstempel>).
+# Mit dem Dev-Default landet auch das im Repo.
+/data.vor-restore-*/
