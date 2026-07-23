@@ -53,3 +53,6 @@ next-env.d.ts
 # Was scripts/restore.sh beiseitelegt (<DATA_DIR>.vor-restore-<Zeitstempel>).
 # Mit dem Dev-Default landet auch das im Repo.
 /data.vor-restore-*/
+
+# Cron-Logs (scripts/cron.sh, Default LOG_DIR=<repo>/logs)
+/logs/

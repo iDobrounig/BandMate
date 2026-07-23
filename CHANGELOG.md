@@ -7,6 +7,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 ## [Unreleased]
 
 ### Hinzugefügt
+- **Zentraler Cron-Dispatcher** (`./scripts/cron.sh`): ein einziger Cron-Eintrag
+  läuft minütlich und entscheidet anhand einer Zeitplan-Tabelle im Repo, welche
+  Aufgabe dran ist (Backup, Papierkorb leeren, Erinnerungen). Der Zeitplan liegt
+  damit in Git statt handgepflegt in der crontab, und neue periodische Aufgaben
+  sind eine Zeile im Script. `--list` zeigt den Plan, `--run <name>` führt eine
+  Aufgabe sofort aus. Setzt `TZ` selbst (sonst rechnete `date` in der
+  System-Zeitzone), meldet Fehler nach stderr für die Cron-MAILTO und
+  verhindert per Sperre, dass sich Läufe überlappen. Die Einzelskripte bleiben
+  eigenständig aufrufbar — wer getrennte Cron-Zeilen bevorzugt, kann den
+  Dispatcher ignorieren.
 - **Termin-Erinnerungen per E-Mail** (`npm run notify:reminders`, für den täglichen
   Cron): zwei Tage vor einem Termin an alle, die noch nicht zu- oder abgesagt
   haben, und am Vortag mit Ort, Zeit und Probe-Agenda an alle Zusagenden. Der

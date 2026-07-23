@@ -86,36 +86,39 @@ Alle vier Werte stehen in der `.env` — dieselbe Datei, aus der die App ihr `DA
 | `RETENTION_DAYS` | `35` | Aufbewahrung. Bewusst länger als die 30-Tage-Frist des Papierkorbs — sonst liegt eine endgültig gepurgte Datei in keinem Backup mehr |
 | `KEEP_MIN` | `3` | so viele Läufe bleiben immer erhalten, egal wie alt |
 
-### Als Cron-Job
+### Wiederkehrende Aufgaben (Cron)
+
+BandMate hat drei automatische Aufgaben: das nächtliche **Backup**, das Leeren des **Papierkorbs** (gelöschte Objekte älter als 30 Tage endgültig entfernen) und die täglichen **Termin-Erinnerungen** (zwei Tage vorher an Unentschiedene, am Vortag an Zusagende — idempotent, ein Doppellauf verschickt nichts doppelt).
+
+Statt drei einzelne Cron-Zeilen zu pflegen, gibt es einen **Dispatcher**: ein Script, das minütlich läuft und anhand einer Zeitplan-Tabelle im Repo entscheidet, was dran ist. Vorteil: Der Zeitplan liegt in Git (versioniert, per Deploy änderbar), und es genügt **ein** Cron-Eintrag.
 
 ```bash
 crontab -e
 ```
 ```cron
-30 3 * * * cd /pfad/zu/BandMate && ./scripts/backup.sh >> /var/log/bandmate-backup.log 2>&1
+* * * * * cd /pfad/zu/BandMate && ./scripts/cron.sh
 ```
 
-Das Script beendet sich bei jedem Problem mit Exit-Code ≠ 0 und räumt einen halbfertigen Lauf wieder weg — ein unvollständiges Backup bleibt nie als scheinbar gültiges stehen. Cron schickt die Ausgabe fehlgeschlagener Läufe per Mail, wenn `MAILTO` gesetzt ist.
-
-### Papierkorb aufräumen
-
-Gelöschtes landet 30 Tage im [Papierkorb](#papierkorb) und wird danach endgültig entfernt. Das Aufräumen passiert automatisch, sobald jemand `/papierkorb` öffnet — als Cron-Job wird es unabhängig davon erledigt:
-
-```cron
-0 4 * * * cd /pfad/zu/BandMate && npm run trash:purge >> /var/log/bandmate-purge.log 2>&1
+```bash
+./scripts/cron.sh --list          # zeigt, was wann läuft
+./scripts/cron.sh --run backup    # eine Aufgabe sofort ausführen (zum Testen)
 ```
 
-> Der Job läuft **nach** dem nächtlichen Backup (3:30), damit der Zustand vor dem endgültigen Löschen noch in einer Sicherung steckt.
+- **Zeitzone:** Der Dispatcher setzt `TZ` (Default `Europe/Vienna`), damit die Zeiten lokal gemeint sind — sonst rechnet `date` in der System-Zeitzone (auf einem UTC-Server liefe „6:00" um 8:00). Muss zu `TZ` in `ecosystem.config.js` passen.
+- **PATH:** Cron startet mit minimalem `PATH`. Bei mehreren Node-Versionen `NODE_BIN_DIR` in der Cron-Zeile voranstellen (wie bei `deploy.sh`): `… && NODE_BIN_DIR=/usr/local/node22/bin ./scripts/cron.sh`.
+- **Logs:** je Aufgabe eine Datei unter `logs/` (per `LOG_DIR` änderbar, z.B. nach `/var/log`). Eine fehlgeschlagene Aufgabe schreibt zusätzlich nach stderr — Cron mailt das, wenn `MAILTO` gesetzt ist.
+- **Reihenfolge:** Backup 3:30, Purge 4:00 — der Papierkorb wird erst geleert, wenn der Zustand davor gesichert ist.
 
-### Termin-Erinnerungen
+Neue periodische Aufgabe? Eine Zeile in der `SCHEDULE`-Tabelle in [`scripts/cron.sh`](scripts/cron.sh).
 
-Ein täglicher Lauf schickt zwei Sorten Erinnerungen (siehe [Benachrichtigungen](#benachrichtigungen)): zwei Tage vor einem Termin an alle, die noch nicht zu- oder abgesagt haben, und am Vortag an alle Zusagenden. Der Lauf ist idempotent — ein doppelter Aufruf verschickt nichts doppelt, ein ausgefallener Tag wird nicht nachgeholt.
+> **Lieber getrennte Cron-Zeilen?** Die Einzelbefehle funktionieren weiter eigenständig — der Dispatcher orchestriert nur:
+> ```cron
+> 30 3 * * * cd /pfad/zu/BandMate && ./scripts/backup.sh      >> /var/log/bandmate-backup.log 2>&1
+> 0  4 * * * cd /pfad/zu/BandMate && npm run trash:purge      >> /var/log/bandmate-purge.log  2>&1
+> 0  6 * * * cd /pfad/zu/BandMate && npm run notify:reminders >> /var/log/bandmate-notify.log 2>&1
+> ```
 
-```cron
-0 6 * * * cd /pfad/zu/BandMate && npm run notify:reminders >> /var/log/bandmate-notify.log 2>&1
-```
-
-> Braucht konfiguriertes SMTP. Ohne läuft der Job durch, verschickt aber nichts und meldet das im Log.
+> Die Erinnerungen brauchen konfiguriertes SMTP. Ohne läuft der Job durch, verschickt aber nichts und meldet das im Log.
 
 ## Benachrichtigungen
 
@@ -298,6 +301,7 @@ Vollständige Checkliste: [FEATURES.md](FEATURES.md), Abschnitt „Vor dem erste
 | `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
 | `./scripts/backup.sh` | Backup von DB + Uploads (für Cron; siehe „Backup & Restore") |
 | `./scripts/restore.sh` | Backup zurückspielen — mit Vorschau, Bestätigung und Sicherheitsnetz |
+| `./scripts/cron.sh` | Cron-Dispatcher (ein Eintrag, minütlich); `--list` / `--run <name>` |
 | `npm test` | Tests (Vitest, Query-Ebene) |
 | `npm run trash:purge` | Papierkorb endgültig aufräumen (für Cron) |
 | `./deploy.sh` | Produktiv-Update auf dem Server (pull, install, build, Snapshot, PM2-restart) |
