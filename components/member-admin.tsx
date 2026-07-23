@@ -201,7 +201,10 @@ export function MemberRow({
               </button>
               <button
                 type="button"
-                className="btn btn-sm btn-danger flex-1 sm:flex-none"
+                // Nur das Deaktivieren ist die zerstörende Richtung
+                className={`btn btn-sm flex-1 sm:flex-none ${
+                  member.active ? "btn-danger" : ""
+                }`}
                 onClick={() => {
                   if (
                     member.active &&

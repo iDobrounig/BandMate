@@ -40,7 +40,7 @@ export function DeleteCommentButton({ commentId }: { commentId: number }) {
     <button
       type="button"
       disabled={pending}
-      className="text-xs text-faint transition hover:text-red-400 cursor-pointer"
+      className="link-danger text-xs"
       onClick={() => {
         if (confirm("Kommentar löschen?"))
           startTransition(() => deleteComment(commentId));

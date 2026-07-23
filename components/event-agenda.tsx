@@ -107,7 +107,7 @@ export function EventAgenda({
               <button
                 type="button"
                 disabled={pending}
-                className="px-1 text-faint transition hover:text-red-400 cursor-pointer"
+                className="link-danger px-1"
                 onClick={() => startTransition(() => removeEventSong(item.id))}
                 title="Von der Agenda nehmen"
               >

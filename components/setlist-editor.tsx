@@ -97,7 +97,7 @@ function SortableRow({
         </div>
         <button
           type="button"
-          className="px-2 text-faint transition hover:text-red-400 cursor-pointer sm:hidden shrink-0 text-lg"
+          className="link-danger px-2 sm:hidden shrink-0 text-lg"
           onClick={() => onRemove(item.id)}
           title="Aus Setliste entfernen"
         >
@@ -117,7 +117,7 @@ function SortableRow({
         />
         <button
           type="button"
-          className="hidden px-1 text-faint transition hover:text-red-400 cursor-pointer sm:block"
+          className="link-danger hidden px-1 sm:block"
           onClick={() => onRemove(item.id)}
           title="Aus Setliste entfernen"
         >

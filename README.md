@@ -151,6 +151,9 @@ Alternativ `NODE_BIN_DIR` fest oben in `deploy.sh` eintragen, dann genügt `./de
 - `SESSION_SECRET` gesetzt? (sonst läuft die App mit unsicherem Dev-Geheimnis)
 - Seed-Admin `admin@example.com` nach dem ersten echten Login deaktivieren
 - Backup für das `DATA_DIR`-Verzeichnis einrichten (dort liegen DB + Uploads)
+- Zeitzone prüfen: `ecosystem.config.js` setzt `TZ` auf `Europe/Vienna`. Steht der Server
+  woanders, den Wert dort anpassen oder `TZ` beim Start mitgeben — sonst zeigt die App
+  alle Zeitstempel in der Server-Zeitzone an.
 
 Vollständige Checkliste: [FEATURES.md](FEATURES.md), Abschnitt „Vor dem ersten echten Deployment".
 

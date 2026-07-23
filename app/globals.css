@@ -63,8 +63,15 @@ body {
   .btn-sm {
     @apply px-2.5 py-1 text-xs rounded-md;
   }
+  /* Zerstörende Aktionen müssen auch OHNE Hover erkennbar sein — am Handy
+     (Hauptgerät) gibt es keinen Hover-Zustand. */
   .btn-danger {
-    @apply hover:border-red-500/60 hover:text-red-400;
+    @apply border-red-500/45 text-red-300
+      hover:border-red-500/80 hover:bg-red-500/10 hover:text-red-200;
+  }
+  /* Dezente Variante für Text-Links wie „löschen" oder ✕ in Listenzeilen. */
+  .link-danger {
+    @apply text-red-400/75 transition hover:text-red-300 cursor-pointer;
   }
   .badge {
     @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5

@@ -29,6 +29,9 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: "8059",
+        // Ohne TZ nutzt toLocaleString() die Zeitzone des Servers — auf einem
+        // UTC-VPS wären alle Zeitstempel (Kommentare, Termine) 1–2 h falsch.
+        TZ: process.env.TZ || "Europe/Vienna",
       },
     },
   ],
