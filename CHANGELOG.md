@@ -8,6 +8,73 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.10.0] — 2026-07-23
+
+Diese Version dreht sich um **Datensicherheit**: Bisher war ein Fehltipp von
+einem endgültigen Verlust nicht getrennt — jedes Mitglied konnte jeden Song
+samt allen Noten und Aufnahmen unwiderruflich löschen, und eine Sicherung gab
+es nicht. Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
+
+### Hinzugefügt
+- **Papierkorb** (`/papierkorb`, im Footer verlinkt): Songs, Setlisten, Termine
+  und hochgeladene Dateien landen beim Löschen 30 Tage dort und lassen sich bis
+  dahin zurückholen. Wiederherstellen darf jedes Mitglied, endgültig löschen nur
+  ein Admin — das ist die einzige Aktion ohne Rückweg. Verweise bleiben erhalten:
+  ein wiederhergestellter Song steht wieder an genau derselben Stelle in Setliste
+  und Probe-Agenda. Eine gesammelt gelöschte Terminserie erscheint als **ein**
+  Eintrag und kommt gemeinsam zurück.
+- **„Rückgängig" direkt nach dem Löschen** auf der jeweiligen Liste — der
+  Fehltipp fällt in derselben Sekunde auf, dafür ist ein Papierkorb, den man
+  nicht kennt, nutzlos.
+- **Automatisches Backup** (`./scripts/backup.sh`) von Datenbank und Uploads:
+  nutzt die Online-Backup-API von SQLite (ein `cp` der laufenden Datei wäre im
+  WAL-Modus **kein** gültiges Backup) und prüft das Ergebnis anschließend mit
+  `PRAGMA integrity_check`. Unveränderte Uploads werden per Hardlink auf den
+  Vorlauf gelegt statt neu gepackt. Cron-Beispiel und erprobte Restore-Anleitung
+  im [README](README.md#backup--restore).
+- **Snapshot vor jedem Deploy**: `./deploy.sh` sichert jetzt, bevor die
+  Auto-Migration die Datenbank anfasst, und bricht ab, wenn das nicht klappt.
+- **Aufräum-Job** `npm run trash:purge` — löscht abgelaufene Papierkorb-Einträge
+  endgültig, inklusive der Dateien auf der Platte. Passiert zusätzlich beim
+  Öffnen von `/papierkorb`.
+- **Testrahmen** (Vitest, `npm test`): 41 Tests auf der Query-Ebene mit eigener
+  Test-Datenbank. Vor dem Papierkorb-Umbau eingeführt, weil ein dort vergessener
+  Filter Gelöschtes wieder auftauchen oder Vorhandenes verschwinden lässt.
+- Hilfe-Seite um einen Abschnitt **Papierkorb** ergänzt.
+
+### Geändert
+- **Löschen vernichtet nicht mehr sofort**, sondern legt in den Papierkorb.
+  Dateien verlassen die Platte erst beim endgültigen Löschen.
+- **Löschdialoge nennen die Folgen**: „Kommt in 2 Setlisten und 1 Probe-Agenda
+  vor und verschwindet dort." Ohne das schrumpft eine Setliste scheinbar grundlos.
+- **Zeitzone festgenagelt** (`TZ` in `ecosystem.config.js`, Default
+  `Europe/Vienna`). Ohne das richtet sich die Anzeige nach der Server-Zeitzone —
+  auf einem UTC-Server waren alle Zeitstempel 1–2 Stunden falsch.
+- Aufbewahrung der Backups auf **35 Tage** angehoben. Sie muss länger sein als
+  die 30-Tage-Frist des Papierkorbs, sonst läge eine endgültig entfernte Datei in
+  keiner Sicherung mehr.
+
+### Behoben
+- **Zerstörende Schaltflächen waren am Handy nicht erkennbar**: `.btn-danger`
+  färbte sich ausschließlich bei `:hover`, „Löschen" sah dort also exakt aus wie
+  „Speichern". Jetzt dauerhaft rot, Hover nur noch als Verstärkung. Betrifft auch
+  die kleinen „löschen"- und ✕-Varianten in Listenzeilen.
+- In der Mitgliederverwaltung trug auch **„Aktivieren"** die Warnfarbe.
+- Setlisten-Übersicht schrieb „1 Songs".
+
+### Hinweis für den Server
+Nach `./deploy.sh` zwei Cron-Jobs einrichten (Reihenfolge ist Absicht — der
+Papierkorb wird erst geleert, wenn der Zustand davor gesichert ist):
+
+```cron
+30 3 * * * cd /pfad/zu/BandMate && DATA_DIR=… BACKUP_DIR=… ./scripts/backup.sh >> /var/log/bandmate-backup.log 2>&1
+0  4 * * * cd /pfad/zu/BandMate && DATA_DIR=…              npm run trash:purge  >> /var/log/bandmate-purge.log  2>&1
+```
+
+`BACKUP_DIR` auf eine **andere Platte** als `DATA_DIR` legen. Den Backup-Befehl
+einmal von Hand ausführen, bevor `./deploy.sh` läuft: schlägt er fehl, bricht das
+Deployment ab (mit Absicht).
+
 ## [1.9.0] — 2026-07-22
 
 ### Hinzugefügt
