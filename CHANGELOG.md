@@ -8,6 +8,41 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.10.1] — 2026-07-23
+
+### Behoben
+- **`./deploy.sh` brach auf dem Server ab**, wenn `DATA_DIR` in der `.env`
+  steht (also bei jeder Installation, die der README-Empfehlung folgt und die
+  Daten außerhalb des Clones ablegt): `scripts/backup.sh` ist ein Shell-Script
+  und las die `.env` nicht, suchte die Datenbank deshalb unter `<repo>/data`
+  und fand sie nicht — und weil der Snapshot fehlschlug, stoppte das
+  Deployment. Es stoppte dabei **vor** `pm2 restart` und damit vor jeder
+  Migration, die laufende Version blieb also unangetastet.
+  Lokal war der Fehler tückischer: dort existiert `<repo>/data`, also wurde
+  stillschweigend das falsche Verzeichnis gesichert.
+- Dasselbe bei **`npm run trash:purge`**: `tsx` lädt die `.env` nicht von
+  selbst, das Script hätte auf die falsche Datenbank gezeigt — und dort
+  endgültig gelöscht.
+- Beide lesen jetzt dieselbe `.env` wie die App. Reihenfolge: gesetzte
+  Umgebungsvariable > `.env` > Default, eine Cron-Zeile kann also weiterhin
+  alles überschreiben.
+
+### Hinzugefügt
+- **`.env.example`** um `BACKUP_DIR`, `RETENTION_DAYS` und `KEEP_MIN` ergänzt
+  (alle optional), mit dem Hinweis, `BACKUP_DIR` auf eine **andere Platte** zu
+  legen als `DATA_DIR`, und der Bedingung `RETENTION_DAYS` > Papierkorb-Frist.
+
+### Hinweis für den Server
+Ab dieser Version genügen die Cron-Zeilen ohne vorangestellte Variablen:
+
+```cron
+30 3 * * * cd /pfad/zu/BandMate && ./scripts/backup.sh  >> /var/log/bandmate-backup.log 2>&1
+0  4 * * * cd /pfad/zu/BandMate && npm run trash:purge  >> /var/log/bandmate-purge.log  2>&1
+```
+
+Wer von 1.10.0 kommt und dort schon Cron-Jobs **mit** `DATA_DIR=…`/`BACKUP_DIR=…`
+eingetragen hat, kann sie so lassen — sie funktionieren weiterhin.
+
 ## [1.10.0] — 2026-07-23
 
 Diese Version dreht sich um **Datensicherheit**: Bisher war ein Fehltipp von
@@ -63,26 +98,17 @@ es nicht. Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026
 - Setlisten-Übersicht schrieb „1 Songs".
 
 ### Hinweis für den Server
-Neu in der `.env` (siehe [.env.example](.env.example)) — alle optional:
-`BACKUP_DIR`, `RETENTION_DAYS`, `KEEP_MIN`. `BACKUP_DIR` sollte auf einer
-**anderen Platte** liegen als `DATA_DIR`, sonst nimmt ein Plattenschaden beides
-mit. `./scripts/backup.sh` und `npm run trash:purge` lesen dieselbe `.env` wie
-die App, es muss also nichts doppelt gepflegt werden.
-
-Vor dem ersten `./deploy.sh` das Backup einmal von Hand ausführen — schlägt es
-fehl, bricht das Deployment ab (mit Absicht):
-
-```bash
-./scripts/backup.sh
-```
-
-Danach zwei Cron-Jobs einrichten (die Reihenfolge ist Absicht — der Papierkorb
-wird erst geleert, wenn der Zustand davor gesichert ist):
+Nach `./deploy.sh` zwei Cron-Jobs einrichten (Reihenfolge ist Absicht — der
+Papierkorb wird erst geleert, wenn der Zustand davor gesichert ist):
 
 ```cron
-30 3 * * * cd /pfad/zu/BandMate && ./scripts/backup.sh  >> /var/log/bandmate-backup.log 2>&1
-0  4 * * * cd /pfad/zu/BandMate && npm run trash:purge  >> /var/log/bandmate-purge.log  2>&1
+30 3 * * * cd /pfad/zu/BandMate && DATA_DIR=… BACKUP_DIR=… ./scripts/backup.sh >> /var/log/bandmate-backup.log 2>&1
+0  4 * * * cd /pfad/zu/BandMate && DATA_DIR=…              npm run trash:purge  >> /var/log/bandmate-purge.log  2>&1
 ```
+
+`BACKUP_DIR` auf eine **andere Platte** als `DATA_DIR` legen. Den Backup-Befehl
+einmal von Hand ausführen, bevor `./deploy.sh` läuft: schlägt er fehl, bricht das
+Deployment ab (mit Absicht).
 
 ## [1.9.0] — 2026-07-22
 
