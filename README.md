@@ -177,6 +177,14 @@ Pflicht- und optionale Werte in der `.env`:
 | `BACKUP_DIR` | empfohlen | Ablage der Backups, am besten auf einer **anderen Platte** als `DATA_DIR` (siehe „Backup & Restore") |
 | `SMTP_HOST` … `SMTP_FROM` | optional | E-Mail-Versand; ohne diese Werte werden keine Mails verschickt |
 
+> **`SMTP_PORT` und `SMTP_SECURE` gehören zusammen** — die falsche Paarung ist der häufigste Grund, warum keine Mails ankommen:
+> | Port | `SMTP_SECURE` | |
+> |---|---|---|
+> | `465` | `true` | TLS von Anfang an |
+> | `587` | `false` | Klartext-Verbindung, die per STARTTLS verschlüsselt wird — `false` heißt hier **nicht** unverschlüsselt |
+>
+> `587` mit `true` erzeugt beim Verbindungsaufbau `SSL routines … wrong version number`: die App spricht TLS, der Server antwortet im Klartext. Der Versand scheitert dann **still** — `notifyBand()` loggt den Fehler nur. Nach jeder Änderung `pm2 restart ecosystem.config.js --update-env` und den **SMTP-Test auf `/mitglieder`** laufen lassen; der zeigt den echten Fehler in der Oberfläche.
+
 > Der Port wird **nicht** über die `.env`, sondern in [`ecosystem.config.js`](ecosystem.config.js) gesetzt.
 
 ### 2. Start mit PM2
