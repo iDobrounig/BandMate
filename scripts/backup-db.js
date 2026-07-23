@@ -14,6 +14,7 @@
 // Toolchain hängen.
 
 const Database = require("better-sqlite3");
+const { dbInfo } = require("./db-info");
 
 const [source, target] = process.argv.slice(2);
 
@@ -32,26 +33,14 @@ async function main() {
   }
 
   // Gegenprüfung auf der KOPIE — ein ungeprüftes Backup ist kein Backup.
-  const copy = new Database(target, { readonly: true, fileMustExist: true });
-  try {
-    const integrity = copy.pragma("integrity_check", { simple: true });
-    if (integrity !== "ok") {
-      console.error(`Integritätsprüfung fehlgeschlagen: ${integrity}`);
-      process.exit(1);
-    }
-
-    // Zeilenzahlen in den Manifest-Text, damit man einem Backup auf einen Blick
-    // ansieht, ob es plausibel ist (z.B. "songs=0" nach einem Unfall).
-    const counts = ["users", "songs", "attachments", "comments", "setlists", "events"]
-      .map((table) => {
-        const row = copy.prepare(`select count(*) as n from ${table}`).get();
-        return `${table}=${row.n}`;
-      })
-      .join(" ");
-    console.log(`integrity=ok ${counts}`);
-  } finally {
-    copy.close();
+  // Die Zeilenzahlen landen im Manifest, damit man einem Backup auf einen Blick
+  // ansieht, ob es plausibel ist (z.B. "songs=0" nach einem Unfall).
+  const info = dbInfo(target);
+  if (!info.startsWith("integrity=ok")) {
+    console.error(`Integritätsprüfung fehlgeschlagen: ${info}`);
+    process.exit(1);
   }
+  console.log(info);
 }
 
 main().catch((err) => {

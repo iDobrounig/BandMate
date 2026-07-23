@@ -119,32 +119,47 @@ Verweise bleiben beim Löschen erhalten und werden nur ausgeblendet. Ein gelösc
 
 ### Restore
 
-Bewusst **kein** Script: Zurückspielen überschreibt Daten und soll eine überlegte Handlung sein, kein Einzeiler, den man nachts versehentlich auslöst.
+```bash
+./scripts/restore.sh              # Lauf interaktiv auswählen
+./scripts/restore.sh --dry-run    # nur zeigen, was passieren würde
+```
+
+Das Script führt durch alle Schritte und sichert dabei sich selbst ab:
+
+1. **Auswahl** aus allen Läufen in `$BACKUP_DIR`, je Zeile Datum, App-Version und Inhalt (Songs, Termine, Dateien) aus dem `MANIFEST.txt`.
+2. **Umfang**: alles · nur die Datenbank · nur die Uploads. „Nur Uploads" hilft, wenn Dateien von der Platte verschwunden sind, die Datenbank aber aktuell ist — dann bleibt alles seither Eingetragene erhalten.
+3. **Vorschau** als Differenz: *„songs 42 → 38 (−4), Dateien 130 → 121 (−9), du gehst auf den Stand von vor 6 Tagen zurück."* Der Schritt, der verhindert, dass man versehentlich einen zu alten Lauf erwischt.
+4. **Bestätigung** durch Abtippen des Laufnamens — ein Tastendruck ließe sich blind wegdrücken, das Datum muss man lesen.
+5. **Sicherheitsnetz**: `backup.sh --label vor-restore` sichert den *jetzigen* Stand, bevor irgendetwas angefasst wird.
+6. **App stoppen** über PM2 (sonst schreibt sie weiter in die alte Datenbank), am Ende wieder starten.
+7. **Beiseitelegen statt löschen**: das Ersetzte wandert nach `<DATA_DIR>.vor-restore-<Zeitstempel>`.
+8. **Kontrolle**: `integrity_check`, Zeilenzahlen gegen das `MANIFEST.txt`, Dateizahl der Uploads. Weicht etwas ab, bleibt die App gestoppt und das Script nennt den Weg zurück.
+
+Weitere Optionen: `--run <name>` wählt einen Lauf direkt, `--scope alles|db|uploads` den Umfang, `PM2_NAME=…` einen abweichenden Prozessnamen. Ohne Terminal (Cron, Pipe) verweigert das Script den Dienst — ein Restore ohne Bestätigung soll es nicht geben.
+
+> **Einzelne Songs oder Dateien holt man nicht hiermit zurück**, sondern über den [Papierkorb](#papierkorb). Ein selektives Zurückspielen einzelner Datensätze wäre kein Restore, sondern ein Merge: alte IDs sind womöglich neu vergeben, Verweise zeigen auf inzwischen gelöschte Mitglieder oder Setlisten. Klare Arbeitsteilung — **Papierkorb für Einzelstücke, Restore für Katastrophen.**
+
+Der Ablauf wurde am 23.07.2026 vollständig durchgespielt: Datenverlust simuliert (zwei Songs und ein Upload-Ordner gelöscht), zurückgespielt, Zeilenzahlen und Dateien wieder identisch. Ebenfalls geprüft: falsche Bestätigung bricht folgenlos ab, `--scope uploads` lässt die Datenbank unangetastet, ohne Terminal wird abgelehnt. **Nach jeder Änderung an Schema, Backup- oder Restore-Script erneut proben** — ein Backup, das nie zurückgespielt wurde, ist kein Backup.
+
+<details>
+<summary>Von Hand, falls das Script einmal nicht läuft</summary>
 
 ```bash
-# 1. App stoppen — sonst schreibt sie weiter in die alte DB
-pm2 stop bandmate
-
-# 2. Aktuellen Stand beiseitelegen statt löschen (falls das Backup doch älter ist als gedacht)
-mv /var/bandmate-data /var/bandmate-data.kaputt-$(date +%F)
+pm2 stop bandmate                                    # sonst schreibt sie weiter
+mv /var/bandmate-data /var/bandmate-data.alt-$(date +%F)
 mkdir -p /var/bandmate-data
 
-# 3. Aus dem gewünschten Lauf zurückspielen
-SRC=/mnt/backup/bandmate/latest          # oder ein konkretes Verzeichnis
-cat "$SRC/MANIFEST.txt"                  # erst schauen: Zeitpunkt und Zeilenzahlen plausibel?
+SRC=/mnt/backup/bandmate/latest
+cat "$SRC/MANIFEST.txt"                              # Zeitpunkt und Zahlen plausibel?
 cp "$SRC/band.db" /var/bandmate-data/band.db
 tar xzf "$SRC/uploads.tar.gz" -C /var/bandmate-data
 
-# 4. Gegenprüfen
 sqlite3 /var/bandmate-data/band.db "pragma integrity_check; select count(*) from songs;"
-
-# 5. Starten — Migrationen laufen beim Start automatisch an
 pm2 start ecosystem.config.js
 ```
 
-Es gibt **keine** `band.db-wal`/`band.db-shm` im Backup und es sollen auch keine zurückkopiert werden: die Backup-Datei ist bereits in sich vollständig, alte WAL-Reste würden sie nur beschädigen.
-
-Dieser Ablauf wurde am 23.07.2026 einmal vollständig durchgespielt (Restore in ein leeres Verzeichnis, Upload-Prüfsummen identisch, App startet inkl. Migrationen). **Nach jeder Änderung an Schema oder Backup-Script erneut proben** — ein Backup, das nie zurückgespielt wurde, ist kein Backup.
+`band.db-wal` und `band.db-shm` gibt es im Backup nicht und sie sollen auch nicht zurückkopiert werden: die Backup-Datei ist in sich vollständig, alte WAL-Reste würden sie nur beschädigen.
+</details>
 
 ## Produktiv-Deployment
 
@@ -266,6 +281,7 @@ Vollständige Checkliste: [FEATURES.md](FEATURES.md), Abschnitt „Vor dem erste
 | `npm run seed` | Ersten Admin anlegen (no-op, wenn User existieren) |
 | `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
 | `./scripts/backup.sh` | Backup von DB + Uploads (für Cron; siehe „Backup & Restore") |
+| `./scripts/restore.sh` | Backup zurückspielen — mit Vorschau, Bestätigung und Sicherheitsnetz |
 | `npm test` | Tests (Vitest, Query-Ebene) |
 | `npm run trash:purge` | Papierkorb endgültig aufräumen (für Cron) |
 | `./deploy.sh` | Produktiv-Update auf dem Server (pull, install, build, Snapshot, PM2-restart) |

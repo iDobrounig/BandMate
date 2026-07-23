@@ -69,7 +69,11 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   und ein `MANIFEST.txt` mit Zeilenzahlen. Unveränderte Uploads werden als Hardlink auf den
   Vorlauf gelegt statt neu gepackt. Rotation nach `RETENTION_DAYS` (35) mit Untergrenze
   `KEEP_MIN` (3). Sperre gegen Parallelläufe inkl. Erkennung verwaister Sperren,
-  Aufräumen halbfertiger Läufe bei Abbruch. Cron-Beispiel und Restore-Anleitung im README.
+  Aufräumen halbfertiger Läufe bei Abbruch. Cron-Beispiel im README.
+  Dazu `scripts/restore.sh` mit Auswahl aus den vorhandenen Läufen, Umfang
+  (alles/nur DB/nur Uploads), Differenz-Vorschau, getippter Bestätigung,
+  Sicherheitsnetz-Backup und Kontrolle gegen das Manifest. Einmal vollständig
+  durchgespielt — ein Backup, das nie zurückgespielt wurde, ist kein Backup.
 
 - [x] **Pre-Migration-Snapshot in `deploy.sh`** — *erledigt 23.07.2026*
   `./scripts/backup.sh --label pre-deploy` läuft direkt vor `pm2 restart`, also bevor die

@@ -6,7 +6,27 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
-_Noch nichts._
+### Hinzugefügt
+- **Restore-Script** (`./scripts/restore.sh`): führt durch das Zurückspielen
+  eines Backups — Auswahl aus allen vorhandenen Läufen (mit Datum, Version und
+  Inhalt aus dem `MANIFEST.txt`), Wahl des Umfangs (alles · nur Datenbank ·
+  nur Uploads), Vorschau als Differenz („songs 42 → 38, du gehst 6 Tage
+  zurück"), Bestätigung durch Abtippen des Laufnamens.
+  Sichert sich selbst ab: Der aktuelle Stand wird vorher per `backup.sh
+  --label vor-restore` gesichert **und** das Ersetzte nach
+  `<DATA_DIR>.vor-restore-<Zeitstempel>` beiseitegelegt statt gelöscht. Die App
+  wird über PM2 gestoppt und danach wieder gestartet — ohne das schreibt sie
+  weiter in die alte Datenbank. Zum Schluss Kontrolle gegen das Manifest;
+  weicht etwas ab, bleibt die App gestoppt und der Weg zurück wird genannt.
+  Dazu `--dry-run`, `--run`, `--scope` und eine Warnung, wenn das Backup aus
+  einer neueren App-Version stammt als die installierte.
+  Ohne Terminal (Cron, Pipe) verweigert das Script den Dienst.
+
+### Geändert
+- Die Zeilenzahl-Auskunft über eine Datenbank liegt jetzt in
+  `scripts/db-info.js` und wird von Backup und Restore gemeinsam genutzt —
+  vorher steckte sie nur im Backup-Script, damit ließe sich ein Restore nicht
+  gegen das Manifest prüfen.
 
 ## [1.10.1] — 2026-07-23
 
