@@ -3,6 +3,7 @@ import {
   text,
   integer,
   primaryKey,
+  unique,
 } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
@@ -14,9 +15,11 @@ export const users = sqliteTable("users", {
     .notNull()
     .default("member"),
   instrument: text("instrument"),
-  notifyByEmail: integer("notify_by_email", { mode: "boolean" })
+  digestEnabled: integer("digest_enabled", { mode: "boolean" })
     .notNull()
     .default(true),
+  /** Für „neu seit deinem letzten Besuch"; höchstens stündlich fortgeschrieben. */
+  lastSeenAt: integer("last_seen_at", { mode: "timestamp" }),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   // Unverschlüsselt gespeichert — kein Hashing-Präzedenzfall im Projekt,
   // geringer Wert als Angriffsziel bei einer Handvoll interner Nutzer.
@@ -204,7 +207,81 @@ export const eventSongs = sqliteTable("event_songs", {
   position: integer("position").notNull(),
 });
 
+/**
+ * Wer will worüber wie benachrichtigt werden?
+ * Entwurf: docs/specs/2026-07-23-benachrichtigungen-design.md
+ *
+ * Es werden nur ABWEICHUNGEN vom Standard gespeichert — fehlt eine Zeile, gilt
+ * der Default aus NOTIFY_KINDS. Dadurch bekommt ein später ergänzter
+ * Ereignistyp automatisch einen sinnvollen Wert, ohne Nachmigration.
+ *
+ * `channel` ist heute immer "mail". Die Spalte steht trotzdem schon hier, damit
+ * Web Push später ohne zweite Schema-Migration dazukommt.
+ */
+export const notificationSettings = sqliteTable(
+  "notification_settings",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind", {
+      enum: ["suggestion", "comment", "event_new", "event_changed", "reminder"],
+    }).notNull(),
+    channel: text("channel", { enum: ["mail"] }).notNull().default("mail"),
+    mode: text("mode", { enum: ["sofort", "gesammelt", "nie"] }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind, t.channel] })]
+);
+
+/**
+ * Was ist rausgegangen? Trägt zwei Aufgaben: Der eindeutige Index verhindert,
+ * dass ein doppelter Cron-Lauf dieselbe Mail zweimal verschickt, und die
+ * Fehlerspalte speist die Statuszeile auf dem Dashboard.
+ */
+export const notificationLog = sqliteTable(
+  "notification_log",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    kind: text("kind").notNull(),
+    /** Worauf bezieht sich der Versand — z.B. "event" + Termin-ID. */
+    refType: text("ref_type").notNull(),
+    refId: integer("ref_id").notNull(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    sentAt: integer("sent_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    status: text("status", { enum: ["ok", "fehler"] }).notNull(),
+    error: text("error"),
+  },
+  (t) => [
+    unique("notification_log_einmalig").on(t.kind, t.refType, t.refId, t.userId),
+  ]
+);
+
+/**
+ * Was hat der Cron getan? Auch „gelaufen, nichts zu tun" ist eine Information —
+ * die fehlt im Log, ist aber genau die, die einen vergessenen Cron verrät.
+ */
+export const notificationRuns = sqliteTable("notification_runs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  art: text("art", { enum: ["reminders", "digest"] }).notNull(),
+  startedAt: integer("started_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  finishedAt: integer("finished_at", { mode: "timestamp" }),
+  sentCount: integer("sent_count").notNull().default(0),
+  errorCount: integer("error_count").notNull().default(0),
+  note: text("note"),
+});
+
 export type User = typeof users.$inferSelect;
+export type NotificationKind =
+  (typeof notificationSettings.$inferSelect)["kind"];
+export type NotificationMode =
+  (typeof notificationSettings.$inferSelect)["mode"];
+export type NotificationRun = typeof notificationRuns.$inferSelect;
 export type Song = typeof songs.$inferSelect;
 export type SongLink = typeof songLinks.$inferSelect;
 export type Attachment = typeof attachments.$inferSelect;

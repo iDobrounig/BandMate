@@ -60,6 +60,7 @@ export async function addComment(
   const song = await db.query.songs.findFirst({ where: eq(songs.id, songId) });
   if (song) {
     notifyBand({
+      kind: "comment",
       subject: `Neuer Kommentar zu „${song.title}"`,
       heading: "Neuer Kommentar",
       intro: `${user.name} schreibt zu „${song.title}":`,

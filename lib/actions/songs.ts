@@ -85,6 +85,7 @@ export async function createSong(
   }
 
   notifyBand({
+    kind: "suggestion",
     subject: `Neuer Songvorschlag: ${fields.title}`,
     heading: "Neuer Songvorschlag",
     intro: `${user.name} hat einen neuen Song vorgeschlagen:`,

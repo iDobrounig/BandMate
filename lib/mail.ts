@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer";
-import { and, eq, ne } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { fetchRecipients } from "@/lib/notifications";
+import type { NotificationKind } from "@/lib/db/schema";
 import { buildEmailHtml, buildEmailText } from "@/lib/email-template";
 
 const smtpConfigured = Boolean(process.env.SMTP_HOST);
@@ -18,10 +17,16 @@ function transporter() {
 }
 
 /**
- * Benachrichtigt alle aktiven Mitglieder mit aktivierter E-Mail-Benachrichtigung,
- * außer dem Auslöser. Fire-and-forget: Fehler werden nur geloggt.
+ * Benachrichtigt alle aktiven Mitglieder, die für DIESEN Ereignistyp „sofort"
+ * eingestellt haben — außer dem Auslöser. Wer „gesammelt" gewählt hat, findet
+ * es später im Wochen-Digest; „nie" bekommt nichts.
+ *
+ * Fire-and-forget: Fehler werden nur geloggt. Für die zeitgesteuerten Mails
+ * (Erinnerungen, Digest) gilt das NICHT — die warten auf das Ergebnis und
+ * schreiben es ins Versand-Log, siehe docs/specs/2026-07-23-benachrichtigungen-design.md.
  */
 export function notifyBand(opts: {
+  kind: NotificationKind;
   subject: string;
   heading: string;
   intro: string;
@@ -37,21 +42,12 @@ export function notifyBand(opts: {
   }
   void (async () => {
     try {
-      const recipients = await db
-        .select({ email: users.email })
-        .from(users)
-        .where(
-          and(
-            eq(users.active, true),
-            eq(users.notifyByEmail, true),
-            opts.excludeUserId !== undefined
-              ? ne(users.id, opts.excludeUserId)
-              : undefined
-          )
-        );
+      const recipients = await fetchRecipients(opts.kind, {
+        excludeUserId: opts.excludeUserId,
+      });
       if (recipients.length === 0) {
         console.log(
-          `[mail] keine Empfänger für "${opts.subject}" — Auslöser ausgeschlossen oder niemand mit aktivierter Benachrichtigung`
+          `[mail] keine Empfänger für "${opts.subject}" (${opts.kind}) — Auslöser ausgeschlossen oder niemand auf "sofort"`
         );
         return;
       }

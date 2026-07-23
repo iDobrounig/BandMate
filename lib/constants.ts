@@ -3,6 +3,8 @@ import type {
   PracticeState,
   EventKind,
   AttendanceStatus,
+  NotificationKind,
+  NotificationMode,
 } from "@/lib/db/schema";
 
 export const SONG_STATUS: Record<
@@ -107,6 +109,65 @@ export const INSTRUMENT_SUGGESTIONS = [
   "Geige",
   "Alle",
 ];
+
+/**
+ * Benachrichtigungen: welche Ereignisse gibt es, und was ist der Standard?
+ * Entwurf: docs/specs/2026-07-23-benachrichtigungen-design.md
+ *
+ * `default` gilt, solange in `notification_settings` keine Zeile steht — es
+ * werden nur Abweichungen gespeichert. Ein später ergänzter Ereignistyp
+ * bekommt dadurch automatisch einen sinnvollen Wert, ohne Nachmigration.
+ */
+export const NOTIFY_KINDS: Record<
+  NotificationKind,
+  { label: string; hint: string; default: NotificationMode; modes: NotificationMode[] }
+> = {
+  suggestion: {
+    label: "Neue Songvorschläge",
+    hint: "Wenn jemand einen Song zur Abstimmung stellt",
+    default: "sofort",
+    modes: ["sofort", "gesammelt", "nie"],
+  },
+  comment: {
+    label: "Kommentare im Bandchat",
+    hint: "Wenn jemand etwas zu einem Song schreibt",
+    default: "sofort",
+    modes: ["sofort", "gesammelt", "nie"],
+  },
+  event_new: {
+    label: "Neue Termine",
+    hint: "Wenn eine Probe oder ein Gig angelegt wird",
+    default: "sofort",
+    modes: ["sofort", "gesammelt", "nie"],
+  },
+  event_changed: {
+    label: "Geänderte Termine",
+    hint: "Wenn sich Datum, Uhrzeit oder Ort ändern",
+    default: "sofort",
+    modes: ["sofort", "gesammelt", "nie"],
+  },
+  reminder: {
+    label: "Termin-Erinnerungen",
+    // Eine Erinnerung im Wochen-Digest wäre sinnlos — deshalb kein "gesammelt".
+    hint: "Zwei Tage vorher, wenn du noch nicht zugesagt hast, und am Vortag",
+    default: "sofort",
+    modes: ["sofort", "nie"],
+  },
+};
+
+export const NOTIFY_KIND_ORDER: NotificationKind[] = [
+  "reminder",
+  "event_new",
+  "event_changed",
+  "suggestion",
+  "comment",
+];
+
+export const NOTIFY_MODES: Record<NotificationMode, { label: string; hint: string }> = {
+  sofort: { label: "Sofort", hint: "eigene Mail, sobald es passiert" },
+  gesammelt: { label: "Gesammelt", hint: "nur im Wochen-Digest am Sonntag" },
+  nie: { label: "Nie", hint: "gar keine Mail" },
+};
 
 /**
  * Aufbewahrung im Papierkorb. Muss KÜRZER bleiben als `RETENTION_DAYS` in

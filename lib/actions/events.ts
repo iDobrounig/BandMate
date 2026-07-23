@@ -88,6 +88,7 @@ export async function createEvent(
         ? `Wöchentlich ab ${formatDate(dates[0])} bis ${formatDate(dates[dates.length - 1])} (${dates.length} Termine)`
         : `${formatDate(dates[0])}${fields.startTime ? `, ${fields.startTime} Uhr` : ""}`;
     notifyBand({
+      kind: "event_new",
       subject: `Neuer Termin: ${fields.title} (${kindLabel})`,
       heading: "Neuer Termin",
       intro: `${user.name} hat einen neuen Termin angelegt:`,

@@ -140,10 +140,14 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Vorschläge **ohne meine Stimme**, was in der kommenden Probe auf der Agenda steht, neue
   Kommentare. Nur verschicken, wenn es etwas zu berichten gibt.
 
-- [ ] **Getrennte Benachrichtigungs-Schalter**
-  Heute ein einziges `notifyByEmail`-Flag für alles — wer Vorschlags-Spam abstellt, verpasst
-  auch jeden Gig. Aufteilen in: Vorschläge · Kommentare · Termine · Erinnerungen · Digest.
-  Schema-Migration + `/profil`-UI + `notifyBand()` um einen `kind`-Parameter erweitern.
+- [x] **Getrennte Benachrichtigungs-Schalter** — *erledigt 23.07.2026*
+  Matrix `(Mitglied × Ereignistyp × Kanal)` mit drei Stufen (sofort/gesammelt/nie), UI auf
+  `/profil` und `/mitglieder`, `notifyBand()` filtert nach `kind`. Gespeichert werden nur
+  Abweichungen vom Standard — ein später ergänzter Ereignistyp bekommt dadurch ohne
+  Nachmigration einen sinnvollen Wert. Die `channel`-Spalte steht schon bereit, damit Web
+  Push ohne zweite Schema-Migration dazukommt. Migration 0005/0006 überführt den alten
+  `notifyByEmail`-Schalter; gegen eine Kopie der echten Daten geprüft.
+  13 Tests, per Mutationsprobe abgesichert.
 
 - [ ] **„Band benachrichtigen" auch beim Bearbeiten von Terminen**
   Fehlt heute komplett (`components/event-forms.tsx:145`) — eine Gig-Verschiebung erreicht

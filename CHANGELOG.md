@@ -7,6 +7,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 ## [Unreleased]
 
 ### Hinzugefügt
+- **Benachrichtigungen je Ereignistyp einstellbar** (`/profil`, für Admins auch
+  unter `/mitglieder`): Termin-Erinnerungen, neue Termine, geänderte Termine,
+  neue Songvorschläge und Kommentare lassen sich einzeln auf **Sofort**,
+  **Gesammelt** (im Wochen-Digest) oder **Nie** stellen. Bisher gab es nur einen
+  Schalter für alles — wer den Vorschlags-Spam loswerden wollte, verlor damit
+  auch jede Gig-Ankündigung und drehte irgendwann alles ab.
+  Die bestehende Einstellung wird übernommen: Wer Mails abgeschaltet hatte,
+  steht danach überall auf „Nie" und bekommt exakt so wenig Post wie vorher.
 - **Erinnerungen im Kalender-Abo**: Termine aus dem ICS-Feed bringen jetzt einen
   Wecker mit — bei Terminen mit Uhrzeit zwei (am Vortag zur selben Zeit und zwei
   Stunden vorher), bei ganztägigen einen mittags am Vortag. Damit erinnert das

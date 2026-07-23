@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { sendTestMail } from "@/lib/mail";
+import { saveSettings, readSettingsForm } from "@/lib/notifications";
 import type { FormState } from "@/lib/actions/auth";
 
 export async function createUser(
@@ -52,7 +53,7 @@ export async function updateUser(
     .trim()
     .toLowerCase();
   const instrument = String(formData.get("instrument") ?? "").trim();
-  const notifyByEmail = formData.get("notifyByEmail") === "on";
+  const digestEnabled = formData.get("digestEnabled") === "on";
 
   if (!name || !email) return { error: "Name und E-Mail sind Pflichtfelder." };
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Ungültige E-Mail-Adresse." };
@@ -64,8 +65,10 @@ export async function updateUser(
 
   await db
     .update(users)
-    .set({ name, email, instrument: instrument || null, notifyByEmail })
+    .set({ name, email, instrument: instrument || null, digestEnabled })
     .where(eq(users.id, userId));
+  await saveSettings(userId, readSettingsForm(formData));
+
   revalidatePath("/", "layout");
   return { success: "Profil gespeichert." };
 }

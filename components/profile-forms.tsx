@@ -8,11 +8,19 @@ import {
 } from "@/lib/actions/auth";
 import { SubmitButton, FormMsg } from "@/components/form";
 import { INSTRUMENT_SUGGESTIONS } from "@/lib/constants";
+import { NotifyMatrix } from "@/components/notify-matrix";
+import type { SettingsMap } from "@/lib/notifications";
 import type { User } from "@/lib/db/schema";
 
 const initial: FormState = {};
 
-export function ProfileForm({ user }: { user: User }) {
+export function ProfileForm({
+  user,
+  settings,
+}: {
+  user: User;
+  settings: SettingsMap;
+}) {
   const [state, action] = useActionState(updateProfile, initial);
   return (
     <form action={action} className="space-y-4">
@@ -62,15 +70,10 @@ export function ProfileForm({ user }: { user: User }) {
           ))}
         </datalist>
       </div>
-      <label className="flex items-center gap-2 text-sm text-mute">
-        <input
-          type="checkbox"
-          name="notifyByEmail"
-          defaultChecked={user.notifyByEmail}
-          className="size-4 accent-(--color-accent)"
-        />
-        E-Mail bei neuen Vorschlägen &amp; Kommentaren
-      </label>
+      <div className="border-t border-line-soft pt-4">
+        <h3 className="label">Benachrichtigungen</h3>
+        <NotifyMatrix settings={settings} digestEnabled={user.digestEnabled} />
+      </div>
       <FormMsg state={state} />
       <SubmitButton>Profil speichern</SubmitButton>
     </form>

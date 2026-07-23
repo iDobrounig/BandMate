@@ -11,6 +11,8 @@ import {
 import type { FormState } from "@/lib/actions/auth";
 import { SubmitButton, FormMsg } from "@/components/form";
 import { INSTRUMENT_SUGGESTIONS } from "@/lib/constants";
+import { NotifyMatrix } from "@/components/notify-matrix";
+import type { SettingsMap } from "@/lib/notifications";
 import type { User } from "@/lib/db/schema";
 
 const initial: FormState = {};
@@ -85,7 +87,13 @@ function ResetPasswordForm({ userId }: { userId: number }) {
   );
 }
 
-function EditMemberForm({ member }: { member: User }) {
+function EditMemberForm({
+  member,
+  settings,
+}: {
+  member: User;
+  settings: SettingsMap;
+}) {
   const [state, action] = useActionState(updateUser, initial);
   return (
     <form action={action} className="mt-3 space-y-3 rounded-lg border border-line-soft p-3">
@@ -120,15 +128,14 @@ function EditMemberForm({ member }: { member: User }) {
           </datalist>
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm text-mute">
-        <input
-          type="checkbox"
-          name="notifyByEmail"
-          defaultChecked={member.notifyByEmail}
-          className="size-4 accent-(--color-accent)"
+      <div className="border-t border-line-soft pt-3">
+        <h3 className="label">Benachrichtigungen</h3>
+        <NotifyMatrix
+          settings={settings}
+          digestEnabled={member.digestEnabled}
+          idPrefix={`m${member.id}-`}
         />
-        E-Mail bei neuen Vorschlägen &amp; Kommentaren
-      </label>
+      </div>
       <FormMsg state={state} />
       <SubmitButton className="btn btn-sm">Speichern</SubmitButton>
     </form>
@@ -138,9 +145,11 @@ function EditMemberForm({ member }: { member: User }) {
 export function MemberRow({
   member,
   isSelf,
+  settings,
 }: {
   member: User;
   isSelf: boolean;
+  settings: SettingsMap;
 }) {
   const [showReset, setShowReset] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -220,7 +229,7 @@ export function MemberRow({
           )}
         </div>
       </div>
-      {showEdit && <EditMemberForm member={member} />}
+      {showEdit && <EditMemberForm member={member} settings={settings} />}
       {showReset && !isSelf && <ResetPasswordForm userId={member.id} />}
     </div>
   );

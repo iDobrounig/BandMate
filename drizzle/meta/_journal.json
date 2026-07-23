@@ -36,6 +36,20 @@
       "when": 1784794740577,
       "tag": "0004_far_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1784822227249,
+      "tag": "0005_supreme_hellcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1784822247253,
+      "tag": "0006_tricky_doomsday",
+      "breakpoints": true
     }
   ]
 }

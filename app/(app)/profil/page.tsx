@@ -1,10 +1,12 @@
 import { requireUser } from "@/lib/auth";
+import { fetchSettings } from "@/lib/notifications";
 import { ProfileForm, PasswordForm } from "@/components/profile-forms";
 
 export const metadata = { title: "Profil" };
 
 export default async function ProfilPage() {
   const user = await requireUser();
+  const settings = await fetchSettings(user.id);
 
   return (
     <div className="max-w-2xl">
@@ -17,7 +19,7 @@ export default async function ProfilPage() {
       <div className="mt-8 grid gap-6 sm:grid-cols-2">
         <section className="card p-5">
           <h2 className="headline mb-4 text-lg">Stammdaten</h2>
-          <ProfileForm user={user} />
+          <ProfileForm user={user} settings={settings} />
         </section>
         <section className="card p-5">
           <h2 className="headline mb-4 text-lg">Passwort</h2>

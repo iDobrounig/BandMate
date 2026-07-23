@@ -2,6 +2,7 @@ import { asc } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { fetchSettings } from "@/lib/notifications";
 import { NewMemberForm, MemberRow } from "@/components/member-admin";
 import { SmtpTestForm } from "@/components/smtp-test";
 
@@ -10,6 +11,8 @@ export const metadata = { title: "Mitglieder" };
 export default async function MitgliederPage() {
   const admin = await requireAdmin();
   const members = await db.select().from(users).orderBy(asc(users.name));
+  // Je Mitglied die aufgelösten Einstellungen (Standardwerte eingesetzt)
+  const settings = await Promise.all(members.map((m) => fetchSettings(m.id)));
 
   return (
     <div className="max-w-3xl">
@@ -24,11 +27,12 @@ export default async function MitgliederPage() {
       </section>
 
       <section className="mt-8 space-y-3">
-        {members.map((member) => (
+        {members.map((member, i) => (
           <MemberRow
             key={member.id}
             member={member}
             isSelf={member.id === admin.id}
+            settings={settings[i]}
           />
         ))}
       </section>
