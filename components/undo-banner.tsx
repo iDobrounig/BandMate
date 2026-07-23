@@ -19,9 +19,11 @@ export async function UndoBanner({ undo }: { undo: string | undefined }) {
   if (!label) return null;
 
   return (
-    <div className="card mb-6 flex flex-wrap items-center gap-3 border-accent/40 bg-accent/5 p-4">
+    <div className="card mb-6 flex flex-wrap items-center gap-x-3 gap-y-3 border-accent/40 bg-accent/5 p-4">
       <IconTrash className="size-5 shrink-0 text-accent" />
-      <p className="min-w-0 flex-1 text-sm">
+      {/* basis-full: am Handy gehören die Buttons unter den Text. Ohne das
+          schrumpft der Titel auf eine Spalte von zwei Wörtern Breite. */}
+      <p className="min-w-0 flex-1 basis-[calc(100%-2rem)] text-sm sm:basis-auto">
         <span className="font-semibold">„{label}"</span> liegt jetzt im
         Papierkorb.
       </p>

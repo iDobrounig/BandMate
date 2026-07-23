@@ -49,7 +49,9 @@ export default async function PapierkorbPage() {
                     {eintrag.label}
                   </span>
                 </p>
-                <p className="mt-1 truncate text-sm text-mute">
+                {/* Bewusst kein `truncate`: sonst fällt auf schmalen Schirmen
+                    ausgerechnet das „von wem" hinten weg. */}
+                <p className="mt-1 text-sm text-mute">
                   {eintrag.sublabel ? `${eintrag.sublabel} · ` : ""}
                   gelöscht {formatDateTime(eintrag.deletedAt)}
                   {eintrag.deletedByName ? ` von ${eintrag.deletedByName}` : ""}
