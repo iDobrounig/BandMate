@@ -49,6 +49,9 @@ export const songs = sqliteTable("songs", {
   updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
+  // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  deletedById: integer("deleted_by_id").references(() => users.id),
 });
 
 export const songLinks = sqliteTable("song_links", {
@@ -78,6 +81,9 @@ export const attachments = sqliteTable("attachments", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
+  // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  deletedById: integer("deleted_by_id").references(() => users.id),
 });
 
 export const comments = sqliteTable("comments", {
@@ -132,6 +138,9 @@ export const setlists = sqliteTable("setlists", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
+  // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  deletedById: integer("deleted_by_id").references(() => users.id),
 });
 
 export const setlistItems = sqliteTable("setlist_items", {
@@ -164,6 +173,9 @@ export const events = sqliteTable("events", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
+  // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  deletedById: integer("deleted_by_id").references(() => users.id),
 });
 
 export const eventAttendance = sqliteTable(

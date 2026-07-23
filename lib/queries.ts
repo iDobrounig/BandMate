@@ -1,4 +1,4 @@
-import { asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   songs,
@@ -14,6 +14,12 @@ import {
   type BandEvent,
   type AttendanceStatus,
 } from "@/lib/db/schema";
+import {
+  songAktiv,
+  setlistAktiv,
+  eventAktiv,
+  anhangAktiv,
+} from "@/lib/db/filters";
 
 export type SongListItem = Song & {
   upvotes: number;
@@ -36,12 +42,13 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
       downvotes: sql<number>`coalesce((select count(*) from votes v where v.song_id = songs.id and v.value < 0), 0)`,
       myVote: sql<number>`coalesce((select v.value from votes v where v.song_id = songs.id and v.user_id = ${currentUserId}), 0)`,
       commentCount: sql<number>`(select count(*) from comments c where c.song_id = songs.id)`,
-      audioCount: sql<number>`(select count(*) from attachments a where a.song_id = songs.id and a.kind = 'audio')`,
-      sheetCount: sql<number>`(select count(*) from attachments a where a.song_id = songs.id and a.kind = 'sheet')`,
+      audioCount: sql<number>`(select count(*) from attachments a where a.song_id = songs.id and a.kind = 'audio' and a.deleted_at is null)`,
+      sheetCount: sql<number>`(select count(*) from attachments a where a.song_id = songs.id and a.kind = 'sheet' and a.deleted_at is null)`,
       readyCount: sql<number>`(select count(*) from practice_status p where p.song_id = songs.id and p.status = 'ready')`,
     })
     .from(songs)
     .leftJoin(users, eq(songs.suggestedById, users.id))
+    .where(songAktiv)
     .orderBy(desc(songs.createdAt));
 
   return rows.map((r) => ({
@@ -57,6 +64,26 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
   }));
 }
 
+/**
+ * Anhang für die Auslieferung über `/api/files/[id]` — oder `null`, wenn er
+ * nicht (mehr) herausgegeben werden darf.
+ *
+ * Zwei Bedingungen, nicht eine: Der Anhang selbst kann im Papierkorb liegen,
+ * ODER der Song, zu dem er gehört. Beim Löschen eines Songs bleiben seine
+ * Anhänge unmarkiert (Soft Delete kennt keinen Cascade) — ohne den Join wären
+ * die Noten und Aufnahmen eines gelöschten Songs weiter per Direktlink
+ * abrufbar und der Papierkorb per URL umgehbar.
+ */
+export async function fetchServableAttachment(attachmentId: number) {
+  const [row] = await db
+    .select({ attachment: attachments })
+    .from(attachments)
+    .innerJoin(songs, eq(attachments.songId, songs.id))
+    .where(and(eq(attachments.id, attachmentId), anhangAktiv, songAktiv))
+    .limit(1);
+  return row?.attachment ?? null;
+}
+
 export type SetlistListItem = Setlist & {
   songCount: number;
   totalSeconds: number;
@@ -67,10 +94,11 @@ export async function fetchSetlists(): Promise<SetlistListItem[]> {
   const rows = await db
     .select({
       setlist: setlists,
-      songCount: sql<number>`(select count(*) from setlist_items i where i.setlist_id = setlists.id)`,
-      totalSeconds: sql<number>`coalesce((select sum(s.duration_seconds) from setlist_items i join songs s on s.id = i.song_id where i.setlist_id = setlists.id), 0)`,
+      songCount: sql<number>`(select count(*) from setlist_items i join songs s on s.id = i.song_id where i.setlist_id = setlists.id and s.deleted_at is null)`,
+      totalSeconds: sql<number>`coalesce((select sum(s.duration_seconds) from setlist_items i join songs s on s.id = i.song_id where i.setlist_id = setlists.id and s.deleted_at is null), 0)`,
     })
     .from(setlists)
+    .where(setlistAktiv)
     .orderBy(desc(setlists.createdAt));
 
   return rows.map((r) => ({
@@ -104,8 +132,16 @@ export async function fetchEvents(
       myStatus: sql<AttendanceStatus | null>`(select a.status from event_attendance a where a.event_id = events.id and a.user_id = ${currentUserId})`,
     })
     .from(events)
-    .leftJoin(setlists, eq(events.setlistId, setlists.id))
-    .where(opts.past ? lt(events.date, today) : gte(events.date, today))
+    // Der Filter gehört in die JOIN-Bedingung, nicht ins WHERE: sonst würde ein
+    // Termin mit gelöschter Setliste ganz aus der Liste fallen statt nur den
+    // Namen zu verlieren.
+    .leftJoin(setlists, and(eq(events.setlistId, setlists.id), setlistAktiv))
+    .where(
+      and(
+        eventAktiv,
+        opts.past ? lt(events.date, today) : gte(events.date, today)
+      )
+    )
     .orderBy(
       opts.past ? desc(events.date) : asc(events.date),
       asc(events.startTime)
@@ -126,7 +162,9 @@ export async function fetchEvents(
 
 /** Alles für die Song-Detailseite. */
 export async function fetchSongDetail(songId: number) {
-  const song = await db.query.songs.findFirst({ where: eq(songs.id, songId) });
+  const song = await db.query.songs.findFirst({
+    where: and(eq(songs.id, songId), songAktiv),
+  });
   if (!song) return null;
 
   const [links, files, songComments, songVotes, practice, allUsers, suggestedBy] =
@@ -135,7 +173,8 @@ export async function fetchSongDetail(songId: number) {
         where: (l, { eq }) => eq(l.songId, songId),
       }),
       db.query.attachments.findMany({
-        where: (a, { eq }) => eq(a.songId, songId),
+        where: (a, { eq, and, isNull }) =>
+          and(eq(a.songId, songId), isNull(a.deletedAt)),
         orderBy: (a, { asc }) => [asc(a.kind), asc(a.instrument)],
       }),
       db

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { asc } from "drizzle-orm";
+import { setlistAktiv } from "@/lib/db/filters";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { setlists } from "@/lib/db/schema";
@@ -27,6 +28,7 @@ export default async function TerminePage({
     db
       .select({ id: setlists.id, name: setlists.name })
       .from(setlists)
+      .where(setlistAktiv)
       .orderBy(asc(setlists.name)),
   ]);
 

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { songs, comments, users } from "@/lib/db/schema";
 import { fetchSongList, fetchEvents } from "@/lib/queries";
+import { songAktiv } from "@/lib/db/filters";
 import { SONG_STATUS, EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 
@@ -17,6 +18,7 @@ export default async function DashboardPage() {
       .from(comments)
       .innerJoin(users, eq(comments.userId, users.id))
       .innerJoin(songs, eq(comments.songId, songs.id))
+      .where(songAktiv)
       .orderBy(desc(comments.createdAt))
       .limit(6),
     fetchEvents(user.id, { limit: 4 }),

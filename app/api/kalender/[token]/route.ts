@@ -1,4 +1,5 @@
 import { asc } from "drizzle-orm";
+import { eventAktiv } from "@/lib/db/filters";
 import { db } from "@/lib/db";
 import { events } from "@/lib/db/schema";
 import { calendarToken, buildIcs } from "@/lib/calendar";
@@ -18,6 +19,7 @@ export async function GET(
   const all = await db
     .select()
     .from(events)
+    .where(eventAktiv)
     .orderBy(asc(events.date), asc(events.startTime));
 
   const ics = buildIcs(all, process.env.APP_URL ?? "");

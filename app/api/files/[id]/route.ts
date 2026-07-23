@@ -1,10 +1,8 @@
 import { NextRequest } from "next/server";
 import fs from "node:fs";
 import { Readable } from "node:stream";
-import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { attachments } from "@/lib/db/schema";
 import { currentUser } from "@/lib/auth";
+import { fetchServableAttachment } from "@/lib/queries";
 import { attachmentPath } from "@/lib/files";
 
 export async function GET(
@@ -15,9 +13,7 @@ export async function GET(
   if (!user) return new Response("Nicht angemeldet", { status: 401 });
 
   const { id } = await ctx.params;
-  const attachment = await db.query.attachments.findFirst({
-    where: eq(attachments.id, Number(id)),
-  });
+  const attachment = await fetchServableAttachment(Number(id));
   if (!attachment) return new Response("Nicht gefunden", { status: 404 });
 
   const filePath = attachmentPath(attachment.songId, attachment.storedName);

@@ -44,6 +44,11 @@ Voting, Setlisten, Termine. Feature-Stand & Roadmap: `FEATURES.md`. Setup/Deploy
 - Upload-Limit: `next.config.ts` `serverActions.bodySizeLimit: "60mb"`; better-sqlite3 steht in
   `serverExternalPackages`.
 - Dev-Server läuft über `.claude/launch.json` (`bandmate-dev`, Port 3000).
+- **Schema-Änderung bei laufendem Dev-Server migriert `data/` sofort.** Next.js lädt
+  `lib/db/index.ts` beim Ändern von `lib/db/schema.ts` neu, und dabei läuft `migrate()`
+  erneut — die frisch erzeugte Migration wird also ohne Zutun auf die echte DB angewandt.
+  Vor Schema-Arbeit deshalb entweder den Dev-Server stoppen oder
+  `./scripts/backup.sh` laufen lassen.
 
 ## Verifikation
 

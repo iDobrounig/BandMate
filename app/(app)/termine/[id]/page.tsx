@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { asc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -11,6 +11,7 @@ import {
   setlists,
   users,
 } from "@/lib/db/schema";
+import { songAktiv, setlistAktiv, eventAktiv } from "@/lib/db/filters";
 import { EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { EventForm, DeleteEventButtons } from "@/components/event-forms";
@@ -26,7 +27,9 @@ export default async function TerminDetailPage({
   const { id } = await params;
   const eventId = Number(id);
 
-  const event = await db.query.events.findFirst({ where: eq(events.id, eventId) });
+  const event = await db.query.events.findFirst({
+    where: and(eq(events.id, eventId), eventAktiv),
+  });
   if (!event) notFound();
 
   const [attendance, allUsers, setlist, setlistOptions, agendaItems, agendaOptions] =
@@ -45,11 +48,14 @@ export default async function TerminDetailPage({
       .where(eq(users.active, true))
       .orderBy(asc(users.name)),
     event.setlistId
-      ? db.query.setlists.findFirst({ where: eq(setlists.id, event.setlistId) })
+      ? db.query.setlists.findFirst({
+          where: and(eq(setlists.id, event.setlistId), setlistAktiv),
+        })
       : Promise.resolve(undefined),
     db
       .select({ id: setlists.id, name: setlists.name })
       .from(setlists)
+      .where(setlistAktiv)
       .orderBy(asc(setlists.name)),
     db
       .select({
@@ -63,12 +69,12 @@ export default async function TerminDetailPage({
       })
       .from(eventSongs)
       .innerJoin(songs, eq(eventSongs.songId, songs.id))
-      .where(eq(eventSongs.eventId, eventId))
+      .where(and(eq(eventSongs.eventId, eventId), songAktiv))
       .orderBy(asc(eventSongs.position)),
     db
       .select({ id: songs.id, title: songs.title, artist: songs.artist })
       .from(songs)
-      .where(ne(songs.status, "archived"))
+      .where(and(ne(songs.status, "archived"), songAktiv))
       .orderBy(asc(songs.title)),
   ]);
 

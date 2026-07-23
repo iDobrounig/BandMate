@@ -29,6 +29,13 @@
       "when": 1784705290959,
       "tag": "0003_complete_angel",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1784794740577,
+      "tag": "0004_far_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

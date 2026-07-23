@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { setlists, setlistItems, songs } from "@/lib/db/schema";
+import { songAktiv, setlistAktiv } from "@/lib/db/filters";
 import { formatDate, formatDuration } from "@/lib/format";
 import { PrintButton } from "@/components/setlist-forms";
 
@@ -19,7 +20,7 @@ export default async function SetlistDruckPage({
   const setlistId = Number(id);
 
   const setlist = await db.query.setlists.findFirst({
-    where: eq(setlists.id, setlistId),
+    where: and(eq(setlists.id, setlistId), setlistAktiv),
   });
   if (!setlist) notFound();
 
@@ -36,7 +37,7 @@ export default async function SetlistDruckPage({
     })
     .from(setlistItems)
     .innerJoin(songs, eq(setlistItems.songId, songs.id))
-    .where(eq(setlistItems.setlistId, setlistId))
+    .where(and(eq(setlistItems.setlistId, setlistId), songAktiv))
     .orderBy(asc(setlistItems.position));
 
   const totalSeconds = items.reduce((s, i) => s + (i.durationSeconds ?? 0), 0);

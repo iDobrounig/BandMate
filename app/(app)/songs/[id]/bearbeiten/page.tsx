@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { songs, songLinks } from "@/lib/db/schema";
+import { songAktiv } from "@/lib/db/filters";
 import { SongForm } from "@/components/song-form";
 
 export const metadata = { title: "Song bearbeiten" };
@@ -16,7 +17,9 @@ export default async function SongBearbeitenPage({
   await requireUser();
   const { id } = await params;
   const songId = Number(id);
-  const song = await db.query.songs.findFirst({ where: eq(songs.id, songId) });
+  const song = await db.query.songs.findFirst({
+    where: and(eq(songs.id, songId), songAktiv),
+  });
   if (!song) notFound();
   const links = await db.query.songLinks.findMany({
     where: eq(songLinks.songId, songId),

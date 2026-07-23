@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { asc, eq, inArray, or } from "drizzle-orm";
+import { and, asc, eq, or } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { setlists, setlistItems, songs } from "@/lib/db/schema";
+import { songAktiv, setlistAktiv } from "@/lib/db/filters";
 import { formatDate } from "@/lib/format";
 import { duplicateSetlist } from "@/lib/actions/setlists";
 import { SetlistForm, DeleteSetlistButton } from "@/components/setlist-forms";
@@ -19,7 +20,7 @@ export default async function SetlistDetailPage({
   const setlistId = Number(id);
 
   const setlist = await db.query.setlists.findFirst({
-    where: eq(setlists.id, setlistId),
+    where: and(eq(setlists.id, setlistId), setlistAktiv),
   });
   if (!setlist) notFound();
 
@@ -36,7 +37,7 @@ export default async function SetlistDetailPage({
     })
     .from(setlistItems)
     .innerJoin(songs, eq(setlistItems.songId, songs.id))
-    .where(eq(setlistItems.setlistId, setlistId))
+    .where(and(eq(setlistItems.setlistId, setlistId), songAktiv))
     .orderBy(asc(setlistItems.position));
 
   const items: EditorItem[] = rows;
@@ -50,7 +51,12 @@ export default async function SetlistDetailPage({
       status: songs.status,
     })
     .from(songs)
-    .where(or(eq(songs.status, "repertoire"), eq(songs.status, "rehearsing")))
+    .where(
+      and(
+        or(eq(songs.status, "repertoire"), eq(songs.status, "rehearsing")),
+        songAktiv
+      )
+    )
     .orderBy(asc(songs.title));
 
   return (
