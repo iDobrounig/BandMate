@@ -121,11 +121,12 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 > Verschärft durch den Betrieb: Der SMTP-Versand war wochenlang still kaputt. Bei
 > Erinnerungen wäre das schlimmer als heute — dann verlässt sich die Band darauf.
 
-- [ ] **Kalender-Erinnerungen (`VALARM`) im ICS-Feed**
-  Termine kommen heute ohne Wecker im abonnierten Kalender an. Zwei Alarme je Termin
-  (Vortag und zwei Stunden vorher) geben jedem Mitglied eine native Handy-Erinnerung —
-  ohne Berechtigung, ohne Service Worker, unabhängig vom Mailversand. Fünf Zeilen in
-  `lib/calendar.ts`, der billigste Gewinn dieser Welle.
+- [x] **Kalender-Erinnerungen (`VALARM`) im ICS-Feed** — *erledigt 23.07.2026*
+  Zwei Alarme je Termin mit Uhrzeit (Vortag zur selben Zeit, zwei Stunden vorher), einer
+  bei ganztägigen (mittags am Vortag — `-P1D` wäre dort Mitternacht). Native
+  Handy-Erinnerung ohne Berechtigung, ohne Service Worker, unabhängig vom Mailversand.
+  Dabei zusätzlich die RFC-5545-Zeilenfaltung nachgeholt, die vorher fehlte.
+  10 Tests für `buildIcs`, per Mutationsprobe abgesichert.
 
 - [ ] **Erinnerungs-Mail vor Terminen**
   Cron-Job (`scripts/reminders.ts`, täglich früh): für jeden Termin in genau 2 Tagen eine
@@ -225,7 +226,6 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   Schema-Migration dazukommt.
 - [ ] Login-Rate-Limit + Rate-Limit auf „Passwort vergessen" (Mail-Bombe gegen bekannte Adresse)
 - [ ] Pro-Mitglied-Token für den ICS-Feed statt eines gemeinsamen (heute nur global widerrufbar)
-- [ ] ICS-Zeilenfaltung nach RFC 5545 (75 Oktette)
 - [ ] Uploads streamen statt komplett in den RAM zu lesen (`lib/files.ts:52`)
 - [ ] Speicherplatz-Übersicht der Uploads
 - [ ] Health-Check / Monitoring (heute merkt niemand, wenn SMTP oder der Prozess ausfällt)

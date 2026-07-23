@@ -7,6 +7,12 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 ## [Unreleased]
 
 ### Hinzugefügt
+- **Erinnerungen im Kalender-Abo**: Termine aus dem ICS-Feed bringen jetzt einen
+  Wecker mit — bei Terminen mit Uhrzeit zwei (am Vortag zur selben Zeit und zwei
+  Stunden vorher), bei ganztägigen einen mittags am Vortag. Damit erinnert das
+  eigene Handy an die Probe, ohne Berechtigung, ohne App-Installation und
+  unabhängig vom Mailversand. Wer den Kalender bereits abonniert hat, muss
+  nichts tun.
 - **Restore-Script** (`./scripts/restore.sh`): führt durch das Zurückspielen
   eines Backups — Auswahl aus allen vorhandenen Läufen (mit Datum, Version und
   Inhalt aus dem `MANIFEST.txt`), Wahl des Umfangs (alles · nur Datenbank ·
@@ -21,6 +27,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
   Dazu `--dry-run`, `--run`, `--scope` und eine Warnung, wenn das Backup aus
   einer neueren App-Version stammt als die installierte.
   Ohne Terminal (Cron, Pipe) verweigert das Script den Dienst.
+
+### Behoben
+- **ICS-Feed faltet lange Zeilen** nach RFC 5545 (höchstens 75 Oktette, gemessen
+  in Oktetten und ohne Umlaute zu zerschneiden). Lange Notizen oder Ortsangaben
+  konnten strenge Kalender-Programme bisher stören.
 
 ### Geändert
 - Die Zeilenzahl-Auskunft über eine Datenbank liegt jetzt in
