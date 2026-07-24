@@ -142,10 +142,24 @@ gezählt und macht die Statuszeile rot.
 
 Nur verschicken, wenn es etwas zu berichten gibt. Enthält:
 
-- alles, was seit dem letzten Digest als `gesammelt` angefallen ist
+- alles, was in den letzten 7 Tagen als `gesammelt` angefallen ist (Vorschläge, Kommentare,
+  neue/geänderte Termine — je nach den `gesammelt`-Einstellungen des Empfängers)
 - kommende Termine mit dem **eigenen** Rückmeldungsstand
 - Vorschläge ohne meine Stimme
 - was auf der Agenda der nächsten Probe steht
+
+**Zeitfenster (entschieden 23.07.2026): rollierende 7 Tage**, nicht „seit letztem Digest".
+Der Digest fragt also einfach ab, was in den letzten 7 Tagen entstanden ist — keine
+Buchführung pro Nutzer. Fällt ein Sonntag aus, deckt der nächste eben 7 statt 14 Tage ab;
+Termine gehen dabei nicht verloren (sie stehen ohnehin als „kommend" drin), nur ein paar
+ältere Vorschläge/Kommentare fallen aus dem Fenster. Bewusster Handel gegen Einfachheit.
+
+**Idempotenz:** Log-Eintrag `kind="digest"`, `refType="woche"`, `refId=<ISO-Woche als Zahl,
+z.B. 202630>`, `userId`. Ein zweiter Lauf am selben Sonntag verschickt nichts.
+
+**Kein Digest, wenn leer:** Hat ein Empfänger nichts Gesammeltes, keine offenen Punkte und
+keine kommenden Termine, bekommt er keine Mail — der Log-Eintrag wird trotzdem gesetzt, damit
+ein erneuter Lauf ihn nicht doch noch anschreibt.
 
 ## Dashboard: „Was muss ich tun?"
 
@@ -154,17 +168,44 @@ Neuer Block **ganz oben**, vor „Heiße Vorschläge". Alle Daten liegen bereits
 - offene Zu-/Absagen für die nächsten 14 Tage
 - Vorschläge ohne meine Stimme
 - Songs der nächsten Probe-Agenda, die ich noch nicht „kann"
-- neue Kommentare seit meinem letzten Besuch (`lastSeenAt`, höchstens stündlich fortgeschrieben)
+- neue Kommentare seit meinem letzten Besuch (`lastSeenAt`)
 - **nur Admin:** die Statuszeile aus E3
 
-Ist nichts offen, verschwindet der Block ganz — er soll nicht zur Tapete werden.
+Ist nichts offen, verschwindet der persönliche Teil ganz — er soll nicht zur Tapete werden.
+Die **Admin-Statuszeile bleibt sichtbar**, auch wenn sonst nichts offen ist: Genau ihr Sinn
+ist es, einen stillen Cron-Ausfall zu verraten, und das tut sie nur, wenn sie immer da ist.
+
+**`lastSeenAt` (Implementierungsnotiz):** wird beim Laden des Dashboards fortgeschrieben —
+der Block liest den *vorigen* Wert für „neu seit …" und setzt danach auf jetzt. Das Schreiben
+während des Renderns ist der einzige heikle Punkt in Häppchen 4. Falls es sich sperrig
+anfühlt, ist „neue Kommentare seit letztem Besuch" der weichste Block-Eintrag und darf
+entfallen, ohne den Rest zu berühren — die harten Punkte (Zusagen, Stimmen, Agenda) brauchen
+`lastSeenAt` nicht.
 
 ## „Band benachrichtigen" beim Bearbeiten von Terminen
 
 Fehlt heute komplett ([components/event-forms.tsx:145](../../components/event-forms.tsx)) —
 eine Gig-Verschiebung erreicht niemanden. Checkbox auch im Bearbeiten-Modus; die Mail nennt
-**was** sich geändert hat (alt → neu), nicht nur dass sich etwas geändert hat. Beim Anlegen
-künftig per Default **an** statt aus.
+**was** sich geändert hat (alt → neu), nicht nur dass sich etwas geändert hat.
+
+**Auslösende Felder (entschieden 23.07.2026): Datum, Uhrzeit, Ort.** Nur was Planung und
+Anwesenheit betrifft. Titel-Korrektur, Notiz, Setlisten-Verknüpfung lösen nichts aus — das
+wäre Kosmetik und würde nur Spam erzeugen, der Grund, warum Leute Benachrichtigungen ganz
+abdrehen. Die Checkbox ist im Bearbeiten-Modus vorausgewählt, es geht aber nur dann eine Mail
+raus, wenn sich wirklich mindestens eines dieser drei Felder geändert hat. `updateEvent` muss
+den alten Termin dafür vor dem Speichern laden. `kind="event_changed"`.
+
+Beim Anlegen künftig per Default **an** statt aus (`kind="event_new"`).
+
+## Bau-Reihenfolge Häppchen 4 (entschieden 23.07.2026)
+
+Zwei Commits — erst Sicherheit/Lückenschluss, dann Wert:
+
+1. **Statuszeile** (liest `notification_runs`, rot ab 2 Tagen ohne Lauf, nur Admin) **+
+   „Band benachrichtigen" beim Bearbeiten von Terminen.** Die kleinen Teile; die Statuszeile
+   ist das Sicherheitsnetz zum neuen Cron-Dispatcher und gehört zuerst.
+2. **Dashboard-Block „Was muss ich tun?" + Wochen-Digest** (`notify.ts` um `digest` erweitern,
+   Cron-Slot steht bereits in `cron.sh`). Der größere Teil mit UI und Auswahllogik.
 
 ## Nicht im Umfang
 
