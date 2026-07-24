@@ -142,16 +142,20 @@ export function EventForm({
         </div>
       )}
 
-      {!isEdit && (
-        <label className="flex items-center gap-2 text-sm text-mute">
-          <input
-            type="checkbox"
-            name="sendMail"
-            className="size-4 accent-(--color-accent)"
-          />
-          Band per E-Mail benachrichtigen
-        </label>
-      )}
+      <label className="flex items-center gap-2 text-sm text-mute">
+        <input
+          type="checkbox"
+          name="sendMail"
+          // Beim Anlegen vorausgewählt; beim Bearbeiten ebenfalls, aber die
+          // Mail geht nur raus, wenn sich wirklich Datum, Uhrzeit oder Ort
+          // geändert hat (siehe updateEvent).
+          defaultChecked
+          className="size-4 accent-(--color-accent)"
+        />
+        {isEdit
+          ? "Band bei Änderung von Datum/Uhrzeit/Ort benachrichtigen"
+          : "Band per E-Mail benachrichtigen"}
+      </label>
 
       <FormMsg state={state} />
       <SubmitButton>{isEdit ? "Speichern" : "Termin anlegen"}</SubmitButton>

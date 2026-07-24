@@ -1,8 +1,9 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   users,
   notificationSettings,
+  notificationRuns,
   type NotificationKind,
   type NotificationMode,
 } from "@/lib/db/schema";
@@ -130,4 +131,40 @@ export async function fetchRecipients(
   const abweichend = new Map(abweichungen.map((a) => [a.userId, a.mode]));
   const standard = NOTIFY_KINDS[kind].default;
   return kandidaten.filter((u) => (abweichend.get(u.id) ?? standard) === "sofort");
+}
+
+/**
+ * Zustand des letzten Erinnerungs-Laufs — für die Statuszeile auf dem
+ * Admin-Dashboard (Entwurf E3). Sie ist die Gegenmaßnahme zum Cron-Dispatcher:
+ * Läuft der nicht (vergessen einzurichten, Server aus, Script kaputt), bleibt
+ * hier der letzte Lauf alt stehen, und die Zeile wird rot.
+ */
+export type ReminderStatus = {
+  lastRunAt: Date | null;
+  sentCount: number;
+  errorCount: number;
+  /** true, wenn seit >2 Tagen kein Lauf verzeichnet ist oder der letzte Fehler hatte. */
+  stale: boolean;
+};
+
+const ZWEI_TAGE_MS = 2 * 24 * 60 * 60 * 1000;
+
+export async function fetchReminderStatus(): Promise<ReminderStatus> {
+  const [letzter] = await db
+    .select()
+    .from(notificationRuns)
+    .where(eq(notificationRuns.art, "reminders"))
+    .orderBy(desc(notificationRuns.startedAt))
+    .limit(1);
+
+  if (!letzter) {
+    return { lastRunAt: null, sentCount: 0, errorCount: 0, stale: true };
+  }
+  const alt = Date.now() - letzter.startedAt.getTime() > ZWEI_TAGE_MS;
+  return {
+    lastRunAt: letzter.startedAt,
+    sentCount: letzter.sentCount,
+    errorCount: letzter.errorCount,
+    stale: alt || letzter.errorCount > 0,
+  };
 }

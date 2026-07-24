@@ -7,6 +7,15 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 ## [Unreleased]
 
 ### Hinzugefügt
+- **Termin-Änderungen erreichen die Band**: Beim Bearbeiten eines Termins gibt es
+  jetzt (wie beim Anlegen) die Checkbox „Band benachrichtigen" — vorausgewählt.
+  Eine Mail geht aber nur raus, wenn sich **Datum, Uhrzeit oder Ort** wirklich
+  geändert hat, und nennt konkret alt → neu. Titel-Korrekturen oder Notizen
+  lösen bewusst nichts aus. Bisher erreichte eine Gig-Verschiebung niemanden.
+- **Statuszeile auf dem Dashboard** (nur Admins): zeigt den letzten
+  Erinnerungs-Lauf mit Datum, Mail-Zahl und Fehlern — und wird auffällig, wenn
+  seit über zwei Tagen kein Lauf verzeichnet ist oder der letzte Fehler hatte.
+  So fällt ein vergessener oder klemmender Cron-Job auf, statt still zu bleiben.
 - **Zentraler Cron-Dispatcher** (`./scripts/cron.sh`): ein einziger Cron-Eintrag
   läuft minütlich und entscheidet anhand einer Zeitplan-Tabelle im Repo, welche
   Aufgabe dran ist (Backup, Papierkorb leeren, Erinnerungen). Der Zeitplan liegt
@@ -54,6 +63,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
   Ohne Terminal (Cron, Pipe) verweigert das Script den Dienst.
 
 ### Behoben
+- **E-Mail-Versand robuster**: knappe Verbindungs-Timeouts (statt bis zu zwei
+  Minuten am Default) und ein Wiederholungsversuch, falls die SMTP-Verbindung
+  kurz zickt („Greeting never received"). Betrifft alle Benachrichtigungen, nicht
+  nur die Erinnerungen.
 - **ICS-Feed faltet lange Zeilen** nach RFC 5545 (höchstens 75 Oktette, gemessen
   in Oktetten und ohne Umlaute zu zerschneiden). Lange Notizen oder Ortsangaben
   konnten strenge Kalender-Programme bisher stören.

@@ -13,6 +13,12 @@ function transporter(extra?: nodemailer.TransportOptions) {
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       : undefined,
+    // Knappe Timeouts: ohne diese hängt ein zickender Server (kein Greeting)
+    // bis zu 2 Minuten am Default. So scheitert ein Versuch nach Sekunden und
+    // der Wiederholungsversuch (frische Verbindung) kann greifen.
+    connectionTimeout: 10_000,
+    greetingTimeout: 8_000,
+    socketTimeout: 20_000,
     ...extra,
   } as nodemailer.TransportOptions);
 }
@@ -83,13 +89,23 @@ export function notifyBand(opts: {
         );
         return;
       }
-      await transporter().sendMail({
+      const mail = {
         from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
         bcc: recipients.map((r) => r.email),
         subject: `[BandMate] ${opts.subject}`,
         text: buildEmailText(opts),
         html: buildEmailHtml({ ...opts, preheader: opts.intro }),
-      });
+      };
+      // Ein Versuch, bei transientem Zicken (z.B. „Greeting never received")
+      // ein zweiter nach kurzer Pause — wie im Erinnerungslauf. Danach gibt
+      // notifyBand auf: fire-and-forget, der Fehler wird nur geloggt.
+      const t = transporter();
+      try {
+        await t.sendMail(mail);
+      } catch {
+        await new Promise((r) => setTimeout(r, 750));
+        await t.sendMail(mail);
+      }
     } catch (err) {
       console.error("E-Mail-Versand fehlgeschlagen:", err);
     }

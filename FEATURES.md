@@ -149,10 +149,15 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   `notifyByEmail`-Schalter; gegen eine Kopie der echten Daten geprüft.
   13 Tests, per Mutationsprobe abgesichert.
 
-- [ ] **„Band benachrichtigen" auch beim Bearbeiten von Terminen**
-  Fehlt heute komplett (`components/event-forms.tsx:145`) — eine Gig-Verschiebung erreicht
-  niemanden. Checkbox auch im Edit-Modus, Mail nennt explizit *was* sich geändert hat
-  (alt → neu). Beim Anlegen sinnvollerweise per Default **an** statt aus.
+- [x] **„Band benachrichtigen" auch beim Bearbeiten von Terminen** — *erledigt 23.07.2026*
+  Checkbox im Edit-Modus (vorausgewählt), Mail nur bei Änderung von Datum/Uhrzeit/Ort mit
+  konkretem alt → neu. Titel/Notiz/Setliste lösen nichts aus. Beim Anlegen jetzt Default an.
+  Reine, testbare Änderungserkennung (`lib/event-notify.ts`), gegen Mailpit Ende-zu-Ende
+  geprüft.
+
+- [x] **Statuszeile für Admins** (Teil des Dashboards) — *erledigt 23.07.2026*
+  Zeigt den letzten Erinnerungs-Lauf aus `notification_runs`, wird ab 2 Tagen ohne Lauf
+  oder bei Fehlern auffällig. Das Sicherheitsnetz zum Cron-Dispatcher.
 
 - [ ] **Dashboard: „Was muss ich tun?"**
   Neuer Block ganz oben, vor allem anderen: offene Zu-/Absagen · Vorschläge ohne meine

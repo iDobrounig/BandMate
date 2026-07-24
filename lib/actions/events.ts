@@ -13,6 +13,7 @@ import {
 } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
 import { notifyBand } from "@/lib/mail";
+import { describeEventChanges } from "@/lib/event-notify";
 import { formatDate } from "@/lib/format";
 import type { FormState } from "@/lib/actions/auth";
 
@@ -112,14 +113,39 @@ export async function updateEvent(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireUser();
+  const user = await requireUser();
   const eventId = Number(formData.get("eventId"));
   const fields = readEventFields(formData);
   if (!fields.title) return { error: "Der Termin braucht einen Titel." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fields.date))
     return { error: "Bitte ein Datum angeben." };
 
+  // Alten Stand VOR dem Speichern lesen, damit die Mail „alt → neu" nennen kann.
+  const alt = await db.query.events.findFirst({ where: eq(events.id, eventId) });
+
   await db.update(events).set(fields).where(eq(events.id, eventId));
+
+  const sendMail = formData.get("sendMail") === "on";
+  if (sendMail && alt) {
+    const changes = describeEventChanges(alt, fields);
+    // Nur benachrichtigen, wenn sich wirklich Datum/Uhrzeit/Ort geändert hat.
+    if (changes.length > 0) {
+      const kindLabel = fields.kind === "gig" ? "Gig" : "Probe";
+      notifyBand({
+        kind: "event_changed",
+        subject: `Termin geändert: ${fields.title} (${kindLabel})`,
+        heading: "Termin geändert",
+        intro: `${user.name} hat „${fields.title}" geändert:`,
+        details: changes,
+        cta: {
+          label: "Zum Termin",
+          url: `${process.env.APP_URL ?? ""}/termine/${eventId}`,
+        },
+        excludeUserId: user.id,
+      });
+    }
+  }
+
   revalidatePath("/", "layout");
   return { success: "Termin gespeichert." };
 }

@@ -4,25 +4,31 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { songs, comments, users } from "@/lib/db/schema";
 import { fetchSongList, fetchEvents } from "@/lib/queries";
+import { fetchReminderStatus } from "@/lib/notifications";
 import { songAktiv } from "@/lib/db/filters";
 import { SONG_STATUS, EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { ReminderStatusLine } from "@/components/reminder-status";
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const isAdmin = user.role === "admin";
 
-  const [allSongs, recentComments, upcomingEvents] = await Promise.all([
-    fetchSongList(user.id),
-    db
-      .select({ comment: comments, userName: users.name, songTitle: songs.title })
-      .from(comments)
-      .innerJoin(users, eq(comments.userId, users.id))
-      .innerJoin(songs, eq(comments.songId, songs.id))
-      .where(songAktiv)
-      .orderBy(desc(comments.createdAt))
-      .limit(6),
-    fetchEvents(user.id, { limit: 4 }),
-  ]);
+  const [allSongs, recentComments, upcomingEvents, reminderStatus] =
+    await Promise.all([
+      fetchSongList(user.id),
+      db
+        .select({ comment: comments, userName: users.name, songTitle: songs.title })
+        .from(comments)
+        .innerJoin(users, eq(comments.userId, users.id))
+        .innerJoin(songs, eq(comments.songId, songs.id))
+        .where(songAktiv)
+        .orderBy(desc(comments.createdAt))
+        .limit(6),
+      fetchEvents(user.id, { limit: 4 }),
+      // Nur Admins sehen die Statuszeile — für alle anderen gar nicht erst laden.
+      isAdmin ? fetchReminderStatus() : Promise.resolve(null),
+    ]);
 
   const suggestions = allSongs.filter((s) => s.status === "suggestion");
   const topSuggestions = [...suggestions]
@@ -50,6 +56,8 @@ export default async function DashboardPage() {
           + Song vorschlagen
         </Link>
       </div>
+
+      {reminderStatus && <ReminderStatusLine status={reminderStatus} />}
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8 min-w-0">
