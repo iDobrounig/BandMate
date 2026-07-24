@@ -6,6 +6,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
+_Noch nichts._
+
+## [1.11.0] — 2026-07-24
+
+**Welle 1 — Aktivierung.** BandMate war bisher eine reine Pull-App: Es passierte
+nur etwas, wenn jemand die Seite öffnete. Diese Version gibt der App eine Stimme —
+Termin-Erinnerungen, ein Wochen-Digest und ein „Was für dich ansteht"-Block holen
+die Band zurück, und eine Statuszeile verrät, wenn der Versand klemmt. Aufbauend
+auf Welle 0 (Datensicherheit) aus 1.10.x. Grundlage:
+[docs/review-2026-07.md](docs/review-2026-07.md).
+
 ### Hinzugefügt
 - **„Was für dich ansteht" auf dem Dashboard**: ein Block ganz oben mit deinen
   offenen Punkten — Termine der nächsten 14 Tage ohne deine Rückmeldung,
@@ -81,6 +92,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 - **ICS-Feed faltet lange Zeilen** nach RFC 5545 (höchstens 75 Oktette, gemessen
   in Oktetten und ohne Umlaute zu zerschneiden). Lange Notizen oder Ortsangaben
   konnten strenge Kalender-Programme bisher stören.
+- **SMTP-Konfiguration dokumentiert**: `SMTP_PORT` und `SMTP_SECURE` gehören
+  zusammen (465/true bzw. 587/false) — die falsche Paarung erzeugt beim
+  Verbindungsaufbau „wrong version number" und lässt den Versand still scheitern.
+  Als Tabelle im README und in der `.env.example`, mit Verweis auf den SMTP-Test.
 
 ### Geändert
 - Die Zeilenzahl-Auskunft über eine Datenbank liegt jetzt in
