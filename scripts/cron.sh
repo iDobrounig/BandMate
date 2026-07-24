@@ -24,6 +24,7 @@ REPO_DIR="$PWD"
 # --- Umgebung --------------------------------------------------------------
 # Cron startet mit minimalem PATH — node/npm müssen gefunden werden. Wie in
 # deploy.sh: bei mehreren Node-Versionen die gewünschte voranstellen.
+NODE_BIN_DIR="/usr/local/node22/bin"
 NODE_BIN_DIR="${NODE_BIN_DIR:-}"
 [[ -n "$NODE_BIN_DIR" ]] && export PATH="$NODE_BIN_DIR:$PATH"
 
@@ -44,7 +45,7 @@ SCHEDULE=(
   "backup    | 30 | 3 | * | ./scripts/backup.sh"
   "purge     | 0  | 4 | * | npm run --silent trash:purge"
   "reminders | 0  | 6 | * | npm run --silent notify:reminders"
-  # später: "digest | 0 | 18 | 7 | npm run --silent notify:digest"
+  "digest    | 0  | 18| 7 | npm run --silent notify:digest"  # sonntags 18:00
 )
 
 # Feld aus einer SCHEDULE-Zeile, umschließende Leerzeichen entfernt. Bewusst

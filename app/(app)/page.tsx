@@ -5,16 +5,22 @@ import { db } from "@/lib/db";
 import { songs, comments, users } from "@/lib/db/schema";
 import { fetchSongList, fetchEvents } from "@/lib/queries";
 import { fetchReminderStatus } from "@/lib/notifications";
+import { fetchTodo, touchLastSeen } from "@/lib/todo";
 import { songAktiv } from "@/lib/db/filters";
 import { SONG_STATUS, EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ReminderStatusLine } from "@/components/reminder-status";
+import { TodoBlock } from "@/components/todo-block";
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const isAdmin = user.role === "admin";
 
-  const [allSongs, recentComments, upcomingEvents, reminderStatus] =
+  // lastSeenAt VOR dem Todo lesen und sofort fortschreiben — so nutzt „neu seit
+  // letztem Besuch" den vorigen Wert, und rasche Reloads verlieren ihn nicht.
+  const lastSeen = await touchLastSeen(user.id);
+
+  const [allSongs, recentComments, upcomingEvents, reminderStatus, todo] =
     await Promise.all([
       fetchSongList(user.id),
       db
@@ -28,6 +34,7 @@ export default async function DashboardPage() {
       fetchEvents(user.id, { limit: 4 }),
       // Nur Admins sehen die Statuszeile — für alle anderen gar nicht erst laden.
       isAdmin ? fetchReminderStatus() : Promise.resolve(null),
+      fetchTodo(user.id, lastSeen),
     ]);
 
   const suggestions = allSongs.filter((s) => s.status === "suggestion");
@@ -58,6 +65,7 @@ export default async function DashboardPage() {
       </div>
 
       {reminderStatus && <ReminderStatusLine status={reminderStatus} />}
+      {todo.gesamt > 0 && <TodoBlock todo={todo} />}
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8 min-w-0">

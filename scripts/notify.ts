@@ -2,6 +2,7 @@
  * Verschickt die zeitgesteuerten Benachrichtigungen.
  *
  *   npm run notify:reminders     # täglich früh (Cron)
+ *   npm run notify:digest        # sonntags abends (Cron)
  *
  * Idempotent: Ein doppelter Lauf verschickt beim zweiten Mal nichts, weil jeder
  * Versand im Log steht. Ein ausgefallener Tag wird NICHT nachgeholt — eine
@@ -16,18 +17,20 @@ loadEnvConfig(process.cwd());
 
 async function main() {
   const befehl = process.argv[2];
-  if (befehl !== "reminders") {
-    console.error("Aufruf: npm run notify:reminders");
+  if (befehl !== "reminders" && befehl !== "digest") {
+    console.error("Aufruf: npm run notify:reminders  |  npm run notify:digest");
     process.exit(2);
   }
 
-  const { runReminders } = await import("../lib/reminders");
   const appUrl = process.env.APP_URL ?? "";
   if (!appUrl) {
     console.warn("Warnung: APP_URL nicht gesetzt — Links in den Mails sind leer.");
   }
 
-  const ergebnis = await runReminders(appUrl);
+  const ergebnis =
+    befehl === "digest"
+      ? await (await import("../lib/digest")).runDigest(appUrl)
+      : await (await import("../lib/reminders")).runReminders(appUrl);
   console.log(ergebnis.note);
   if (ergebnis.errors > 0) process.exitCode = 1;
 }

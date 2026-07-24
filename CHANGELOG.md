@@ -7,6 +7,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 ## [Unreleased]
 
 ### Hinzugefügt
+- **„Was für dich ansteht" auf dem Dashboard**: ein Block ganz oben mit deinen
+  offenen Punkten — Termine der nächsten 14 Tage ohne deine Rückmeldung,
+  Vorschläge ohne deine Stimme, Songs der nächsten Probe-Agenda, die du noch
+  nicht „kannst", und neue Kommentare seit deinem letzten Besuch. Ist nichts
+  offen, verschwindet der Block.
+- **Wochen-Digest** (`npm run notify:digest`, sonntags per Cron): eine
+  Zusammenfassung pro Mitglied mit den offenen Punkten und dem, was in den
+  letzten sieben Tagen anfiel (neue Vorschläge, Termine, Kommentare — je nach
+  den „Gesammelt"-Einstellungen). Wer nichts zu berichten hat, bekommt keine
+  Mail. Idempotent je Kalenderwoche; pro Mitglied unter „Wochen-Digest" im
+  Profil abschaltbar.
 - **Termin-Änderungen erreichen die Band**: Beim Bearbeiten eines Termins gibt es
   jetzt (wie beim Anlegen) die Checkbox „Band benachrichtigen" — vorausgewählt.
   Eine Mail geht aber nur raus, wenn sich **Datum, Uhrzeit oder Ort** wirklich

@@ -135,10 +135,10 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   den nächsten Lauf nicht. Jeder Lauf wird in `notification_runs` festgehalten — Grundlage
   für die Statuszeile aus dem nächsten Häppchen. 12 Tests, per Mutationsprobe abgesichert.
 
-- [ ] **Wochen-Digest**
-  Sonntagabend eine Mail pro Mitglied: nächste Termine mit eigenem RSVP-Stand, neue
-  Vorschläge **ohne meine Stimme**, was in der kommenden Probe auf der Agenda steht, neue
-  Kommentare. Nur verschicken, wenn es etwas zu berichten gibt.
+- [x] **Wochen-Digest** — *erledigt 23.07.2026*
+  `npm run notify:digest` (Cron, So 18:00 im Dispatcher): offene Punkte + „gesammelt"-Posten
+  der letzten 7 Tage je nach Einstellungen. Idempotent je ISO-Woche, leer = keine Mail,
+  pro Mitglied abschaltbar. 8 Tests, per Mutationsprobe abgesichert, gegen Mailpit geprüft.
 
 - [x] **Getrennte Benachrichtigungs-Schalter** — *erledigt 23.07.2026*
   Matrix `(Mitglied × Ereignistyp × Kanal)` mit drei Stufen (sofort/gesammelt/nie), UI auf
@@ -159,11 +159,10 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Zeigt den letzten Erinnerungs-Lauf aus `notification_runs`, wird ab 2 Tagen ohne Lauf
   oder bei Fehlern auffällig. Das Sicherheitsnetz zum Cron-Dispatcher.
 
-- [ ] **Dashboard: „Was muss ich tun?"**
-  Neuer Block ganz oben, vor allem anderen: offene Zu-/Absagen · Vorschläge ohne meine
-  Stimme · Songs der nächsten Probe-Agenda, die ich noch nicht „kann" · neue Kommentare seit
-  meinem letzten Besuch. **Alle Daten liegen schon in der DB** — es fehlt nur die Abfrage.
-  Billigste große Wirkung im Projekt.
+- [x] **Dashboard: „Was für dich ansteht"** — *erledigt 23.07.2026*
+  Block ganz oben mit offenen Zu-/Absagen (14 Tage), ungestimmten Vorschlägen, ungeübten
+  Agenda-Songs und neuen Kommentaren seit dem letzten Besuch (`lastSeenAt`). Verschwindet,
+  wenn nichts offen ist. `lib/todo.ts`, 15 Tests, per Mutationsprobe abgesichert.
 
 ### Welle 2 — Bühnenwert *(das, was WhatsApp nie können wird)*
 
