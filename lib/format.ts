@@ -42,3 +42,13 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/**
+ * Gage in Euro, deutsche Notation: 400 → "400 €", 1250 → "1.250 €".
+ * Bewusst "de-DE" (Punkt als Tausendertrenner) statt "de-AT" — ICU rendert
+ * de-AT mit schmalem Leerzeichen ("1 250"), was bei Beträgen ungewohnt wirkt.
+ */
+export function formatFee(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "";
+  return `${value.toLocaleString("de-DE", { maximumFractionDigits: 2 })} €`;
+}
