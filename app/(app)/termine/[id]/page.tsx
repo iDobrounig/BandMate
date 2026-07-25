@@ -13,7 +13,7 @@ import {
 } from "@/lib/db/schema";
 import { songAktiv, setlistAktiv, eventAktiv } from "@/lib/db/filters";
 import { EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatFee } from "@/lib/format";
 import { EventForm, DeleteEventButtons } from "@/components/event-forms";
 import { AttendanceButtons } from "@/components/attendance";
 import { EventAgenda } from "@/components/event-agenda";
@@ -96,7 +96,11 @@ export default async function TerminDetailPage({
         </div>
         <p className="mono-display mt-2 text-mute">
           {formatDate(event.date)}
-          {event.startTime ? ` · ${event.startTime} Uhr` : ""}
+          {event.startTime
+            ? event.kind === "gig"
+              ? ` · Load-in ${event.startTime}`
+              : ` · ${event.startTime} Uhr`
+            : ""}
           {event.location ? ` · ${event.location}` : ""}
         </p>
         {event.notes && (
@@ -117,6 +121,75 @@ export default async function TerminDetailPage({
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-8">
+          {event.kind === "gig" &&
+            (event.soundcheckTime ||
+              event.stageTime ||
+              event.contactName ||
+              event.contactPhone ||
+              event.fee != null ||
+              event.feeExtras ||
+              event.travelNotes ||
+              event.backlineNotes) && (
+              <section className="card p-5">
+                <h2 className="headline mb-3 text-lg">Gig-Logistik</h2>
+                <dl className="space-y-2 text-sm">
+                  {(event.startTime || event.soundcheckTime || event.stageTime) && (
+                    <div className="flex gap-3">
+                      <dt className="w-28 shrink-0 text-mute">Ablauf</dt>
+                      <dd className="mono-display">
+                        {[
+                          event.startTime ? `Load-in ${event.startTime}` : null,
+                          event.soundcheckTime ? `Soundcheck ${event.soundcheckTime}` : null,
+                          event.stageTime ? `Auftritt ${event.stageTime}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </dd>
+                    </div>
+                  )}
+                  {(event.contactName || event.contactPhone) && (
+                    <div className="flex gap-3">
+                      <dt className="w-28 shrink-0 text-mute">Kontakt</dt>
+                      <dd>
+                        {event.contactName}
+                        {event.contactName && event.contactPhone ? " · " : ""}
+                        {event.contactPhone && (
+                          <a
+                            href={`tel:${event.contactPhone.replace(/[^\d+]/g, "")}`}
+                            className="text-accent-hi hover:underline"
+                          >
+                            {event.contactPhone}
+                          </a>
+                        )}
+                      </dd>
+                    </div>
+                  )}
+                  {(event.fee != null || event.feeExtras) && (
+                    <div className="flex gap-3">
+                      <dt className="w-28 shrink-0 text-mute">Gage</dt>
+                      <dd>
+                        {[formatFee(event.fee), event.feeExtras]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </dd>
+                    </div>
+                  )}
+                  {event.travelNotes && (
+                    <div className="flex gap-3">
+                      <dt className="w-28 shrink-0 text-mute">Anfahrt</dt>
+                      <dd className="whitespace-pre-wrap">{event.travelNotes}</dd>
+                    </div>
+                  )}
+                  {event.backlineNotes && (
+                    <div className="flex gap-3">
+                      <dt className="w-28 shrink-0 text-mute">Backline</dt>
+                      <dd className="whitespace-pre-wrap">{event.backlineNotes}</dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+            )}
+
           <section className="card p-5">
             <h2 className="headline mb-3 text-lg">Bist du dabei?</h2>
             <AttendanceButtons
