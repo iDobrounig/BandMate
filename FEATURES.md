@@ -180,10 +180,18 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Set 1 / Pause / Set 2 als Strukturelemente mit Zwischensummen, plus Zielzeit-Abgleich
   („90 min gebucht, 78 min programmiert"). Häufigster echter Gig-Bedarf.
 
-- [ ] **Gig-Logistik**
-  Ein Gig hat heute nur Titel/Datum/Ort/Notizen. Ergänzen: Gage, Ansprechpartner + Telefon,
-  Load-in, Soundcheck, Auftrittszeit, Anfahrt/Parken, Backline/Technik. Sonst landet genau
-  das wieder in WhatsApp — im Moment des größten Nutzens.
+- [x] **Gig-Logistik** — *erledigt 26.07.2026. Entwurf:
+  [docs/superpowers/specs/2026-07-26-gig-logistik-design.md](docs/superpowers/specs/2026-07-26-gig-logistik-design.md)*
+  Acht Felder nur bei Gigs: `startTime` = **Load-in** (Anker für Kalender & Erinnerung),
+  dazu **Soundcheck** und **Auftritt** als Zusatzzeiten, **Ansprechpartner + Telefon**
+  (auf der Detailseite als `tel:`-Link antippbar), **Gage** als Zahl (`real`, summierbar)
+  plus **Verpflegung & Extras**, **Anfahrt/Parken** und **Backline/Technik** als Freitext.
+  Logistik-Karte zuoberst auf der Termin-Detailseite (nur befüllte Zeilen). Geänderte
+  Soundcheck-/Auftrittszeit löst die „Band benachrichtigen"-Mail aus (Gage/Kontakt/Anfahrt/
+  Backline bewusst nicht). Der ICS-Feed bekommt bei Gigs einen Logistik-Block in der
+  `DESCRIPTION` und `DTEND` bis Auftritt + 2 h. Nebenbei alle Labels im Terminformular mit
+  `htmlFor`/`id` (Teil von „Konsistenz & Kleinkram" F1). Neue Tests für `describeEventChanges`,
+  `buildIcs` und `formatFee`.
 
 ### Welle 3 — Gedächtnis & Komfort
 
