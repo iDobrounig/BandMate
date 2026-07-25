@@ -2,6 +2,7 @@ import {
   sqliteTable,
   text,
   integer,
+  real,
   primaryKey,
   unique,
 } from "drizzle-orm/sqlite-core";
@@ -168,6 +169,16 @@ export const events = sqliteTable("events", {
   startTime: text("start_time"), // HH:MM
   location: text("location"),
   notes: text("notes"),
+  // Gig-Logistik (nur bei kind === "gig" befüllt). startTime dient bei Gigs
+  // als Load-in — daher hier kein eigenes Load-in-Feld.
+  soundcheckTime: text("soundcheck_time"), // HH:MM
+  stageTime: text("stage_time"), // HH:MM Auftrittszeit
+  contactName: text("contact_name"),
+  contactPhone: text("contact_phone"),
+  fee: real("fee"), // Gage in Euro, summierbar
+  feeExtras: text("fee_extras"), // Verpflegung & Extras (Freitext)
+  travelNotes: text("travel_notes"), // Anfahrt & Parken
+  backlineNotes: text("backline_notes"), // Backline & Technik
   setlistId: integer("setlist_id").references(() => setlists.id, {
     onDelete: "set null",
   }),
