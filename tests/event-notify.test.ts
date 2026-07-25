@@ -53,4 +53,19 @@ describe("describeEventChanges", () => {
     // dieser Test hält fest, dass nur date/startTime/location zählen.
     expect(Object.keys(basis).sort()).toEqual(["date", "location", "startTime"]);
   });
+
+  it("nennt die Zeitzeile bei einem Gig „Load-in“", () => {
+    const z = describeEventChanges(basis, { ...basis, startTime: "15:00" }, "gig");
+    expect(z).toEqual(["Load-in: 19:30 Uhr → 15:00 Uhr"]);
+  });
+
+  it("erkennt eine geänderte Soundcheck-Zeit (nur bei Gig gefüllt)", () => {
+    const z = describeEventChanges(basis, { ...basis, soundcheckTime: "16:30" }, "gig");
+    expect(z).toEqual(["Soundcheck: — → 16:30 Uhr"]);
+  });
+
+  it("erkennt eine geänderte Auftrittszeit", () => {
+    const z = describeEventChanges(basis, { ...basis, stageTime: "20:00" }, "gig");
+    expect(z).toEqual(["Auftritt: — → 20:00 Uhr"]);
+  });
 });
