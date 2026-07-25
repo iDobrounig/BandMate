@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { sessionOptions } from "@/lib/session";
+import { formatFee } from "@/lib/format";
 import type { BandEvent } from "@/lib/db/schema";
 
 /**
@@ -128,17 +129,38 @@ export function buildIcs(eventList: BandEvent[], appUrl: string): string {
     if (event.startTime) {
       // Lokale Zeit ohne Zeitzone ("floating") — Kalender interpretiert lokal
       lines.push(`DTSTART:${icsDateTime(event.date, event.startTime)}`);
-      // Proben 2h, Gigs 3h als Standarddauer
-      lines.push(
-        `DTEND:${addHours(event.date, event.startTime, event.kind === "gig" ? 3 : 2)}`
-      );
+      // Proben 2h. Gigs: bis Auftritt + 2h (startTime ist Load-in), sonst +3h.
+      const gig = event.kind === "gig";
+      const endBase = gig && event.stageTime ? event.stageTime : event.startTime;
+      const endHours = gig ? (event.stageTime ? 2 : 3) : 2;
+      lines.push(`DTEND:${addHours(event.date, endBase, endHours)}`);
     } else {
       lines.push(`DTSTART;VALUE=DATE:${event.date.replaceAll("-", "")}`);
       lines.push(`DTEND;VALUE=DATE:${nextDay(event.date)}`);
     }
     lines.push(`SUMMARY:${escapeIcs(`${kindLabel}: ${event.title}`)}`);
     if (event.location) lines.push(`LOCATION:${escapeIcs(event.location)}`);
+    const logistik: string[] = [];
+    if (event.kind === "gig") {
+      const zeiten = [
+        event.startTime ? `Load-in ${event.startTime}` : null,
+        event.soundcheckTime ? `Soundcheck ${event.soundcheckTime}` : null,
+        event.stageTime ? `Auftritt ${event.stageTime}` : null,
+      ].filter(Boolean);
+      if (zeiten.length) logistik.push(zeiten.join(" · "));
+      if (event.contactName || event.contactPhone)
+        logistik.push(
+          `Kontakt: ${[event.contactName, event.contactPhone].filter(Boolean).join(", ")}`
+        );
+      if (event.fee != null || event.feeExtras)
+        logistik.push(
+          `Gage: ${[formatFee(event.fee), event.feeExtras].filter(Boolean).join(" · ")}`
+        );
+      if (event.travelNotes) logistik.push(`Anfahrt: ${event.travelNotes}`);
+      if (event.backlineNotes) logistik.push(`Backline: ${event.backlineNotes}`);
+    }
     const descParts = [
+      logistik.length ? logistik.join("\n") : "",
       event.notes ?? "",
       appUrl ? `Zu-/Absagen: ${appUrl}/termine/${event.id}` : "",
     ].filter(Boolean);

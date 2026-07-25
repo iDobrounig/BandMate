@@ -17,6 +17,14 @@ function termin(over: Partial<BandEvent> = {}): BandEvent {
     createdAt: new Date("2026-07-01T10:00:00Z"),
     deletedAt: null,
     deletedById: null,
+    soundcheckTime: null,
+    stageTime: null,
+    contactName: null,
+    contactPhone: null,
+    fee: null,
+    feeExtras: null,
+    travelNotes: null,
+    backlineNotes: null,
     ...over,
   } as BandEvent;
 }
@@ -24,6 +32,17 @@ function termin(over: Partial<BandEvent> = {}): BandEvent {
 /** Entfaltet den Feed wieder (RFC 5545: CRLF + Leerzeichen = Fortsetzung). */
 function entfalten(ics: string): string[] {
   return ics.replace(/\r\n /g, "").split("\r\n");
+}
+
+/** Holt die entfaltete DESCRIPTION und macht ICS-Maskierung rückgängig. */
+function beschreibung(ics: string): string | undefined {
+  const z = entfalten(ics).find((l) => l.startsWith("DESCRIPTION:"));
+  return z
+    ?.slice("DESCRIPTION:".length)
+    .replace(/\\n/g, "\n")
+    .replace(/\\,/g, ",")
+    .replace(/\\;/g, ";")
+    .replace(/\\\\/g, "\\");
 }
 
 describe("Erinnerungen (VALARM)", () => {
@@ -90,6 +109,47 @@ describe("Zeilenfaltung (RFC 5545)", () => {
     const ics = buildIcs([termin({ notes: null, location: null })], "");
     expect(ics).toContain("\r\nBEGIN:VEVENT\r\n");
     expect(ics).toContain("\r\nSUMMARY:Probe: Bandprobe\r\n");
+  });
+});
+
+describe("Gig-Logistik im Feed", () => {
+  const gig = {
+    kind: "gig" as const,
+    title: "Stadtfest",
+    date: "2026-08-06",
+    startTime: "15:00",
+    soundcheckTime: "16:30",
+    stageTime: "20:00",
+    contactName: "Max Huber",
+    contactPhone: "0664 1234567",
+    fee: 400,
+    feeExtras: "warmes Essen",
+    travelNotes: "Parkplatz hinterm Zelt",
+    backlineNotes: "Drumkit steht",
+  };
+
+  it("stellt einem Gig einen Logistik-Block in die DESCRIPTION voran", () => {
+    const desc = beschreibung(buildIcs([termin(gig)], "https://b.example.com"));
+    expect(desc).toContain("Load-in 15:00 · Soundcheck 16:30 · Auftritt 20:00");
+    expect(desc).toContain("Kontakt: Max Huber, 0664 1234567");
+    expect(desc).toContain("Gage: 400 € · warmes Essen");
+    expect(desc).toContain("Anfahrt: Parkplatz hinterm Zelt");
+    expect(desc).toContain("Backline: Drumkit steht");
+  });
+
+  it("setzt DTEND bei einem Gig auf Auftrittszeit + 2 h", () => {
+    const zeilen = entfalten(buildIcs([termin(gig)], ""));
+    expect(zeilen).toContain("DTSTART:20260806T150000");
+    expect(zeilen).toContain("DTEND:20260806T220000");
+  });
+
+  it("lässt Proben unverändert (kein Block, DTEND = startTime + 2 h)", () => {
+    const desc = beschreibung(
+      buildIcs([termin({ date: "2026-08-06", startTime: "19:30", notes: "Nur Notiz" })], "")
+    );
+    expect(desc).not.toContain("Load-in");
+    const zeilen = entfalten(buildIcs([termin({ date: "2026-08-06", startTime: "19:30" })], ""));
+    expect(zeilen).toContain("DTEND:20260806T213000");
   });
 });
 
