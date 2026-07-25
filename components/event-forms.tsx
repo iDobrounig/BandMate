@@ -55,8 +55,9 @@ export function EventForm({
       </div>
 
       <div>
-        <label className="label">Titel</label>
+        <label className="label" htmlFor="ev-title">Titel</label>
         <input
+          id="ev-title"
           className="input"
           name="title"
           defaultValue={event?.title ?? ""}
@@ -66,8 +67,9 @@ export function EventForm({
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Datum</label>
+          <label className="label" htmlFor="ev-date">Datum</label>
           <input
+            id="ev-date"
             className="input"
             name="date"
             type="date"
@@ -76,8 +78,11 @@ export function EventForm({
           />
         </div>
         <div>
-          <label className="label">Uhrzeit (optional)</label>
+          <label className="label" htmlFor="ev-startTime">
+            {kind === "gig" ? "Load-in (optional)" : "Uhrzeit (optional)"}
+          </label>
           <input
+            id="ev-startTime"
             className="input"
             name="startTime"
             type="time"
@@ -86,8 +91,9 @@ export function EventForm({
         </div>
       </div>
       <div>
-        <label className="label">Ort (optional)</label>
+        <label className="label" htmlFor="ev-location">Ort (optional)</label>
         <input
+          id="ev-location"
           className="input"
           name="location"
           defaultValue={event?.location ?? ""}
@@ -95,8 +101,9 @@ export function EventForm({
         />
       </div>
       <div>
-        <label className="label">Setliste (optional)</label>
+        <label className="label" htmlFor="ev-setlistId">Setliste (optional)</label>
         <select
+          id="ev-setlistId"
           className="input"
           name="setlistId"
           defaultValue={event?.setlistId ?? ""}
@@ -110,13 +117,108 @@ export function EventForm({
         </select>
       </div>
       <div>
-        <label className="label">Notizen</label>
+        <label className="label" htmlFor="ev-notes">Notizen</label>
         <textarea
+          id="ev-notes"
           className="input min-h-16"
           name="notes"
           defaultValue={event?.notes ?? ""}
         />
       </div>
+
+      {kind === "gig" && (
+        <div className="space-y-4 rounded-lg border border-line-soft p-3">
+          <p className="label !mb-0">Gig-Logistik</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="ev-soundcheck">Soundcheck</label>
+              <input
+                id="ev-soundcheck"
+                className="input"
+                name="soundcheckTime"
+                type="time"
+                defaultValue={event?.soundcheckTime ?? ""}
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="ev-stage">Auftritt</label>
+              <input
+                id="ev-stage"
+                className="input"
+                name="stageTime"
+                type="time"
+                defaultValue={event?.stageTime ?? ""}
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="ev-contactName">Ansprechpartner</label>
+              <input
+                id="ev-contactName"
+                className="input"
+                name="contactName"
+                defaultValue={event?.contactName ?? ""}
+                placeholder="z.B. Max Huber"
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="ev-contactPhone">Telefon</label>
+              <input
+                id="ev-contactPhone"
+                className="input"
+                name="contactPhone"
+                type="tel"
+                defaultValue={event?.contactPhone ?? ""}
+                placeholder="z.B. 0664 1234567"
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="ev-fee">Gage (€)</label>
+              <input
+                id="ev-fee"
+                className="input"
+                name="fee"
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                defaultValue={event?.fee ?? ""}
+                placeholder="z.B. 400"
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="ev-feeExtras">Verpflegung &amp; Extras</label>
+              <input
+                id="ev-feeExtras"
+                className="input"
+                name="feeExtras"
+                defaultValue={event?.feeExtras ?? ""}
+                placeholder="z.B. warmes Essen, 2 Kisten Bier"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="label" htmlFor="ev-travel">Anfahrt &amp; Parken</label>
+            <textarea
+              id="ev-travel"
+              className="input min-h-16"
+              name="travelNotes"
+              defaultValue={event?.travelNotes ?? ""}
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="ev-backline">Backline &amp; Technik</label>
+            <textarea
+              id="ev-backline"
+              className="input min-h-16"
+              name="backlineNotes"
+              defaultValue={event?.backlineNotes ?? ""}
+            />
+          </div>
+        </div>
+      )}
 
       {!isEdit && (
         <div className="space-y-2 rounded-lg border border-line-soft p-3">
