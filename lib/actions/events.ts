@@ -28,6 +28,13 @@ function readEventFields(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim();
   const setlistIdRaw = String(formData.get("setlistId") ?? "").trim();
   const setlistId = setlistIdRaw ? Number(setlistIdRaw) : null;
+
+  // Gig-Logistik. Fehlen die Felder (Probe-Termin, Block nicht gerendert),
+  // liest FormData sie als leer → null; ein Umschalten Gig→Probe leert sie.
+  const t = (key: string) => String(formData.get(key) ?? "").trim() || null;
+  const feeRaw = String(formData.get("fee") ?? "").trim();
+  const feeNum = feeRaw ? Number(feeRaw) : NaN;
+
   return {
     title,
     kind,
@@ -36,6 +43,15 @@ function readEventFields(formData: FormData) {
     location: location || null,
     notes: notes || null,
     setlistId,
+    soundcheckTime: t("soundcheckTime"),
+    stageTime: t("stageTime"),
+    contactName: t("contactName"),
+    contactPhone: t("contactPhone"),
+    // Tippfehler soll das Formular nicht blockieren → NaN wird zu null.
+    fee: Number.isFinite(feeNum) ? feeNum : null,
+    feeExtras: t("feeExtras"),
+    travelNotes: t("travelNotes"),
+    backlineNotes: t("backlineNotes"),
   };
 }
 
@@ -127,8 +143,8 @@ export async function updateEvent(
 
   const sendMail = formData.get("sendMail") === "on";
   if (sendMail && alt) {
-    const changes = describeEventChanges(alt, fields);
-    // Nur benachrichtigen, wenn sich wirklich Datum/Uhrzeit/Ort geändert hat.
+    const changes = describeEventChanges(alt, fields, fields.kind);
+    // Nur benachrichtigen, wenn sich Datum/Load-in/Ort/Soundcheck/Auftritt geändert hat.
     if (changes.length > 0) {
       const kindLabel = fields.kind === "gig" ? "Gig" : "Probe";
       notifyBand({
