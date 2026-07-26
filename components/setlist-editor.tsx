@@ -27,9 +27,12 @@ import { formatDuration } from "@/lib/format";
 
 export type EditorItem = {
   id: number;
-  songId: number;
+  kind: "song" | "section" | "break";
+  songId: number | null;
+  label: string | null;
+  breakSeconds: number | null;
   note: string | null;
-  title: string;
+  title: string | null;
   artist: string | null;
   songKey: string | null;
   tempoBpm: number | null;
@@ -55,6 +58,41 @@ function SortableRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
   const [note, setNote] = useState(item.note ?? "");
+
+  if (item.kind !== "song") {
+    return (
+      <div
+        ref={setNodeRef}
+        style={{ transform: CSS.Transform.toString(transform), transition }}
+        className={`card flex items-center gap-3 p-3 ${
+          isDragging ? "z-10 border-accent/60 shadow-lg" : ""
+        }`}
+      >
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab touch-none px-1 text-lg text-faint hover:text-ink active:cursor-grabbing shrink-0"
+          title="Ziehen zum Umsortieren"
+        >
+          ⠿
+        </button>
+        <span className="flex-1 font-semibold">
+          {item.kind === "section"
+            ? item.label ?? "Set"
+            : `Pause${item.breakSeconds ? ` · ${Math.round(item.breakSeconds / 60)} min` : ""}`}
+        </span>
+        <button
+          type="button"
+          className="link-danger px-2 text-lg shrink-0"
+          onClick={() => onRemove(item.id)}
+          title="Entfernen"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -82,7 +120,7 @@ function SortableRow({
             href={`/songs/${item.songId}`}
             className="block truncate font-semibold hover:text-accent-hi"
           >
-            {item.title}
+            {item.title ?? ""}
           </a>
           <p className="mono-display truncate text-xs text-mute">
             {[

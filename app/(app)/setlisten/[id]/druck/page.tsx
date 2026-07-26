@@ -27,6 +27,9 @@ export default async function SetlistDruckPage({
   const items = await db
     .select({
       id: setlistItems.id,
+      kind: setlistItems.kind,
+      label: setlistItems.label,
+      breakSeconds: setlistItems.breakSeconds,
       note: setlistItems.note,
       title: songs.title,
       artist: songs.artist,
@@ -36,7 +39,7 @@ export default async function SetlistDruckPage({
       durationSeconds: songs.durationSeconds,
     })
     .from(setlistItems)
-    .innerJoin(songs, eq(setlistItems.songId, songs.id))
+    .leftJoin(songs, eq(setlistItems.songId, songs.id))
     .where(and(eq(setlistItems.setlistId, setlistId), songAktiv))
     .orderBy(asc(setlistItems.position));
 
@@ -73,7 +76,7 @@ export default async function SetlistDruckPage({
             </tr>
           </thead>
           <tbody>
-            {items.map((item, index) => (
+            {items.filter((i) => i.kind === "song").map((item, index) => (
               <tr key={item.id} className="border-b border-neutral-200">
                 <td className="py-2.5 pr-2 font-mono text-sm text-neutral-400">
                   {index + 1}

@@ -139,6 +139,7 @@ export const setlists = sqliteTable("setlists", {
   name: text("name").notNull(),
   eventDate: text("event_date"), // ISO-Datum YYYY-MM-DD
   notes: text("notes"),
+  targetSeconds: integer("target_seconds"), // Zielzeit / gebuchte Spielzeit
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -152,9 +153,13 @@ export const setlistItems = sqliteTable("setlist_items", {
   setlistId: integer("setlist_id")
     .notNull()
     .references(() => setlists.id, { onDelete: "cascade" }),
-  songId: integer("song_id")
+  // Bei kind "section"/"break" ist songId null.
+  songId: integer("song_id").references(() => songs.id, { onDelete: "cascade" }),
+  kind: text("kind", { enum: ["song", "section", "break"] })
     .notNull()
-    .references(() => songs.id, { onDelete: "cascade" }),
+    .default("song"),
+  label: text("label"), // Set-Name (section) bzw. Pausentext (break)
+  breakSeconds: integer("break_seconds"), // Pausendauer (break)
   position: integer("position").notNull(),
   note: text("note"),
 });

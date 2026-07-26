@@ -27,7 +27,10 @@ export default async function SetlistDetailPage({
   const rows = await db
     .select({
       id: setlistItems.id,
+      kind: setlistItems.kind,
       songId: setlistItems.songId,
+      label: setlistItems.label,
+      breakSeconds: setlistItems.breakSeconds,
       note: setlistItems.note,
       title: songs.title,
       artist: songs.artist,
@@ -36,7 +39,7 @@ export default async function SetlistDetailPage({
       durationSeconds: songs.durationSeconds,
     })
     .from(setlistItems)
-    .innerJoin(songs, eq(setlistItems.songId, songs.id))
+    .leftJoin(songs, eq(setlistItems.songId, songs.id))
     .where(and(eq(setlistItems.setlistId, setlistId), songAktiv))
     .orderBy(asc(setlistItems.position));
 
