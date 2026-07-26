@@ -176,9 +176,15 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   zu Song, Wake Lock (Bildschirm bleibt an), Metronom eingeblendet. Macht das Tablet am
   Notenständer zum Grund, die App überhaupt zu öffnen.
 
-- [ ] **Sets & Pausen in Setlisten**
-  Set 1 / Pause / Set 2 als Strukturelemente mit Zwischensummen, plus Zielzeit-Abgleich
-  („90 min gebucht, 78 min programmiert"). Häufigster echter Gig-Bedarf.
+- [x] **Sets & Pausen in Setlisten** — *erledigt 26.07.2026. Entwurf:
+  [docs/superpowers/specs/2026-07-26-sets-und-pausen-design.md](docs/superpowers/specs/2026-07-26-sets-und-pausen-design.md)*
+  Benannte **Set-Überschriften** und **Pausen** (Dauer + optionales Label) als eigene
+  Element-Typen in einer geordneten Liste (`kind` in `setlist_items`, `songId` nullable).
+  Zwischensummen je Set, Song-Nummern je Set neu, Fuß mit **Musik / Pausen / Gesamt** und
+  **Zielzeit-Abgleich** (`targetSeconds` an der Setliste, Musik + Pausen gegen die gebuchte
+  Spielzeit, Ampel). Editor (Drag&Drop über alle Typen) und Druckansicht bilden es ab.
+  Reine Logik `lib/setlist-structure.ts` mit 10 Tests. Migration (Tabellen-Rebuild) gegen
+  eine Kopie der echten DB verifiziert — kein Datenverlust.
 
 - [x] **Gig-Logistik** — *erledigt 26.07.2026. Entwurf:
   [docs/superpowers/specs/2026-07-26-gig-logistik-design.md](docs/superpowers/specs/2026-07-26-gig-logistik-design.md)*
