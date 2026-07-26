@@ -98,6 +98,7 @@ export default async function SetlistDetailPage({
         setlistId={setlist.id}
         items={items}
         songOptions={songOptions}
+        targetSeconds={setlist.targetSeconds}
       />
     </div>
   );

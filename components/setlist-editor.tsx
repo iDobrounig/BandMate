@@ -19,10 +19,15 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   addSongToSetlist,
+  addSetlistSection,
+  addSetlistBreak,
   removeSetlistItem,
   reorderSetlist,
   updateSetlistItemNote,
+  updateSetlistItemLabel,
+  updateSetlistBreakSeconds,
 } from "@/lib/actions/setlists";
+import { summarizeSetlist, compareTarget } from "@/lib/setlist-structure";
 import { formatDuration } from "@/lib/format";
 
 export type EditorItem = {
@@ -48,45 +53,109 @@ export type SongOption = {
 
 function SortableRow({
   item,
-  index,
+  displayNumber,
+  summary,
   onRemove,
 }: {
   item: EditorItem;
-  index: number;
+  displayNumber: number;
+  summary?: { songCount: number; seconds: number };
   onRemove: (id: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
   const [note, setNote] = useState(item.note ?? "");
 
-  if (item.kind !== "song") {
+  const grip = (
+    <button
+      type="button"
+      {...attributes}
+      {...listeners}
+      className="cursor-grab touch-none px-1 text-lg text-faint hover:text-ink active:cursor-grabbing shrink-0"
+      title="Ziehen zum Umsortieren"
+    >
+      ⠿
+    </button>
+  );
+
+  if (item.kind === "section") {
     return (
       <div
         ref={setNodeRef}
         style={{ transform: CSS.Transform.toString(transform), transition }}
-        className={`card flex items-center gap-3 p-3 ${
-          isDragging ? "z-10 border-accent/60 shadow-lg" : ""
+        className={`flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 p-2 ${
+          isDragging ? "z-10 shadow-lg" : ""
         }`}
       >
+        {grip}
+        <input
+          defaultValue={item.label ?? ""}
+          onBlur={(e) => {
+            if (e.target.value !== (item.label ?? ""))
+              void updateSetlistItemLabel(item.id, e.target.value);
+          }}
+          placeholder="Set-Name"
+          aria-label="Set-Name"
+          className="input flex-1 border-none bg-transparent px-1 py-0.5 font-semibold text-accent-hi"
+        />
+        {summary && (
+          <span className="mono-display shrink-0 text-xs text-mute">
+            {summary.songCount} {summary.songCount === 1 ? "Song" : "Songs"} ·{" "}
+            {formatDuration(summary.seconds)}
+          </span>
+        )}
         <button
           type="button"
-          {...attributes}
-          {...listeners}
-          className="cursor-grab touch-none px-1 text-lg text-faint hover:text-ink active:cursor-grabbing shrink-0"
-          title="Ziehen zum Umsortieren"
-        >
-          ⠿
-        </button>
-        <span className="flex-1 font-semibold">
-          {item.kind === "section"
-            ? item.label ?? "Set"
-            : `Pause${item.breakSeconds ? ` · ${Math.round(item.breakSeconds / 60)} min` : ""}`}
-        </span>
-        <button
-          type="button"
-          className="link-danger px-2 text-lg shrink-0"
+          className="link-danger px-2 shrink-0"
           onClick={() => onRemove(item.id)}
-          title="Entfernen"
+          title="Set-Überschrift entfernen"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  if (item.kind === "break") {
+    const minutes = item.breakSeconds ? Math.round(item.breakSeconds / 60) : 0;
+    return (
+      <div
+        ref={setNodeRef}
+        style={{ transform: CSS.Transform.toString(transform), transition }}
+        className={`flex items-center gap-2 rounded-lg border border-dashed border-line p-2 text-sm ${
+          isDragging ? "z-10 shadow-lg" : ""
+        }`}
+      >
+        {grip}
+        <span className="shrink-0 text-mute">Pause</span>
+        <input
+          type="number"
+          min="0"
+          defaultValue={minutes}
+          onBlur={(e) => {
+            const m = Number(e.target.value);
+            if (m * 60 !== (item.breakSeconds ?? 0))
+              void updateSetlistBreakSeconds(item.id, (Number.isFinite(m) ? m : 0) * 60);
+          }}
+          aria-label="Pausendauer (Minuten)"
+          className="input w-16 py-1 text-center text-xs"
+        />
+        <span className="shrink-0 text-faint">min</span>
+        <input
+          defaultValue={item.label ?? ""}
+          onBlur={(e) => {
+            if (e.target.value !== (item.label ?? ""))
+              void updateSetlistItemLabel(item.id, e.target.value);
+          }}
+          placeholder="Label (optional, z.B. Umbau)"
+          aria-label="Pausen-Label"
+          className="input flex-1 py-1 text-xs"
+        />
+        <button
+          type="button"
+          className="link-danger px-2 shrink-0"
+          onClick={() => onRemove(item.id)}
+          title="Pause entfernen"
         >
           ✕
         </button>
@@ -103,17 +172,9 @@ function SortableRow({
       }`}
     >
       <div className="flex items-center gap-3 w-full sm:w-auto sm:flex-1 min-w-0">
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="cursor-grab touch-none px-1 text-lg text-faint hover:text-ink active:cursor-grabbing shrink-0"
-          title="Ziehen zum Umsortieren"
-        >
-          ⠿
-        </button>
+        {grip}
         <span className="mono-display w-6 shrink-0 text-right text-sm text-faint">
-          {index + 1}.
+          {displayNumber}.
         </span>
         <div className="min-w-0 flex-1">
           <a
@@ -148,10 +209,9 @@ function SortableRow({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           onBlur={() => {
-            if (note !== (item.note ?? ""))
-              void updateSetlistItemNote(item.id, note);
+            if (note !== (item.note ?? "")) void updateSetlistItemNote(item.id, note);
           }}
-          placeholder="Notiz (z.B. Pause danach)"
+          placeholder="Notiz (z.B. Solo verlängern)"
         />
         <button
           type="button"
@@ -170,10 +230,12 @@ export function SetlistEditor({
   setlistId,
   items: serverItems,
   songOptions,
+  targetSeconds,
 }: {
   setlistId: number;
   items: EditorItem[];
   songOptions: SongOption[];
+  targetSeconds?: number | null;
 }) {
   const [items, setItems] = useState(serverItems);
   const [, startTransition] = useTransition();
@@ -204,8 +266,49 @@ export function SetlistEditor({
     startTransition(() => removeSetlistItem(itemId));
   };
 
-  const totalSeconds = items.reduce((sum, i) => sum + (i.durationSeconds ?? 0), 0);
-  const withDuration = items.filter((i) => i.durationSeconds).length;
+  const structure = summarizeSetlist(
+    items.map((i) => ({
+      kind: i.kind,
+      label: i.label,
+      durationSeconds: i.durationSeconds,
+      breakSeconds: i.breakSeconds,
+    }))
+  );
+  const cmp = compareTarget(structure.totalSeconds, targetSeconds ?? null);
+
+  // Song-Nummer je Set (Reset bei jeder Überschrift) + Zwischensumme je section-Zeile.
+  const songNumbers = new Map<number, number>();
+  const sectionSummaries = new Map<number, { songCount: number; seconds: number }>();
+  {
+    let n = 0;
+    let curSongCount = 0;
+    let curSeconds = 0;
+    let curSectionId: number | null = null;
+    const flush = () => {
+      if (curSectionId != null)
+        sectionSummaries.set(curSectionId, { songCount: curSongCount, seconds: curSeconds });
+    };
+    for (const it of items) {
+      if (it.kind === "section") {
+        flush();
+        curSectionId = it.id;
+        curSongCount = 0;
+        curSeconds = 0;
+        n = 0;
+      } else if (it.kind === "song") {
+        n += 1;
+        songNumbers.set(it.id, n);
+        curSongCount += 1;
+        curSeconds += it.durationSeconds ?? 0;
+      }
+    }
+    flush();
+  }
+
+  const songCount = items.filter((i) => i.kind === "song").length;
+  const missingDuration = items.filter(
+    (i) => i.kind === "song" && !i.durationSeconds
+  ).length;
 
   const availableSongs = songOptions.filter(
     (s) => !items.some((i) => i.songId === s.id)
@@ -213,9 +316,9 @@ export function SetlistEditor({
 
   return (
     <div className="space-y-4 min-w-0">
-      <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:flex-wrap">
         <select
-          className="input w-full min-w-0 sm:max-w-md sm:flex-1"
+          className="input w-full min-w-0 sm:max-w-xs sm:flex-1"
           value={selectedSong}
           onChange={(e) => setSelectedSong(e.target.value)}
         >
@@ -240,6 +343,20 @@ export function SetlistEditor({
         >
           + Hinzufügen
         </button>
+        <button
+          type="button"
+          className="btn w-full sm:w-auto"
+          onClick={() => startTransition(() => addSetlistSection(setlistId))}
+        >
+          + Set-Überschrift
+        </button>
+        <button
+          type="button"
+          className="btn w-full sm:w-auto"
+          onClick={() => startTransition(() => addSetlistBreak(setlistId))}
+        >
+          + Pause
+        </button>
       </div>
 
       {items.length === 0 ? (
@@ -257,11 +374,12 @@ export function SetlistEditor({
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-2">
-              {items.map((item, index) => (
+              {items.map((item) => (
                 <SortableRow
                   key={item.id}
                   item={item}
-                  index={index}
+                  displayNumber={songNumbers.get(item.id) ?? 0}
+                  summary={sectionSummaries.get(item.id)}
                   onRemove={remove}
                 />
               ))}
@@ -270,11 +388,21 @@ export function SetlistEditor({
         </DndContext>
       )}
 
-      <p className="mono-display text-sm text-mute">
-        {items.length} Songs · Gesamtdauer {formatDuration(totalSeconds)}
-        {withDuration < items.length &&
-          ` (${items.length - withDuration} ohne Zeitangabe)`}
-      </p>
+      <div className="mono-display space-y-1 text-sm text-mute">
+        <p>
+          {songCount} {songCount === 1 ? "Song" : "Songs"} · Musik{" "}
+          {formatDuration(structure.musicSeconds)}
+          {structure.breakSeconds > 0 &&
+            ` · Pausen ${formatDuration(structure.breakSeconds)} · Gesamt ${formatDuration(structure.totalSeconds)}`}
+          {missingDuration > 0 && ` (${missingDuration} ohne Zeitangabe)`}
+        </p>
+        {cmp && (
+          <p className={cmp.over ? "text-red-400" : "text-emerald-400"}>
+            Ziel {formatDuration(targetSeconds!)} → {formatDuration(cmp.diffSeconds)}{" "}
+            {cmp.over ? "über" : "unter"}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
