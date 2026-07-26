@@ -44,13 +44,30 @@ export function SetlistForm({ setlist }: { setlist?: Setlist }) {
         </div>
       </div>
       <div>
-        <label className="label">Notizen</label>
+        <label className="label" htmlFor="sl-notes">Notizen</label>
         <textarea
+          id="sl-notes"
           className="input min-h-16"
           name="notes"
           defaultValue={setlist?.notes ?? ""}
           placeholder="z.B. Location, Anspielzeit, Besetzung …"
         />
+      </div>
+      <div>
+        <label className="label" htmlFor="sl-target">Zielzeit (Minuten, optional)</label>
+        <input
+          id="sl-target"
+          className="input"
+          name="targetMinutes"
+          type="number"
+          inputMode="numeric"
+          min="0"
+          defaultValue={setlist?.targetSeconds ? Math.round(setlist.targetSeconds / 60) : ""}
+          placeholder="z.B. 90"
+        />
+        <p className="mt-1 text-xs text-faint">
+          Gebuchte Spielzeit für den Abgleich.
+        </p>
       </div>
       <FormMsg state={state} />
       <SubmitButton>{isEdit ? "Speichern" : "Setliste anlegen"}</SubmitButton>
