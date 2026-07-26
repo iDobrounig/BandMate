@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { IconCalendar } from "@/components/icons";
 
 /**
  * Zeigt die Abo-URL des ICS-Feeds mit Kopier-Button. Die absolute URL wird
@@ -19,12 +20,17 @@ export function CalendarSubscribe({
   const url = `${appUrl || (typeof window !== "undefined" ? window.location.origin : "")}${feedPath}`;
 
   return (
-    <div>
-      <button type="button" className="btn" onClick={() => setOpen((v) => !v)}>
-        📅 Kalender abonnieren
+    <div className="relative">
+      <button
+        type="button"
+        className="btn inline-flex items-center gap-2"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <IconCalendar className="size-4" />
+        Kalender abonnieren
       </button>
       {open && (
-        <div className="card mt-3 space-y-2 p-4 text-sm">
+        <div className="card absolute right-0 z-30 mt-2 w-80 space-y-2 p-4 text-left text-sm sm:w-96">
           <p className="text-mute">
             Diese URL in deiner Kalender-App als <strong>Kalender-Abo</strong>{" "}
             hinzufügen (iPhone: Einstellungen → Kalender → Accounts →
