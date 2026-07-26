@@ -45,7 +45,7 @@ export async function updateSetlist(
 
   revalidatePath("/setlisten");
   revalidatePath(`/setlisten/${setlistId}`);
-  return { success: "Gespeichert." };
+  redirect(`/setlisten/${setlistId}`);
 }
 
 /** Kopiert eine Setliste samt Songs (ohne Datum), z.B. als Basis für den nächsten Gig. */

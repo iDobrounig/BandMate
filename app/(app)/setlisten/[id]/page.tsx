@@ -7,7 +7,7 @@ import { setlists, setlistItems, songs } from "@/lib/db/schema";
 import { songAktiv, setlistAktiv } from "@/lib/db/filters";
 import { formatDate } from "@/lib/format";
 import { duplicateSetlist } from "@/lib/actions/setlists";
-import { SetlistForm, DeleteSetlistButton } from "@/components/setlist-forms";
+import { DeleteSetlistButton } from "@/components/setlist-forms";
 import { SetlistEditor, type EditorItem } from "@/components/setlist-editor";
 
 export default async function SetlistDetailPage({
@@ -74,6 +74,9 @@ export default async function SetlistDetailPage({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link href={`/setlisten/${setlist.id}/bearbeiten`} className="btn">
+              ✎ Bearbeiten
+            </Link>
             <Link href={`/setlisten/${setlist.id}/druck`} className="btn">
               🖨 Druckansicht
             </Link>
@@ -87,18 +90,12 @@ export default async function SetlistDetailPage({
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <SetlistEditor
-          key={rows.map((r) => r.id).sort((a, b) => a - b).join("-")}
-          setlistId={setlist.id}
-          items={items}
-          songOptions={songOptions}
-        />
-        <section className="min-w-0 card h-fit p-5">
-          <h2 className="headline mb-4 text-lg">Details bearbeiten</h2>
-          <SetlistForm setlist={setlist} />
-        </section>
-      </div>
+      <SetlistEditor
+        key={rows.map((r) => r.id).sort((a, b) => a - b).join("-")}
+        setlistId={setlist.id}
+        items={items}
+        songOptions={songOptions}
+      />
     </div>
   );
 }

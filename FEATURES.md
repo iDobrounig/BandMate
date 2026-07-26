@@ -222,10 +222,11 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 - [ ] Einheitliche Position für „Löschen" (heute drei verschiedene Stellen)
 - [ ] Bestätigungsdialoge vereinheitlichen (u.a. Admin-Rechte vergeben ohne Rückfrage)
 - [ ] Ikonografie: Emoji/Unicode durch das SVG-Set aus `components/icons.tsx` ersetzen
-- [ ] „Leg **rechts** die erste an!" stimmt mobil nicht — *bei Terminen erledigt
-  (Anlegen jetzt über „+ Neuer Termin" auf eigener Seite `/termine/neu`), Setlisten offen*
-- [ ] Singular/Plural („1 Songs")
-- [ ] Setlisten-Liste: Suche/Sortierung, Trennung vergangen/kommend
+- [x] „Leg **rechts** die erste an!" stimmt mobil nicht — *erledigt 26.07.2026: Anlegen
+  bei Terminen und Setlisten jetzt über „+ Neuer …" auf eigener Seite (`/termine/neu`,
+  `/setlisten/neu`), Bearbeiten analog auf `/…/[id]/bearbeiten`, Detailseiten schlank*
+- [ ] Singular/Plural („1 Songs") — *offen u.a. in `components/setlist-editor.tsx` („1 Songs")*
+- [x] Setlisten-Liste: Suche/Sortierung, Trennung vergangen/kommend — *erledigt 26.07.2026*
 - [x] Termine: „Vergangene ausblenden"-Weg zurück — *erledigt 26.07.2026*
 - [ ] `readyCount` zählt deaktivierte Mitglieder mit (`lib/queries.ts:40`)
 - [ ] Dashboard verlinkt Setlisten nirgends
