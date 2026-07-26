@@ -8,6 +8,52 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.12.0] — 2026-07-26
+
+**Welle 2 — Bühnenwert (Auftakt).** Das, was WhatsApp nie kann: Gigs und Setlisten
+für den echten Auftritt. Ein Gig hält jetzt die Logistik fest, die sonst im Gruppenchat
+verlorengeht, und eine Setliste lässt sich in Sets und Pausen gliedern und gegen die
+gebuchte Spielzeit abgleichen. Nebenbei ist das Anlegen und Bearbeiten über Songs,
+Termine und Setlisten hinweg einheitlich geworden.
+
+### Hinzugefügt
+- **Gig-Logistik**: Termine vom Typ „Gig" haben jetzt eigene Felder für **Load-in,
+  Soundcheck und Auftrittszeit**, **Ansprechpartner + Telefon** (am Handy antippbar
+  zum Anrufen), **Gage** (Zahl, später summierbar) plus **Verpflegung & Extras**,
+  **Anfahrt/Parken** und **Backline/Technik**. Auf der Detailseite steht das als
+  „Gig-Logistik"-Karte ganz oben; bei einem Gig ist die Termin-Uhrzeit das **Load-in**
+  (Anker für Kalender-Erinnerung und Erinnerungs-Mail). Geänderte Soundcheck- oder
+  Auftrittszeit löst die „Band benachrichtigen"-Mail aus; Gage/Kontakt/Anfahrt tun das
+  bewusst nicht. Der Kalender-Feed nimmt die Logistik in die Termin-Beschreibung mit und
+  spannt den Eintrag bis zum Auftritt.
+- **Sets & Pausen in Setlisten**: eine Setliste lässt sich jetzt mit benannten
+  **Set-Überschriften** und **Pausen** (Dauer + optionalem Label) gliedern — alles per
+  Drag & Drop in einer Liste. Jedes Set zeigt seine **Zwischensumme** (Songs · Dauer),
+  die Song-Nummern starten je Set neu, und der Fuß rechnet **Musik / Pausen / Gesamt**.
+  Mit einer optionalen **Zielzeit** (gebuchte Spielzeit) an der Setliste kommt ein
+  **Abgleich** dazu („Ziel 90:00 → 12:00 über"). Die Druckansicht bildet Sets, Pausen
+  und den Zeit-Fuß mit ab.
+
+### Geändert
+- **Einheitliches Anlegen & Bearbeiten**: Termine und Setlisten werden jetzt — wie
+  Songs — über einen **„+ Neu"-Button** auf einer **eigenen Seite** angelegt und über
+  **„✎ Bearbeiten"** auf einer eigenen Seite bearbeitet, statt über ein Formular in der
+  Seitenleiste. Die Listen laufen dadurch über die volle Breite; kein Runterscrollen
+  mehr zum Anlegen. Die Termin-Detailseite ist damit eine reine Leseansicht.
+- **Setlisten-Liste** bekommt **Suche**, **Sortierung** (Datum/Name/Songs) und eine
+  Trennung in **kommende und vergangene** Setlisten (vergangene einklappbar).
+- Die **„Kalender abonnieren"-Box** sitzt jetzt als Dropdown in der Termine-Kopfzeile
+  (mit Icon statt Emoji) statt in der Seitenleiste.
+- Kleinkram aus der Konsistenz-Liste mitgenommen: „← Vergangene ausblenden" bei
+  Terminen, korrektes „1 Song" statt „1 Songs" im Setlisten-Fuß, `htmlFor` an mehr
+  Formular-Labels.
+
+> **Hinweis fürs Update:** Dieser Release bringt zwei automatische DB-Migrationen mit
+> — eine additive (Gig-Logistik-Felder) und einen **Tabellen-Rebuild** von
+> `setlist_items` (für Sets/Pausen; bestehende Daten werden kopiert, nichts geht
+> verloren). Beide laufen beim App-Start; `./deploy.sh` zieht davor automatisch ein
+> Pre-Deploy-Backup. `./deploy.sh` genügt, kein manueller Eingriff nötig.
+
 ## [1.11.0] — 2026-07-24
 
 **Welle 1 — Aktivierung.** BandMate war bisher eine reine Pull-App: Es passierte
