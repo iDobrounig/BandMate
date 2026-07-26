@@ -163,7 +163,7 @@ export async function updateEvent(
   }
 
   revalidatePath("/", "layout");
-  return { success: "Termin gespeichert." };
+  redirect(`/termine/${eventId}`);
 }
 
 export async function deleteEvent(eventId: number, scope: "single" | "series") {
