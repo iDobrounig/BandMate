@@ -1,69 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useMetronome } from "@/lib/use-metronome";
 
 /**
- * Web-Audio-Metronom mit Lookahead-Scheduler und Tap-Tempo.
- * Akzent auf der 1 bei 4/4.
+ * Web-Audio-Metronom mit Tap-Tempo. Der Scheduler steckt im Hook
+ * `useMetronome`; hier bleibt nur die BPM-/Tap-Bedienung.
  */
 export function Metronome({ initialBpm }: { initialBpm: number | null }) {
   const [open, setOpen] = useState(false);
   const [bpm, setBpm] = useState(initialBpm ?? 120);
-  const [running, setRunning] = useState(false);
-  const [beatFlash, setBeatFlash] = useState(false);
-
-  const ctxRef = useRef<AudioContext | null>(null);
-  const nextNoteTimeRef = useRef(0);
-  const beatRef = useRef(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const bpmRef = useRef(bpm);
-  bpmRef.current = bpm;
+  const { running, beatFlash, start, stop } = useMetronome(bpm);
 
   const taps = useRef<number[]>([]);
-
-  const stop = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
-    setRunning(false);
-  };
-
-  const scheduleClick = (time: number, accent: boolean) => {
-    const ctx = ctxRef.current!;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = accent ? 1568 : 1047; // G6 / C6
-    gain.gain.setValueAtTime(accent ? 0.5 : 0.3, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(time);
-    osc.stop(time + 0.06);
-  };
-
-  const start = async () => {
-    if (!ctxRef.current) ctxRef.current = new AudioContext();
-    const ctx = ctxRef.current;
-    if (ctx.state === "suspended") await ctx.resume();
-    beatRef.current = 0;
-    nextNoteTimeRef.current = ctx.currentTime + 0.06;
-    timerRef.current = setInterval(() => {
-      // 100 ms Lookahead
-      while (nextNoteTimeRef.current < ctx.currentTime + 0.1) {
-        const accent = beatRef.current % 4 === 0;
-        scheduleClick(nextNoteTimeRef.current, accent);
-        const delay = Math.max(
-          0,
-          (nextNoteTimeRef.current - ctx.currentTime) * 1000
-        );
-        setTimeout(() => {
-          setBeatFlash(true);
-          setTimeout(() => setBeatFlash(false), 80);
-        }, delay);
-        nextNoteTimeRef.current += 60 / bpmRef.current;
-        beatRef.current += 1;
-      }
-    }, 25);
-    setRunning(true);
-  };
 
   const tap = () => {
     const now = performance.now();
@@ -78,8 +27,6 @@ export function Metronome({ initialBpm }: { initialBpm: number | null }) {
       if (next >= 20 && next <= 300) setBpm(next);
     }
   };
-
-  useEffect(() => stop, []);
 
   if (!open) {
     return (

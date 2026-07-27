@@ -174,10 +174,22 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   ist nirgends druckbar. Zwei Ausgaben: pro Song und für eine ganze Setliste (Seitenumbruch
   je Song, `break-inside: avoid`, Tabellenkopf wiederholen, optional transponiert).
 
-- [ ] **Bühnenmodus**
-  Vollbild-Ansicht einer Setliste: großer, kontrastreicher Text, Wischen/Pfeiltasten von Song
-  zu Song, Wake Lock (Bildschirm bleibt an), Metronom eingeblendet. Macht das Tablet am
-  Notenständer zum Grund, die App überhaupt zu öffnen.
+- [x] **Bühnenmodus** — *erledigt 27.07.2026. Entwurf:
+  [docs/superpowers/specs/2026-07-27-buehnenmodus-design.md](docs/superpowers/specs/2026-07-27-buehnenmodus-design.md)*
+  Vollbild-Ansicht einer Setliste (`/setlisten/[id]/buehne`), die die Elemente **1:1 als
+  Seitenfolge** abbildet — Songs, Set-Überschriften und Pausen. Blättern per **Wischen und
+  Pfeiltasten/Leertaste**, **Wake Lock** (Bildschirm bleibt an, erneuert bei Tab-Rückkehr).
+  Je Song standardmäßig die **Noten des eigenen Instruments** (aus dem Profil), umschaltbar
+  auf andere Instrumente oder **Lyrics/Akkorde**; die Wahl „klebt" über die Songs. PDFs
+  eingebettet mit iOS-Fallback („in neuem Tab öffnen"). **Metronom fix eingeblendet**, auf die
+  Song-BPM vorbelegt; **Transponieren** (flüchtig) und **Schriftgröße** in einer wegblendbaren
+  Werkzeugleiste. Pausen-Seite mit **Countdown** (startet auf Tipp, zählt über null ins Rote)
+  und „Weiter mit …". Metronom-Scheduler in den Hook `useMetronome` ausgelagert (vom
+  bestehenden Widget mitgenutzt). Rein lesend, kein Schema-Eingriff.
+  Dazu ein Umschalter **„Voll ⇄ Notenpult"**: die Minimal-Ansicht für Mitglieder mit
+  physischen Noten zeigt den aktuellen Ablaufpunkt groß (Titel, Tonart/Capo/Tempo, Notiz +
+  Metronom bzw. Pausen-Countdown) plus die **nächsten zwei Elemente** als Vorschau; pro Gerät
+  gemerkt. Reine Logik `lib/stage.ts` mit Tests.
 
 - [x] **Sets & Pausen in Setlisten** — *erledigt 26.07.2026. Entwurf:
   [docs/superpowers/specs/2026-07-26-sets-und-pausen-design.md](docs/superpowers/specs/2026-07-26-sets-und-pausen-design.md)*

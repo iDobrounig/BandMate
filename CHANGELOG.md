@@ -8,6 +8,30 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.14.0] — 2026-07-27
+
+**Welle 2 — Bühnenmodus.** Das Tablet am Notenständer wird zum Grund, die App
+während des Auftritts offen zu haben: eine Setliste als Vollbild-Ablauf, großer
+kontrastreicher Inhalt, Metronom je Song, Bildschirm bleibt an.
+
+### Hinzugefügt
+- **Bühnenmodus** („▶ Bühnenmodus" auf der Setliste): Vollbild-Ansicht, die die
+  Setliste **1:1 als Seitenfolge** abbildet — Songs, Set-Überschriften und Pausen.
+  Blättern per **Wischen und Pfeiltasten/Leertaste**, **Wake Lock** (Bildschirm
+  bleibt an, erneuert bei Tab-Rückkehr). Je Song die **Noten des eigenen
+  Instruments** (aus dem Profil), umschaltbar auf andere Instrumente oder
+  **Lyrics/Akkorde**; die Wahl „klebt" über die Songs. PDFs eingebettet mit
+  iOS-Fallback. **Metronom** fix eingeblendet und auf die Song-BPM vorbelegt,
+  **Transponieren** (flüchtig) und **Schriftgröße** in einer wegblendbaren
+  Werkzeugleiste. Pausen mit **Countdown** (startet auf Tipp, zählt über null ins
+  Rote) und „Weiter mit …".
+- **Notenpult-Ansicht**: Umschalter „Voll ⇄ Notenpult" für Mitglieder mit
+  physischen Noten — zeigt den aktuellen Ablaufpunkt groß (Titel, Tonart/Capo/Tempo,
+  Notiz + Metronom bzw. Pausen-Countdown) plus die **nächsten zwei Elemente** als
+  Vorschau; pro Gerät gemerkt.
+
+> Rein lesend, keine DB-Änderung — `./deploy.sh` genügt.
+
 ## [1.13.0] — 2026-07-27
 
 **Update-Hinweis nach Deploy.** Kleine Politur mit Wirkung fürs Vertrauen: Läuft

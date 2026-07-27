@@ -77,6 +77,9 @@ export default async function SetlistDetailPage({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link href={`/setlisten/${setlist.id}/buehne`} className="btn btn-primary">
+              ▶ Bühnenmodus
+            </Link>
             <Link href={`/setlisten/${setlist.id}/bearbeiten`} className="btn">
               ✎ Bearbeiten
             </Link>
