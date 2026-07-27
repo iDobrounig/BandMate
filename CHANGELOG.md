@@ -8,6 +8,26 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.13.0] — 2026-07-27
+
+**Update-Hinweis nach Deploy.** Kleine Politur mit Wirkung fürs Vertrauen: Läuft
+noch ein alter Tab, während eine neue Version deployt wird, meldet sich die App
+jetzt — statt still auf dem alten Stand weiterzulaufen (und im schlimmsten Fall
+eine Aktion gegen den neuen Server zu schicken, die fehlschlägt).
+
+### Hinzugefügt
+- **Update-Banner**: Über eine Build-Kennung (Endpunkt `/api/version`) erkennt die
+  App, wenn der Server auf eine neue Version aktualisiert wurde, und zeigt oben
+  einen dezenten, **wegklickbaren** Hinweis „Neue Version verfügbar — neu laden".
+  Geprüft wird, wenn der Tab wieder in den Fokus kommt, und zusätzlich alle paar
+  Minuten. Weggeklickt bleibt der Hinweis weg, bis eine **noch neuere** Version
+  auftaucht — nervt also nicht. Kein Service Worker nötig (ein normaler Reload
+  holt den content-gehashten Build), keine DB-Änderung.
+
+> **Hinweis:** Dieser Release ist der „Bootstrap" — die bereits geladenen Tabs
+> der Band haben den Wächter noch nicht. Sichtbar wird der Banner deshalb erst
+> **ab dem nächsten** Deploy. `./deploy.sh` genügt, keine Migration dabei.
+
 ## [1.12.0] — 2026-07-26
 
 **Welle 2 — Bühnenwert (Auftakt).** Das, was WhatsApp nie kann: Gigs und Setlisten
