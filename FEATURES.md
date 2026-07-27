@@ -47,6 +47,9 @@ Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 - [x] Dashboard: heiße Vorschläge, in Probe, nächste Termine mit RSVP-Status, letzte Kommentare
 - [x] Mobile-taugliches, dunkles „Backstage"-Design
 - [x] **App-Icon/Favicon + PWA-Manifest** — „Zum Homescreen hinzufügen" wie eine echte App
+- [x] **Update-Banner nach Deploy**: erkennt über eine Build-Kennung (`/api/version`), wenn
+  der Server aktualisiert wurde, und bietet einen wegklickbaren „Neu laden"-Hinweis — prüft
+  beim Zurückkehren in den Tab und alle paar Minuten, meldet sich nur bei echt neuer Version
 
 ---
 

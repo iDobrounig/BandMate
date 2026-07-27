@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/lib/actions/auth";
 import { NavLinks } from "@/components/nav-links";
+import { VersionWatcher } from "@/components/version-watcher";
 import { IconUser, IconLogout, IconHelp, IconTrash } from "@/components/icons";
 
 export default async function AppLayout({
@@ -79,6 +80,7 @@ export default async function AppLayout({
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+        <VersionWatcher />
         {children}
       </main>
       <footer className="print-hidden border-t border-line-soft py-4 text-center text-xs text-faint">
