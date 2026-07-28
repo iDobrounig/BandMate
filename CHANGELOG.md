@@ -8,6 +8,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.14.1] — 2026-07-28
+
+### Behoben
+- **Hydration-Warnung im Setlisten-Editor**: Der Drag-&-Drop-Kontext (dnd-kit) erzeugte
+  die `aria-describedby`-IDs der Ziehgriffe über einen modul-globalen Zähler, der zwischen
+  Server- und Client-Render abwich — React meldete einen Hydration-Mismatch. Der `DndContext`
+  bekommt jetzt eine stabile ID (`useId`); Server und Client stimmen wieder überein. Kein
+  sichtbarer Funktionsfehler, aber die Warnung ist weg und der betroffene Teilbaum wird
+  wieder sauber hydriert.
+
 ## [1.14.0] — 2026-07-27
 
 **Welle 2 — Bühnenmodus.** Das Tablet am Notenständer wird zum Grund, die App

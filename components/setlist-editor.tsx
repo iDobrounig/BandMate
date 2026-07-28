@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import {
   DndContext,
   closestCenter,
@@ -240,6 +240,10 @@ export function SetlistEditor({
   const [items, setItems] = useState(serverItems);
   const [, startTransition] = useTransition();
   const [selectedSong, setSelectedSong] = useState("");
+  // Stabile ID für den DndContext: sonst erzeugt dnd-kit die aria-describedby-IDs
+  // der Drag-Griffe über einen globalen Zähler, der zwischen Server- und
+  // Client-Render divergiert → Hydration-Mismatch.
+  const dndId = useId();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -365,6 +369,7 @@ export function SetlistEditor({
         </div>
       ) : (
         <DndContext
+          id={dndId}
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={onDragEnd}
