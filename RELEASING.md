@@ -41,6 +41,12 @@ gh release create v1.1.0 --title v1.1.0 --notes-file <(sed -n '/## \[1.1.0\]/,/#
 Ohne `gh` alternativ über die Weboberfläche: **Releases → Draft a new release**, Tag
 `vX.Y.Z` wählen, Titel = Tag, Beschreibung = passender `CHANGELOG.md`-Abschnitt, **Publish**.
 
+### Automatischer Deploy (optional)
+
+Ist der GitHub-Actions-Workflow eingerichtet, deployt ein veröffentlichter Release nach
+manueller Freigabe von selbst auf den Server (Approval-Gate; MAJOR-Releases bleiben manuell).
+Einrichtung und Funktionsweise: [docs/auto-deploy.md](docs/auto-deploy.md).
+
 ## Auf dem Server auf eine bestimmte Version aktualisieren
 
 `./deploy.sh` zieht immer den neuesten `main`-Stand. Willst du gezielt auf einen

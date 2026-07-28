@@ -1,0 +1,80 @@
+name: Deploy nach Release
+
+# Deployt automatisch auf den Server, sobald ein GitHub-Release veröffentlicht
+# wird (release.sh legt das an). Zwei Schutzmechanismen:
+#   1. Approval-Gate über das Environment "production" (required reviewers) —
+#      der Deploy pausiert und wartet auf eine manuelle Freigabe.
+#   2. MAJOR-Releases (X.0.0) werden NICHT automatisch deployt, weil sie laut
+#      RELEASING.md manuelle Schritte brauchen (Migration/.env/Deploy).
+# Einrichtung (Runner, Environment, Variablen): docs/auto-deploy.md
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {} # manueller Re-Deploy des aktuellen main-Stands
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false # laufenden Deploy nie abbrechen, lieber anstellen
+
+jobs:
+  pruefen:
+    runs-on: [self-hosted, bandmate]
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      is_major: ${{ steps.v.outputs.is_major }}
+    steps:
+      - id: v
+        run: |
+          tag="${{ github.event.release.tag_name || github.ref_name }}"
+          version="${tag#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # MAJOR = X.0.0 (Minor und Patch beide 0)
+          if [[ "$version" =~ ^[0-9]+\.0\.0$ ]]; then
+            echo "is_major=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_major=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: pruefen
+    if: needs.pruefen.outputs.is_major == 'false'
+    runs-on: [self-hosted, bandmate]
+    environment: production # <- hier hängt das Approval-Gate (required reviewers)
+    steps:
+      - name: Deploy-Pfad prüfen
+        run: |
+          if [ -z "${{ vars.DEPLOY_PATH }}" ]; then
+            echo "::error::Repo-Variable DEPLOY_PATH ist nicht gesetzt (Settings → Secrets and variables → Actions → Variables). Erwartet den absoluten Pfad zum App-Clone auf dem Server." >&2
+            exit 1
+          fi
+
+      - name: Deploy ausführen
+        run: |
+          cd "${{ vars.DEPLOY_PATH }}"
+          ./deploy.sh
+
+      - name: Health-Check
+        run: |
+          url="${{ vars.HEALTHCHECK_URL || 'http://localhost:8059/api/version' }}"
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "$url" >/dev/null; then
+              echo "✓ App antwortet nach dem Deploy ($url)"
+              exit 0
+            fi
+            echo "… warte auf App ($i/6)"
+            sleep 3
+          done
+          echo "::error::App antwortet nach dem Deploy nicht ($url) — bitte pm2 logs bandmate prüfen." >&2
+          exit 1
+
+  major-hinweis:
+    needs: pruefen
+    if: needs.pruefen.outputs.is_major == 'true'
+    runs-on: [self-hosted, bandmate]
+    steps:
+      - run: |
+          v="${{ needs.pruefen.outputs.version }}"
+          echo "::warning::MAJOR-Release $v — kein Auto-Deploy."
+          echo "MAJOR-Versionen brauchen laut RELEASING.md manuelle Schritte (Migration/.env/Deploy-Anpassungen)."
+          echo "Nach den manuellen Schritten auf dem Server deployen:  ./deploy.sh"
