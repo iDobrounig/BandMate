@@ -100,3 +100,19 @@ body {
     display: none !important;
   }
 }
+
+/* Safe-Area-Insets für den Vollbild-Bühnenmodus: iPhone-Notch, abgerundete
+   Display-Ecken und Home-Indicator. Wirken voll nur mit `viewport-fit=cover`
+   (in der Bühnen-Route gesetzt); ohne Inset gilt der Mindestwert. Bewusst als
+   normale Klassen (nicht als Tailwind-Utilities), damit sie immer im Output
+   landen. */
+.stage-px {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+.stage-pt {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+.stage-pb {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}

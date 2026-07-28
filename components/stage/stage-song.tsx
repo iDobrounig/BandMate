@@ -57,7 +57,7 @@ export function StageSong({
   return (
     <div className="flex h-full flex-col">
       {/* Kopf */}
-      <div className="shrink-0 px-4 pt-3">
+      <div className="stage-px shrink-0 pt-3">
         <h1 className="headline text-2xl leading-tight sm:text-3xl">{page.title}</h1>
         <p className="mono-display mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-mute">
           {page.artist && <span>{page.artist}</span>}
@@ -104,7 +104,7 @@ export function StageSong({
           )
         ) : showLyrics ? (
           <pre
-            className="mono-display whitespace-pre px-4 leading-relaxed"
+            className="stage-px mono-display whitespace-pre leading-relaxed"
             style={{ fontSize: `${1.1 * fontScale}rem` }}
           >
             {shownLyrics}
@@ -117,7 +117,7 @@ export function StageSong({
       </div>
 
       {/* Fußleiste: Ansicht-Umschalter, Metronom, Werkzeuge */}
-      <div className="shrink-0 space-y-2 border-t border-line px-3 py-2">
+      <div className="stage-px stage-pb shrink-0 space-y-2 border-t border-line pt-2">
         {hasSwitcher && (
           <div className="flex flex-wrap items-center gap-1.5">
             {[...byLabel.keys()].map((label) => {

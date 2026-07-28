@@ -8,6 +8,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.14.2] — 2026-07-28
+
+### Behoben
+- **Bühnenmodus auf dem Handy** — Kopf- und Fußzeile für kleine Displays optimiert.
+  In der Kopfzeile verrutschten Elemente (die Seitenzahl brach um): jetzt bleibt alles in
+  einer Zeile, der „Beenden"-Button zeigt mobil nur das **✕** (Text erst auf größeren
+  Schirmen), und der Setlisten-Name wird auf dem Handy ausgeblendet. In der Fußzeile wurde
+  Text (z.B. „Schrift") an der abgerundeten Display-Kante abgeschnitten — die Bühnen-Route
+  respektiert jetzt die **iOS-Safe-Area** (`viewport-fit=cover` plus Insets an Kopf- und
+  Fußzeile); der Rest der App bleibt unberührt.
+
 ## [1.14.1] — 2026-07-28
 
 ### Behoben

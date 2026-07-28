@@ -152,30 +152,30 @@ export function StageView({
       onTouchEnd={onTouchEnd}
     >
       {/* Kopfzeile */}
-      <div className="flex items-center gap-3 border-b border-line px-3 py-2 text-sm">
+      <div className="stage-px stage-pt flex items-center gap-2 border-b border-line pb-2 text-sm">
         <button
           type="button"
-          className="btn btn-sm"
+          className="btn btn-sm shrink-0"
           onClick={() => go(-1)}
           disabled={index === 0}
           aria-label="Zurück"
         >
           ‹
         </button>
-        <span className="mono-display tabular-nums text-mute">
+        <span className="mono-display tabular-nums whitespace-nowrap shrink-0 text-mute">
           {index + 1} / {count}
         </span>
         <button
           type="button"
-          className="btn btn-sm"
+          className="btn btn-sm shrink-0"
           onClick={() => go(1)}
           disabled={index === count - 1}
           aria-label="Weiter"
         >
           ›
         </button>
-        <span className="truncate text-mute">{setlistName}</span>
-        <div className="ml-auto flex items-center gap-2">
+        <span className="hidden truncate text-mute sm:block">{setlistName}</span>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <div className="flex items-center rounded-md border border-line p-0.5">
             <button
               type="button"
@@ -200,8 +200,13 @@ export function StageView({
           >
             ⛶
           </button>
-          <button type="button" className="btn btn-sm" onClick={exit}>
-            ✕ Beenden
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={exit}
+            aria-label="Beenden"
+          >
+            ✕<span className="hidden sm:inline"> Beenden</span>
           </button>
         </div>
       </div>

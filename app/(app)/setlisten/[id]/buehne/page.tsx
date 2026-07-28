@@ -1,3 +1,4 @@
+import type { Viewport } from "next";
 import { notFound } from "next/navigation";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
@@ -8,6 +9,9 @@ import { StageView } from "@/components/stage/stage-view";
 import type { StagePage, StageSheet } from "@/components/stage/types";
 
 export const metadata = { title: "Bühnenmodus" };
+// Bis unter Notch/Display-Rundung ziehen, damit die Safe-Area-Insets (env())
+// greifen; die Kopf-/Fußzeilen halten den Inhalt darüber frei.
+export const viewport: Viewport = { viewportFit: "cover" };
 
 export default async function SetlistBuehnePage({
   params,

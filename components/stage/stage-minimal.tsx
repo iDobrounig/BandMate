@@ -21,7 +21,7 @@ export function StageMinimal({
   return (
     <div className="flex h-full flex-col">
       {/* JETZT */}
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="stage-px flex min-h-0 flex-1 flex-col items-center justify-center gap-4 py-6 text-center">
         <span className="text-xs uppercase tracking-widest text-faint">
           {current.kind === "break" ? "Pause" : current.kind === "section" ? "Set" : "Jetzt"}
         </span>
@@ -59,7 +59,7 @@ export function StageMinimal({
       </div>
 
       {/* ALS NÄCHSTES */}
-      <div className="shrink-0 border-t border-line px-6 py-4">
+      <div className="stage-px stage-pb shrink-0 border-t border-line pt-4">
         <p className="mb-2 text-xs uppercase tracking-widest text-faint">Als nächstes</p>
         {upcoming.length > 0 ? (
           <ul className="space-y-1">
