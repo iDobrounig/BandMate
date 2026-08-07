@@ -302,18 +302,17 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 - [ ] Uploads streamen statt komplett in den RAM zu lesen (`lib/files.ts:52`)
 - [ ] Speicherplatz-Übersicht der Uploads
 - [ ] Health-Check / Monitoring (heute merkt niemand, wenn SMTP oder der Prozess ausfällt)
-- [ ] **Auto-Deploy-Runner einrichten** — der Workflow „Deploy nach Release"
-  (`.github/workflows/deploy.yml`, seit 1.14.2) existierte bisher ohne Gegenstück; jeder
-  Release-Lauf blieb für immer auf „queued" hängen (verifiziert 07.08.2026 bei v1.15.0,
-  Lauf abgebrochen; Ursache: 0 registrierte Self-hosted-Runner). Bis dahin: `./deploy.sh`
-  manuell auf dem Server. Einrichtung: [docs/auto-deploy.md](docs/auto-deploy.md).
-  - [x] Environment `production` mit „Required reviewers" (`iDobrounig`) — *erledigt
-    07.08.2026 per `gh api`*
-  - [x] Repo-Variable `DEPLOY_PATH` = `/var/www/web24/htdocs/BandMate` — *erledigt
-    07.08.2026 per `gh api`*
-  - [ ] Self-hosted Runner auf dem Server installieren (Label **`bandmate`** nicht
-    vergessen), als Dienst einrichten (`svc.sh install/start`) — braucht Serverzugriff
-  - [ ] Danach testen ohne echten Release: Actions → „Deploy nach Release" → Run workflow
+- [x] **Auto-Deploy-Runner einrichten — auf diesem Hosting nicht möglich, verworfen
+  07.08.2026.** Environment `production` mit „Required reviewers" (`iDobrounig`) und
+  Repo-Variable `DEPLOY_PATH` sind per `gh api` gesetzt, bleiben aber ohne Wirkung: Der
+  self-hosted Runner (.NET) prüft beim Start Lese-/Traversierrechte auf **jedes**
+  Verzeichnis von `/` bis zum eigenen Ordner — bei diesem Shared-Hosting-Account gehört
+  `/var/www` dem Hosting-System, nicht dem Account („Permission to read the directory
+  contents is required for '…' and each directory up the hierarchy"). Das ist bewusste
+  Kunden-Isolation des Hosters, nicht reparierbar ohne Provider-seitige Rechteänderung.
+  Workflow (`.github/workflows/deploy.yml`, seit 1.14.2) bleibt im Repo für den Fall
+  eines Hosting-Wechsels, läuft aber mangels Runner nie automatisch los.
+  **Weiterhin manuell:** `./deploy.sh` auf dem Server nach jedem Release.
 
 ### Offene Grundsatzentscheidung: Open Source ernst gemeint?
 
