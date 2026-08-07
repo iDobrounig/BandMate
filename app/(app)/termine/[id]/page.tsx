@@ -17,6 +17,7 @@ import { formatDate, formatFee } from "@/lib/format";
 import { DeleteEventButtons } from "@/components/event-forms";
 import { AttendanceButtons } from "@/components/attendance";
 import { EventAgenda } from "@/components/event-agenda";
+import { IconEdit, IconRepeat } from "@/components/icons";
 
 export default async function TerminDetailPage({
   params,
@@ -100,7 +101,9 @@ export default async function TerminDetailPage({
               <h1 className="headline text-4xl">{event.title}</h1>
               <span className={`badge ${kindMeta.badge}`}>{kindMeta.label}</span>
               {event.seriesId && (
-                <span className="badge border-line text-faint">↻ Teil einer Serie</span>
+                <span className="badge border-line text-faint">
+                  <IconRepeat className="size-3" /> Teil einer Serie
+                </span>
               )}
             </div>
             <p className="mono-display mt-2 text-mute">
@@ -129,7 +132,7 @@ export default async function TerminDetailPage({
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={`/termine/${event.id}/bearbeiten`} className="btn">
-              ✎ Bearbeiten
+              <IconEdit className="size-4" /> Bearbeiten
             </Link>
             <DeleteEventButtons eventId={event.id} isSeries={Boolean(event.seriesId)} />
           </div>

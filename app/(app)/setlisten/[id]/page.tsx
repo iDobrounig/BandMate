@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/format";
 import { duplicateSetlist } from "@/lib/actions/setlists";
 import { DeleteSetlistButton } from "@/components/setlist-forms";
 import { SetlistEditor, type EditorItem } from "@/components/setlist-editor";
+import { IconEdit, IconPrint, IconCopy } from "@/components/icons";
 
 export default async function SetlistDetailPage({
   params,
@@ -81,14 +82,18 @@ export default async function SetlistDetailPage({
               ▶ Bühnenmodus
             </Link>
             <Link href={`/setlisten/${setlist.id}/bearbeiten`} className="btn">
-              ✎ Bearbeiten
+              <IconEdit className="size-4" /> Bearbeiten
             </Link>
             <Link href={`/setlisten/${setlist.id}/druck`} className="btn">
-              🖨 Druckansicht
+              <IconPrint className="size-4" /> Druckansicht
             </Link>
             <form action={duplicateSetlist.bind(null, setlist.id)}>
-              <button type="submit" className="btn" title="Kopie dieser Setliste anlegen">
-                ⧉ Duplizieren
+              <button
+                type="submit"
+                className="btn"
+                title="Kopie dieser Setliste anlegen"
+              >
+                <IconCopy className="size-4" /> Duplizieren
               </button>
             </form>
             <DeleteSetlistButton setlistId={setlist.id} name={setlist.name} />

@@ -8,6 +8,7 @@ import {
 } from "@/lib/actions/setlists";
 import type { FormState } from "@/lib/actions/auth";
 import { SubmitButton, FormMsg } from "@/components/form";
+import { IconPrint } from "@/components/icons";
 import type { Setlist } from "@/lib/db/schema";
 
 const initial: FormState = {};
@@ -107,7 +108,7 @@ export function DeleteSetlistButton({
 export function PrintButton() {
   return (
     <button type="button" className="btn" onClick={() => window.print()}>
-      🖨 Drucken / PDF
+      <IconPrint className="size-4" /> Drucken / PDF
     </button>
   );
 }

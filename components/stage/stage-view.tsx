@@ -8,6 +8,7 @@ import { StageSong, type ViewSel } from "./stage-song";
 import { StageBreak } from "./stage-break";
 import { StageSection } from "./stage-section";
 import { StageMinimal } from "./stage-minimal";
+import { IconExpand, IconClose } from "@/components/icons";
 
 const FONT_KEY = "stage-font-scale";
 const DENSITY_KEY = "stage-density";
@@ -198,7 +199,7 @@ export function StageView({
             onClick={toggleFullscreen}
             title="Vollbild"
           >
-            ⛶
+            <IconExpand className="size-4" />
           </button>
           <button
             type="button"
@@ -206,7 +207,8 @@ export function StageView({
             onClick={exit}
             aria-label="Beenden"
           >
-            ✕<span className="hidden sm:inline"> Beenden</span>
+            <IconClose className="size-4" />
+            <span className="hidden sm:inline">Beenden</span>
           </button>
         </div>
       </div>

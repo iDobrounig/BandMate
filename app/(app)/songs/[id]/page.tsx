@@ -13,6 +13,7 @@ import { TransposableLyrics } from "@/components/transpose";
 import { LinkEmbed } from "@/components/embeds";
 import { Metronome } from "@/components/metronome";
 import { SongStatusActions, DeleteSongButton } from "@/components/song-actions";
+import { IconEdit, IconSheet } from "@/components/icons";
 import type { PracticeState } from "@/lib/db/schema";
 
 export default async function SongDetailPage({
@@ -75,7 +76,7 @@ export default async function SongDetailPage({
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={`/songs/${song.id}/bearbeiten`} className="btn">
-              ✎ Bearbeiten
+              <IconEdit className="size-4" /> Bearbeiten
             </Link>
             <DeleteSongButton
               songId={song.id}
@@ -282,12 +283,13 @@ export default async function SongDetailPage({
                       <li key={file.id} className="text-sm">
                         <div className="flex items-center justify-between gap-2">
                           <a
-                            className="min-w-0 truncate text-accent-hi hover:underline"
+                            className="inline-flex min-w-0 items-center gap-1.5 text-accent-hi hover:underline"
                             href={`/api/files/${file.id}`}
                             target="_blank"
                             rel="noopener"
                           >
-                            𝄞 {file.originalName}
+                            <IconSheet className="size-4 shrink-0" />
+                            <span className="truncate">{file.originalName}</span>
                           </a>
                           <DeleteAttachmentButton
                             attachmentId={file.id}

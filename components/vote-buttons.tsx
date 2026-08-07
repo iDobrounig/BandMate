@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { setVote } from "@/lib/actions/interactions";
+import { IconThumbsUp, IconThumbsDown } from "@/components/icons";
 
 export function VoteButtons({
   songId,
@@ -32,7 +33,8 @@ export function VoteButtons({
             : ""
         }`}
       >
-        👍 <span className="mono-display">{upvoters.length}</span>
+        <IconThumbsUp className="size-4" />
+        <span className="mono-display">{upvoters.length}</span>
       </button>
       <button
         type="button"
@@ -45,7 +47,8 @@ export function VoteButtons({
           myVote === -1 ? "border-red-500/60 bg-red-500/15 text-red-300" : ""
         }`}
       >
-        👎 <span className="mono-display">{downvoters.length}</span>
+        <IconThumbsDown className="size-4" />
+        <span className="mono-display">{downvoters.length}</span>
       </button>
     </div>
   );

@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/format";
 import { CalendarSubscribe } from "@/components/calendar-subscribe";
 import { calendarFeedPath } from "@/lib/calendar";
 import { UndoBanner } from "@/components/undo-banner";
+import { IconRepeat } from "@/components/icons";
 
 export const metadata = { title: "Termine" };
 
@@ -74,7 +75,7 @@ export default async function TerminePage({
                     <span className={`badge ${kindMeta.badge}`}>{kindMeta.label}</span>
                     {event.seriesId && (
                       <span className="badge border-line text-faint" title="Teil einer Serie">
-                        ↻ Serie
+                        <IconRepeat className="size-3" /> Serie
                       </span>
                     )}
                   </p>

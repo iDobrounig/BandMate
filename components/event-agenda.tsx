@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { addSongToEvent, removeEventSong } from "@/lib/actions/events";
+import { IconClose } from "@/components/icons";
 
 export type AgendaItem = {
   id: number;
@@ -111,7 +112,7 @@ export function EventAgenda({
                 onClick={() => startTransition(() => removeEventSong(item.id))}
                 title="Von der Agenda nehmen"
               >
-                ✕
+                <IconClose className="size-4" />
               </button>
             </li>
           ))}

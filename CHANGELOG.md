@@ -25,6 +25,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 - **Admin-Rechte vergeben fragt jetzt nach**: bisher lief das ohne jede Rückfrage, obwohl
   es die einzige sicherheitsrelevante Aktion ohne Bestätigung war — Entziehen bleibt
   bewusst ohne Rückfrage (die ungefährliche Richtung).
+- **Emoji/Unicode-Icons durch das SVG-Set ersetzt**: Drucker-, Bearbeiten-, Duplizieren-,
+  Schließen-, Daumen-, Noten- und Kommentar-Symbole rendern jetzt als Strich-Icons statt
+  als Emoji, die je nach Gerät unterschiedlich oder gar nicht dargestellt wurden (u.a.
+  betroffen: Notenblatt-Symbol 𝄞, Ziehgriff ⠿ in der Setlisten-Sortierung).
 
 ### Behoben
 - **Upload-Fehler beim Song-Anlegen wird nicht mehr verschluckt**: Schlägt ein Noten-

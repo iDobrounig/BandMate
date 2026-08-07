@@ -169,3 +169,118 @@ export function IconUndo({ className }: IconProps) {
     </Svg>
   );
 }
+
+export function IconEdit({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </Svg>
+  );
+}
+
+export function IconPrint({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <polyline points="6 9 6 2 18 2 18 9" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <rect x="6" y="14" width="12" height="8" />
+    </Svg>
+  );
+}
+
+export function IconClose({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </Svg>
+  );
+}
+
+export function IconCheck({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <polyline points="20 6 9 17 4 12" />
+    </Svg>
+  );
+}
+
+export function IconThumbsUp({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14Z" />
+      <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+    </Svg>
+  );
+}
+
+export function IconThumbsDown({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10Z" />
+      <path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
+    </Svg>
+  );
+}
+
+export function IconMusicNote({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M9 18V5l7-2v13" />
+      <circle cx="6" cy="18" r="3" />
+    </Svg>
+  );
+}
+
+export function IconSheet({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2Z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </Svg>
+  );
+}
+
+export function IconComment({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+    </Svg>
+  );
+}
+
+export function IconGrip({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <circle cx="9" cy="6" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="6" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="18" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="18" r="1.2" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
+export function IconCopy({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </Svg>
+  );
+}
+
+export function IconExpand({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+      <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+      <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+      <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+    </Svg>
+  );
+}

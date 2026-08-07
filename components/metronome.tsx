@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useMetronome } from "@/lib/use-metronome";
+import { IconClose } from "@/components/icons";
 
 /**
  * Web-Audio-Metronom mit Tap-Tempo. Der Scheduler steckt im Hook
@@ -85,13 +86,14 @@ export function Metronome({ initialBpm }: { initialBpm: number | null }) {
       )}
       <button
         type="button"
-        className="text-sm text-faint hover:text-ink cursor-pointer"
+        className="text-faint hover:text-ink cursor-pointer"
         onClick={() => {
           stop();
           setOpen(false);
         }}
+        title="Metronom schließen"
       >
-        ✕
+        <IconClose className="size-4" />
       </button>
     </div>
   );

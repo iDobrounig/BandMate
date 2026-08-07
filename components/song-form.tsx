@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { createSong, updateSong } from "@/lib/actions/songs";
 import type { FormState } from "@/lib/actions/auth";
 import { SubmitButton, FormMsg } from "@/components/form";
+import { IconClose } from "@/components/icons";
 import { INSTRUMENT_SUGGESTIONS } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
 import type { Song, SongLink } from "@/lib/db/schema";
@@ -133,7 +134,7 @@ export function SongForm({
                     onClick={() => removeRow(row.id)}
                     title="Link entfernen"
                   >
-                    ✕
+                    <IconClose className="size-3.5" />
                   </button>
                 )}
               </div>

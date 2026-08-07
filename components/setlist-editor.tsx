@@ -30,6 +30,7 @@ import {
 import { summarizeSetlist, compareTarget } from "@/lib/setlist-structure";
 import { formatDuration } from "@/lib/format";
 import { useSavedHint, SavedHint } from "@/components/form";
+import { IconGrip, IconClose } from "@/components/icons";
 
 export type EditorItem = {
   id: number;
@@ -73,10 +74,10 @@ function SortableRow({
       type="button"
       {...attributes}
       {...listeners}
-      className="cursor-grab touch-none px-1 text-lg text-faint hover:text-ink active:cursor-grabbing shrink-0"
+      className="cursor-grab touch-none px-1 text-faint hover:text-ink active:cursor-grabbing shrink-0"
       title="Ziehen zum Umsortieren"
     >
-      ⠿
+      <IconGrip className="size-4" />
     </button>
   );
 
@@ -115,7 +116,7 @@ function SortableRow({
           onClick={() => onRemove(item.id)}
           title="Set-Überschrift entfernen"
         >
-          ✕
+          <IconClose className="size-4" />
         </button>
       </div>
     );
@@ -167,7 +168,7 @@ function SortableRow({
           onClick={() => onRemove(item.id)}
           title="Pause entfernen"
         >
-          ✕
+          <IconClose className="size-4" />
         </button>
       </div>
     );
@@ -206,11 +207,11 @@ function SortableRow({
         </div>
         <button
           type="button"
-          className="link-danger px-2 sm:hidden shrink-0 text-lg"
+          className="link-danger px-2 sm:hidden shrink-0"
           onClick={() => onRemove(item.id)}
           title="Aus Setliste entfernen"
         >
-          ✕
+          <IconClose className="size-4" />
         </button>
       </div>
       <div className="flex gap-2 w-full sm:w-auto sm:ml-auto shrink-0">
@@ -233,7 +234,7 @@ function SortableRow({
           onClick={() => onRemove(item.id)}
           title="Aus Setliste entfernen"
         >
-          ✕
+          <IconClose className="size-4" />
         </button>
       </div>
     </div>

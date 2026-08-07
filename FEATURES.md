@@ -263,8 +263,14 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   Kommentar-Löschen hatten schon Rückfragen. Song/Agenda aus Setliste bzw. Probe-Agenda
   entfernen bewusst ohne Rückfrage gelassen — ein Klick zum Wiederherstellen über die
   Dropdown-Auswahl, anders als bei den harten Löschvorgängen.*
-- [ ] Ikonografie: Emoji/Unicode durch das SVG-Set aus `components/icons.tsx` ersetzen
-  (Stand 07.08.2026 weiterhin in 15 Dateien)
+- [x] Ikonografie: Emoji/Unicode durch das SVG-Set aus `components/icons.tsx` ersetzen —
+  *erledigt 07.08.2026: die 12 im Review gelisteten Symbole (🖨 ⧉ ⠿ 𝄞 ♫ 💬 ↻ ✎ ✕ 👍 👎)
+  über 15 Dateien ersetzt, `components/icons.tsx` um `IconEdit/IconPrint/IconCopy/IconClose/
+  IconThumbsUp/IconThumbsDown/IconMusicNote/IconSheet/IconComment/IconGrip/IconExpand`
+  ergänzt. Bewusst ausgenommen: ✓/✗/? (Zu-/Absage-Symbole aus `ATTENDANCE_STATUS`,
+  Zähler-Häkchen) sowie ▶/■ (Metronom/Bühnenmodus-Transportsymbole) — beide standen nicht
+  auf der Review-Liste, sind universell lesbar und ✓/✗ hängen an einer zentralen
+  Konstante mit vielen Verwendungsstellen; eigener Punkt bei Bedarf.*
 - [x] „Leg **rechts** die erste an!" stimmt mobil nicht — *erledigt 26.07.2026: Anlegen
   bei Terminen und Setlisten jetzt über „+ Neuer …" auf eigener Seite (`/termine/neu`,
   `/setlisten/neu`), Bearbeiten analog auf `/…/[id]/bearbeiten`, Detailseiten schlank*

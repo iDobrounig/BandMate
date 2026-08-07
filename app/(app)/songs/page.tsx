@@ -10,6 +10,9 @@ import {
   IconRepeat,
   IconCheckCircle,
   IconArchive,
+  IconMusicNote,
+  IconSheet,
+  IconComment,
 } from "@/components/icons";
 
 const STATUS_ICON: Record<SongStatus, (p: { className?: string }) => React.ReactNode> = {
@@ -212,9 +215,21 @@ export default async function SongsPage({
                 )}
               </div>
               <div className="flex shrink-0 gap-3 text-xs text-faint">
-                {song.audioCount > 0 && <span title="Audio-Dateien">♫ {song.audioCount}</span>}
-                {song.sheetCount > 0 && <span title="Noten">𝄞 {song.sheetCount}</span>}
-                {song.commentCount > 0 && <span title="Kommentare">💬 {song.commentCount}</span>}
+                {song.audioCount > 0 && (
+                  <span className="inline-flex items-center gap-1" title="Audio-Dateien">
+                    <IconMusicNote className="size-3.5" /> {song.audioCount}
+                  </span>
+                )}
+                {song.sheetCount > 0 && (
+                  <span className="inline-flex items-center gap-1" title="Noten">
+                    <IconSheet className="size-3.5" /> {song.sheetCount}
+                  </span>
+                )}
+                {song.commentCount > 0 && (
+                  <span className="inline-flex items-center gap-1" title="Kommentare">
+                    <IconComment className="size-3.5" /> {song.commentCount}
+                  </span>
+                )}
                 {song.readyCount > 0 && (
                   <span title="Mitglieder, die den Song können" className="text-emerald-400">
                     ✓ {song.readyCount}

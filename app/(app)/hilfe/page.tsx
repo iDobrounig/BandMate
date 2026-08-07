@@ -73,7 +73,7 @@ export default function HilfePage() {
           bullets={[
             "Song vorschlagen mit Titel, Interpret, YouTube-/Spotify-Link",
             "Status-Workflow: Vorschlag → In Probe → Repertoire → Archiv",
-            "Abstimmen (👍/👎), ob ihr den Song spielen wollt",
+            "Abstimmen (dafür/dagegen), ob ihr den Song spielen wollt",
             "Eigenen Übe-Status setzen (Noch nicht angeschaut / Übe noch / Kann ich) — für alle sichtbar",
             "Kommentare im Bandchat direkt beim Song",
             "Noten (PDF/Bild) und Audio-Aufnahmen hochladen und abspielen",
