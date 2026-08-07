@@ -257,8 +257,12 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   Termin jetzt einheitlich im Kopf neben „Bearbeiten" (`components/song-actions.tsx` in
   `DeleteSongButton` von den Status-Buttons getrennt, `DeleteEventButtons` vom Seitenende
   nach oben verschoben; Setliste war dort schon)*
-- [ ] Bestätigungsdialoge vereinheitlichen (u.a. Admin-Rechte vergeben in
-  `components/member-admin.tsx` weiterhin ohne Rückfrage)
+- [x] Bestätigungsdialoge vereinheitlichen — *erledigt 07.08.2026: Admin-Rechte **vergeben**
+  fragt jetzt nach („Admin entz." bleibt wie das Deaktivieren-Muster ohne Rückfrage die
+  ungefährliche Richtung), `components/member-admin.tsx`. Song/Setliste/Termin/Datei/
+  Kommentar-Löschen hatten schon Rückfragen. Song/Agenda aus Setliste bzw. Probe-Agenda
+  entfernen bewusst ohne Rückfrage gelassen — ein Klick zum Wiederherstellen über die
+  Dropdown-Auswahl, anders als bei den harten Löschvorgängen.*
 - [ ] Ikonografie: Emoji/Unicode durch das SVG-Set aus `components/icons.tsx` ersetzen
   (Stand 07.08.2026 weiterhin in 15 Dateien)
 - [x] „Leg **rechts** die erste an!" stimmt mobil nicht — *erledigt 26.07.2026: Anlegen

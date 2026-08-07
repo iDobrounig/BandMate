@@ -212,9 +212,16 @@ export function MemberRow({
               <button
                 type="button"
                 className="btn btn-sm flex-1 sm:flex-none"
-                onClick={() =>
-                  setUserRole(member.id, member.role === "admin" ? "member" : "admin")
-                }
+                onClick={() => {
+                  // Nur das Vergeben ist die zerstörende Richtung (voller Zugriff
+                  // auf Mitgliederverwaltung) — Entziehen läuft ohne Rückfrage.
+                  if (
+                    member.role !== "admin" &&
+                    !confirm(`${member.name} Admin-Rechte geben?`)
+                  )
+                    return;
+                  setUserRole(member.id, member.role === "admin" ? "member" : "admin");
+                }}
               >
                 {member.role === "admin" ? "Admin entz." : "Admin geben"}
               </button>

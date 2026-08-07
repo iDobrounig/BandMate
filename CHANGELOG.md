@@ -22,6 +22,9 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 - **„Löschen" jetzt an derselben Stelle**: bei Song, Setliste und Termin steht der
   Löschen-Button jetzt einheitlich im Kopf neben „Bearbeiten" — bei Terminen stand er
   bisher ganz unten auf der Seite, beim Song zwischen den Status-Buttons.
+- **Admin-Rechte vergeben fragt jetzt nach**: bisher lief das ohne jede Rückfrage, obwohl
+  es die einzige sicherheitsrelevante Aktion ohne Bestätigung war — Entziehen bleibt
+  bewusst ohne Rückfrage (die ungefährliche Richtung).
 
 ### Behoben
 - **Upload-Fehler beim Song-Anlegen wird nicht mehr verschluckt**: Schlägt ein Noten-
