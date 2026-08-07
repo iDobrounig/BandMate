@@ -253,8 +253,10 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   `components/attendance.tsx` sperrt das Kommentarfeld, bis eine Zu-/Absage gewählt ist
   (Platzhalter „Erst zu-/absagen, dann kommentieren"), statt den Text beim Blur stillschweigend
   zu verwerfen*
-- [ ] Einheitliche Position für „Löschen" (Stand 07.08.2026 weiterhin drei verschiedene
-  Stellen: Song in der Statusleiste, Setliste im Kopf, Termin am Seitenende)
+- [x] Einheitliche Position für „Löschen" — *erledigt 07.08.2026: bei Song, Setliste und
+  Termin jetzt einheitlich im Kopf neben „Bearbeiten" (`components/song-actions.tsx` in
+  `DeleteSongButton` von den Status-Buttons getrennt, `DeleteEventButtons` vom Seitenende
+  nach oben verschoben; Setliste war dort schon)*
 - [ ] Bestätigungsdialoge vereinheitlichen (u.a. Admin-Rechte vergeben in
   `components/member-admin.tsx` weiterhin ohne Rückfrage)
 - [ ] Ikonografie: Emoji/Unicode durch das SVG-Set aus `components/icons.tsx` ersetzen

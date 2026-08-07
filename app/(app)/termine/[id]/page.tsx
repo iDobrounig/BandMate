@@ -127,9 +127,12 @@ export default async function TerminDetailPage({
               </p>
             )}
           </div>
-          <Link href={`/termine/${event.id}/bearbeiten`} className="btn">
-            ✎ Bearbeiten
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/termine/${event.id}/bearbeiten`} className="btn">
+              ✎ Bearbeiten
+            </Link>
+            <DeleteEventButtons eventId={event.id} isSeries={Boolean(event.seriesId)} />
+          </div>
         </div>
       </div>
 
@@ -242,8 +245,6 @@ export default async function TerminDetailPage({
           memberCount={allUsers.length}
         />
       </section>
-
-      <DeleteEventButtons eventId={event.id} isSeries={Boolean(event.seriesId)} />
     </div>
   );
 }

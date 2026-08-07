@@ -12,7 +12,7 @@ import { SheetViewer } from "@/components/sheet-viewer";
 import { TransposableLyrics } from "@/components/transpose";
 import { LinkEmbed } from "@/components/embeds";
 import { Metronome } from "@/components/metronome";
-import { SongStatusActions } from "@/components/song-actions";
+import { SongStatusActions, DeleteSongButton } from "@/components/song-actions";
 import type { PracticeState } from "@/lib/db/schema";
 
 export default async function SongDetailPage({
@@ -73,9 +73,17 @@ export default async function SongDetailPage({
               {suggestedByName ? ` · vorgeschlagen von ${suggestedByName}` : ""}
             </p>
           </div>
-          <Link href={`/songs/${song.id}/bearbeiten`} className="btn">
-            ✎ Bearbeiten
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/songs/${song.id}/bearbeiten`} className="btn">
+              ✎ Bearbeiten
+            </Link>
+            <DeleteSongButton
+              songId={song.id}
+              title={song.title}
+              setlistCount={refs.setlistCount}
+              agendaCount={refs.agendaCount}
+            />
+          </div>
         </div>
 
         {/* Tuner-Zeile: Tempo / Tonart / Capo / Dauer */}
@@ -109,9 +117,6 @@ export default async function SongDetailPage({
           <SongStatusActions
             songId={song.id}
             status={song.status}
-            title={song.title}
-            setlistCount={refs.setlistCount}
-            agendaCount={refs.agendaCount}
           />
         </div>
       </div>
