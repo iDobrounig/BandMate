@@ -15,6 +15,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 - **Alle Formular-Labels haben jetzt `htmlFor`/`id`**: Anklicken eines Labels fokussiert
   jetzt zuverlässig das zugehörige Feld, Screenreader haben einen Bezug. Betraf zuletzt
   Termin-, Setlisten-, Song- und Mitgliederformulare.
+- **Speicher-Rückmeldung vereinheitlicht**: Kommentare zeigen nach dem Absenden jetzt
+  eine Bestätigung; Felder, die beim Verlassen automatisch speichern (RSVP-Kommentar,
+  Setlisten-Notizen, Set-Namen, Pausendauer), blenden kurz „✓ gespeichert" ein statt
+  kommentarlos zu speichern.
 
 ### Behoben
 - **Upload-Fehler beim Song-Anlegen wird nicht mehr verschluckt**: Schlägt ein Noten-

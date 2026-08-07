@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { setAttendance } from "@/lib/actions/events";
 import { ATTENDANCE_STATUS } from "@/lib/constants";
+import { useSavedHint, SavedHint } from "@/components/form";
 import type { AttendanceStatus } from "@/lib/db/schema";
 
 const ORDER: AttendanceStatus[] = ["yes", "maybe", "no"];
@@ -20,6 +21,7 @@ export function AttendanceButtons({
 }) {
   const [pending, startTransition] = useTransition();
   const [comment, setComment] = useState(myComment ?? "");
+  const [saved, showSaved] = useSavedHint();
 
   return (
     <div className="space-y-2">
@@ -42,20 +44,25 @@ export function AttendanceButtons({
         })}
       </div>
       {withComment && (
-        <input
-          className="input max-w-xs py-1 text-sm disabled:opacity-50"
-          value={comment}
-          disabled={!mine}
-          onChange={(e) => setComment(e.target.value)}
-          onBlur={() => {
-            if (mine && comment !== (myComment ?? ""))
-              startTransition(() => setAttendance(eventId, mine, comment));
-          }}
-          placeholder={
-            mine ? "Kommentar (z.B. komme später)" : "Erst zu-/absagen, dann kommentieren"
-          }
-          maxLength={200}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className="input max-w-xs py-1 text-sm disabled:opacity-50"
+            value={comment}
+            disabled={!mine}
+            onChange={(e) => setComment(e.target.value)}
+            onBlur={() => {
+              if (mine && comment !== (myComment ?? "")) {
+                startTransition(() => setAttendance(eventId, mine, comment));
+                showSaved();
+              }
+            }}
+            placeholder={
+              mine ? "Kommentar (z.B. komme später)" : "Erst zu-/absagen, dann kommentieren"
+            }
+            maxLength={200}
+          />
+          <SavedHint show={saved} />
+        </div>
       )}
     </div>
   );

@@ -29,6 +29,7 @@ import {
 } from "@/lib/actions/setlists";
 import { summarizeSetlist, compareTarget } from "@/lib/setlist-structure";
 import { formatDuration } from "@/lib/format";
+import { useSavedHint, SavedHint } from "@/components/form";
 
 export type EditorItem = {
   id: number;
@@ -65,6 +66,7 @@ function SortableRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
   const [note, setNote] = useState(item.note ?? "");
+  const [saved, showSaved] = useSavedHint();
 
   const grip = (
     <button
@@ -91,13 +93,16 @@ function SortableRow({
         <input
           defaultValue={item.label ?? ""}
           onBlur={(e) => {
-            if (e.target.value !== (item.label ?? ""))
+            if (e.target.value !== (item.label ?? "")) {
               void updateSetlistItemLabel(item.id, e.target.value);
+              showSaved();
+            }
           }}
           placeholder="Set-Name"
           aria-label="Set-Name"
           className="input flex-1 border-none bg-transparent px-1 py-0.5 font-semibold text-accent-hi"
         />
+        <SavedHint show={saved} />
         {summary && (
           <span className="mono-display shrink-0 text-xs text-mute">
             {summary.songCount} {summary.songCount === 1 ? "Song" : "Songs"} ·{" "}
@@ -134,8 +139,10 @@ function SortableRow({
           defaultValue={minutes}
           onBlur={(e) => {
             const m = Number(e.target.value);
-            if (m * 60 !== (item.breakSeconds ?? 0))
+            if (m * 60 !== (item.breakSeconds ?? 0)) {
               void updateSetlistBreakSeconds(item.id, (Number.isFinite(m) ? m : 0) * 60);
+              showSaved();
+            }
           }}
           aria-label="Pausendauer (Minuten)"
           className="input w-16 py-1 text-center text-xs"
@@ -144,13 +151,16 @@ function SortableRow({
         <input
           defaultValue={item.label ?? ""}
           onBlur={(e) => {
-            if (e.target.value !== (item.label ?? ""))
+            if (e.target.value !== (item.label ?? "")) {
               void updateSetlistItemLabel(item.id, e.target.value);
+              showSaved();
+            }
           }}
           placeholder="Label (optional, z.B. Umbau)"
           aria-label="Pausen-Label"
           className="input flex-1 py-1 text-xs"
         />
+        <SavedHint show={saved} />
         <button
           type="button"
           className="link-danger px-2 shrink-0"
@@ -209,10 +219,14 @@ function SortableRow({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           onBlur={() => {
-            if (note !== (item.note ?? "")) void updateSetlistItemNote(item.id, note);
+            if (note !== (item.note ?? "")) {
+              void updateSetlistItemNote(item.id, note);
+              showSaved();
+            }
           }}
           placeholder="Notiz (z.B. Solo verlängern)"
         />
+        <SavedHint show={saved} />
         <button
           type="button"
           className="link-danger hidden px-1 sm:block"

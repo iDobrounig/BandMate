@@ -74,7 +74,7 @@ export async function addComment(
   }
 
   revalidatePath(`/songs/${songId}`);
-  return {};
+  return { success: "Kommentar gesendet." };
 }
 
 export async function deleteComment(commentId: number) {

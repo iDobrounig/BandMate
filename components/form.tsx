@@ -1,7 +1,9 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { useRef, useState } from "react";
 import type { FormState } from "@/lib/actions/auth";
+import { IconCheck } from "@/components/icons";
 
 export function SubmitButton({
   children,
@@ -36,4 +38,32 @@ export function FormMsg({ state }: { state: FormState }) {
     );
   }
   return null;
+}
+
+/**
+ * Rückmeldung für Onblur-Autospeicher (Notiz-/Kommentarfelder ohne eigenen
+ * Speichern-Button). Blendet sich nach kurzer Zeit von selbst wieder aus —
+ * siehe F3 in FEATURES.md: bisher speicherten diese Felder still.
+ */
+export function useSavedHint(): [boolean, () => void] {
+  const [visible, setVisible] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const trigger = () => {
+    setVisible(true);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setVisible(false), 1500);
+  };
+
+  return [visible, trigger];
+}
+
+export function SavedHint({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-emerald-400">
+      <IconCheck className="size-3.5" />
+      gespeichert
+    </span>
+  );
 }

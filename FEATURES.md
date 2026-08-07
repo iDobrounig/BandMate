@@ -241,8 +241,11 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   nachgezogen (Letzteres mit Mitglieds-ID im `id`, da das Formular pro Zeile wiederholt
   wird). Die reinen Gruppen-Überschriften (Links-Sektion) sind jetzt `<h3>` statt `<label>`,
   wie es das Projekt bei „Benachrichtigungen" schon vormacht.*
-- [ ] Einheitliche Speicher-Rückmeldung (Redirect/Text/Text/gar keine — Kommentar und
-  Setlisten-Notiz weiterhin ohne Rückmeldung)
+- [x] Einheitliche Speicher-Rückmeldung — *erledigt 07.08.2026: Kommentar-Absenden zeigt
+  jetzt „Kommentar gesendet." (`lib/actions/interactions.ts`); die Onblur-Autospeicher ohne
+  eigenen Button (RSVP-Kommentar, Setlisten-Notiz/Set-Name/Pausenfelder) blenden kurz
+  „✓ gespeichert" ein (`useSavedHint`/`SavedHint` in `components/form.tsx`). Redirect-Formulare
+  (Song/Termin/Setliste anlegen/bearbeiten) bleiben als eigenes, bewusstes Muster bestehen.*
 - [x] Upload-Fehler beim Song-Anlegen nicht mehr verschlucken — *erledigt 07.08.2026:
   `lib/actions/songs.ts` reicht einen Fehlschlag als `?upload_error=1` an die Detailseite
   durch, die daraus einen Hinweis-Banner zeigt statt nur `console.error`*
