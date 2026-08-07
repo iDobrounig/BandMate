@@ -3,7 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { songs, comments, users } from "@/lib/db/schema";
-import { fetchSongList, fetchEvents } from "@/lib/queries";
+import { fetchSongList, fetchEvents, fetchSetlists } from "@/lib/queries";
 import { fetchReminderStatus } from "@/lib/notifications";
 import { fetchTodo, touchLastSeen } from "@/lib/todo";
 import { songAktiv } from "@/lib/db/filters";
@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   // letztem Besuch" den vorigen Wert, und rasche Reloads verlieren ihn nicht.
   const lastSeen = await touchLastSeen(user.id);
 
-  const [allSongs, recentComments, upcomingEvents, reminderStatus, todo] =
+  const [allSongs, recentComments, upcomingEvents, allSetlists, reminderStatus, todo] =
     await Promise.all([
       fetchSongList(user.id),
       db
@@ -32,6 +32,7 @@ export default async function DashboardPage() {
         .orderBy(desc(comments.createdAt))
         .limit(6),
       fetchEvents(user.id, { limit: 4 }),
+      fetchSetlists(),
       // Nur Admins sehen die Statuszeile — für alle anderen gar nicht erst laden.
       isAdmin ? fetchReminderStatus() : Promise.resolve(null),
       fetchTodo(user.id, lastSeen),
@@ -43,6 +44,17 @@ export default async function DashboardPage() {
     .slice(0, 5);
   const rehearsing = allSongs.filter((s) => s.status === "rehearsing");
   const repertoireCount = allSongs.filter((s) => s.status === "repertoire").length;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const upcomingSetlists = allSetlists
+    .filter((s) => s.eventDate == null || s.eventDate >= today)
+    .sort((a, b) => {
+      if (!a.eventDate && !b.eventDate) return a.name.localeCompare(b.name, "de");
+      if (!a.eventDate) return 1;
+      if (!b.eventDate) return -1;
+      return a.eventDate.localeCompare(b.eventDate);
+    })
+    .slice(0, 4);
 
   const firstName = user.name.split(" ")[0];
 
@@ -167,6 +179,46 @@ export default async function DashboardPage() {
 
         {/* Seitenspalte */}
         <div className="space-y-8 min-w-0">
+          <section className="card p-5">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="headline text-lg">Setlisten</h2>
+              <Link href="/setlisten" className="text-sm text-mute hover:text-accent-hi">
+                alle →
+              </Link>
+            </div>
+            {upcomingSetlists.length === 0 ? (
+              <p className="text-sm text-faint">
+                Keine anstehenden Setlisten.{" "}
+                <Link href="/setlisten/neu" className="text-accent-hi hover:underline">
+                  Anlegen →
+                </Link>
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {upcomingSetlists.map((setlist) => (
+                  <li key={setlist.id}>
+                    <Link
+                      href={`/setlisten/${setlist.id}`}
+                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-raise"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold">
+                          {setlist.name}
+                        </span>
+                        <span className="mono-display block text-xs text-mute">
+                          {setlist.eventDate ? formatDate(setlist.eventDate) : "ohne Datum"}
+                        </span>
+                      </span>
+                      <span className="mono-display shrink-0 text-xs text-faint">
+                        {setlist.songCount} {setlist.songCount === 1 ? "Song" : "Songs"}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           <section className="card p-5">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="headline text-lg">Nächste Termine</h2>

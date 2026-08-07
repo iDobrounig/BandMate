@@ -38,8 +38,9 @@ export function SongForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="label">Titel *</label>
+          <label className="label" htmlFor="sf-title">Titel *</label>
           <input
+            id="sf-title"
             className="input text-lg"
             name="title"
             defaultValue={song?.title ?? ""}
@@ -48,12 +49,18 @@ export function SongForm({
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="label">Interpret / Original</label>
-          <input className="input" name="artist" defaultValue={song?.artist ?? ""} />
+          <label className="label" htmlFor="sf-artist">Interpret / Original</label>
+          <input
+            id="sf-artist"
+            className="input"
+            name="artist"
+            defaultValue={song?.artist ?? ""}
+          />
         </div>
         <div>
-          <label className="label">Tempo (BPM)</label>
+          <label className="label" htmlFor="sf-tempo">Tempo (BPM)</label>
           <input
+            id="sf-tempo"
             className="input mono-display"
             name="tempoBpm"
             type="number"
@@ -64,8 +71,9 @@ export function SongForm({
           />
         </div>
         <div>
-          <label className="label">Tonart</label>
+          <label className="label" htmlFor="sf-key">Tonart</label>
           <input
+            id="sf-key"
             className="input mono-display"
             name="songKey"
             defaultValue={song?.songKey ?? ""}
@@ -73,8 +81,9 @@ export function SongForm({
           />
         </div>
         <div>
-          <label className="label">Capo (Bund)</label>
+          <label className="label" htmlFor="sf-capo">Capo (Bund)</label>
           <input
+            id="sf-capo"
             className="input mono-display"
             name="capo"
             type="number"
@@ -84,8 +93,9 @@ export function SongForm({
           />
         </div>
         <div>
-          <label className="label">Dauer (min:sek)</label>
+          <label className="label" htmlFor="sf-duration">Dauer (min:sek)</label>
           <input
+            id="sf-duration"
             className="input mono-display"
             name="duration"
             defaultValue={
@@ -98,7 +108,7 @@ export function SongForm({
       </div>
 
       <div>
-        <label className="label">Links (YouTube, Spotify, Tabs, …)</label>
+        <h3 className="label">Links (YouTube, Spotify, Tabs, …)</h3>
         <div className="space-y-3">
           {linkRows.map((row) => (
             <div key={row.id} className="flex flex-col gap-2 border-b border-line-soft/40 pb-3 sm:flex-row sm:border-0 sm:pb-0">
@@ -138,8 +148,9 @@ export function SongForm({
       {!isEdit && (
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Audio-Datei (optional)</label>
+            <label className="label" htmlFor="sf-audio">Audio-Datei (optional)</label>
             <input
+              id="sf-audio"
               className="input"
               name="audioFile"
               type="file"
@@ -148,8 +159,9 @@ export function SongForm({
             <p className="mt-1 text-xs text-faint">MP3, M4A, WAV … max. 50 MB</p>
           </div>
           <div>
-            <label className="label">Noten (optional)</label>
+            <label className="label" htmlFor="sf-sheet">Noten (optional)</label>
             <input
+              id="sf-sheet"
               className="input"
               name="sheetFile"
               type="file"
@@ -160,6 +172,7 @@ export function SongForm({
               name="sheetInstrument"
               list="instruments-song"
               placeholder="Für welches Instrument?"
+              aria-label="Für welches Instrument?"
             />
             <datalist id="instruments-song">
               {INSTRUMENT_SUGGESTIONS.map((i) => (
@@ -171,8 +184,9 @@ export function SongForm({
       )}
 
       <div>
-        <label className="label">Lyrics / Akkorde</label>
+        <label className="label" htmlFor="sf-lyrics">Lyrics / Akkorde</label>
         <textarea
+          id="sf-lyrics"
           className="input mono-display min-h-48 text-sm leading-relaxed"
           name="lyricsChords"
           defaultValue={song?.lyricsChords ?? ""}
@@ -181,8 +195,9 @@ export function SongForm({
       </div>
 
       <div>
-        <label className="label">Notizen</label>
+        <label className="label" htmlFor="sf-notes">Notizen</label>
         <textarea
+          id="sf-notes"
           className="input min-h-20"
           name="notes"
           defaultValue={song?.notes ?? ""}

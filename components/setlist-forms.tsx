@@ -24,8 +24,9 @@ export function SetlistForm({ setlist }: { setlist?: Setlist }) {
       {isEdit && <input type="hidden" name="setlistId" value={setlist!.id} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Name</label>
+          <label className="label" htmlFor="sl-name">Name</label>
           <input
+            id="sl-name"
             className="input"
             name="name"
             defaultValue={setlist?.name ?? ""}
@@ -34,8 +35,9 @@ export function SetlistForm({ setlist }: { setlist?: Setlist }) {
           />
         </div>
         <div>
-          <label className="label">Datum (optional)</label>
+          <label className="label" htmlFor="sl-eventDate">Datum (optional)</label>
           <input
+            id="sl-eventDate"
             className="input"
             name="eventDate"
             type="date"

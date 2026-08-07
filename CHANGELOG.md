@@ -6,6 +6,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
+### Hinzugefügt
+- **Dashboard verlinkt jetzt Setlisten**: neue Sidebar-Sektion „Setlisten" mit den
+  nächsten anstehenden — bisher ein Hauptmenüpunkt ohne jede Erwähnung auf der
+  Startseite.
+
+### Geändert
+- **Alle Formular-Labels haben jetzt `htmlFor`/`id`**: Anklicken eines Labels fokussiert
+  jetzt zuverlässig das zugehörige Feld, Screenreader haben einen Bezug. Betraf zuletzt
+  Termin-, Setlisten-, Song- und Mitgliederformulare.
+
 ### Behoben
 - **Upload-Fehler beim Song-Anlegen wird nicht mehr verschluckt**: Schlägt ein Noten-
   oder Audio-Upload beim Anlegen eines Songs fehl, zeigt die Detailseite jetzt einen

@@ -23,16 +23,17 @@ export function NewMemberForm() {
     <form action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Name</label>
-          <input className="input" name="name" required />
+          <label className="label" htmlFor="ma-name">Name</label>
+          <input id="ma-name" className="input" name="name" required />
         </div>
         <div>
-          <label className="label">E-Mail</label>
-          <input className="input" name="email" type="email" required />
+          <label className="label" htmlFor="ma-email">E-Mail</label>
+          <input id="ma-email" className="input" name="email" type="email" required />
         </div>
         <div>
-          <label className="label">Startpasswort</label>
+          <label className="label" htmlFor="ma-password">Startpasswort</label>
           <input
+            id="ma-password"
             className="input"
             name="password"
             type="text"
@@ -42,8 +43,9 @@ export function NewMemberForm() {
           />
         </div>
         <div>
-          <label className="label">Instrument</label>
+          <label className="label" htmlFor="ma-instrument">Instrument</label>
           <input
+            id="ma-instrument"
             className="input"
             name="instrument"
             list="instruments-admin"
@@ -100,12 +102,19 @@ function EditMemberForm({
       <input type="hidden" name="userId" value={member.id} />
       <div className="grid gap-3 sm:grid-cols-3">
         <div>
-          <label className="label">Name</label>
-          <input className="input" name="name" defaultValue={member.name} required />
+          <label className="label" htmlFor={`me-${member.id}-name`}>Name</label>
+          <input
+            id={`me-${member.id}-name`}
+            className="input"
+            name="name"
+            defaultValue={member.name}
+            required
+          />
         </div>
         <div>
-          <label className="label">E-Mail</label>
+          <label className="label" htmlFor={`me-${member.id}-email`}>E-Mail</label>
           <input
+            id={`me-${member.id}-email`}
             className="input"
             name="email"
             type="email"
@@ -114,8 +123,9 @@ function EditMemberForm({
           />
         </div>
         <div>
-          <label className="label">Instrument</label>
+          <label className="label" htmlFor={`me-${member.id}-instrument`}>Instrument</label>
           <input
+            id={`me-${member.id}-instrument`}
             className="input"
             name="instrument"
             defaultValue={member.instrument ?? ""}

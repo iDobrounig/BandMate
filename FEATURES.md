@@ -236,7 +236,11 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 Kein eigenes Release; wird mitgenommen, wenn die betroffene Datei ohnehin angefasst wird.
 Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026-07.md), Abschnitt 1.
 
-- [ ] `htmlFor`/`id` an allen Formular-Labels (Stand 07.08.2026: noch 24 von 51 ohne)
+- [x] `htmlFor`/`id` an allen Formular-Labels — *erledigt 07.08.2026: letzte 21 Fundstellen
+  in `event-forms.tsx`, `setlist-forms.tsx`, `song-form.tsx` und `member-admin.tsx`
+  nachgezogen (Letzteres mit Mitglieds-ID im `id`, da das Formular pro Zeile wiederholt
+  wird). Die reinen Gruppen-Überschriften (Links-Sektion) sind jetzt `<h3>` statt `<label>`,
+  wie es das Projekt bei „Benachrichtigungen" schon vormacht.*
 - [ ] Einheitliche Speicher-Rückmeldung (Redirect/Text/Text/gar keine — Kommentar und
   Setlisten-Notiz weiterhin ohne Rückmeldung)
 - [x] Upload-Fehler beim Song-Anlegen nicht mehr verschlucken — *erledigt 07.08.2026:
@@ -262,7 +266,8 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 - [x] `readyCount` zählt deaktivierte Mitglieder mit — *erledigt 07.08.2026: Subquery in
   `lib/queries.ts` und `app/(app)/termine/[id]/page.tsx` joint jetzt gegen `users.active`,
   wie es `memberCount` bereits tat*
-- [ ] Dashboard verlinkt Setlisten nirgends
+- [x] Dashboard verlinkt Setlisten nirgends — *erledigt 07.08.2026: neue Sidebar-Sektion
+  „Setlisten" mit den nächsten anstehenden (Vorbild „Nächste Termine")*
 - [ ] Hilfe-Seite auf aktuellen Stand bringen — *Stand 07.08.2026: Passwort-Reset steht
   inzwischen drin, es fehlen aber weiterhin Mitgliederverwaltung, Bühnenmodus, Sets & Pausen,
   Gig-Logistik und die Benachrichtigungs-Einstellungen aus Welle 1/2*

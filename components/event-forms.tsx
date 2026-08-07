@@ -234,8 +234,14 @@ export function EventForm({
           </label>
           {repeat && (
             <div>
-              <label className="label">Wiederholen bis</label>
-              <input className="input" name="repeatUntil" type="date" required />
+              <label className="label" htmlFor="ev-repeatUntil">Wiederholen bis</label>
+              <input
+                id="ev-repeatUntil"
+                className="input"
+                name="repeatUntil"
+                type="date"
+                required
+              />
               <p className="mt-1 text-xs text-faint">
                 Erzeugt einzelne Termine (max. 30), die auch einzeln absagbar sind.
               </p>
