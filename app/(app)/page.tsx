@@ -179,7 +179,7 @@ export default async function DashboardPage() {
 
         {/* Seitenspalte */}
         <div className="space-y-8 min-w-0">
-          <section className="card p-5">
+          <section>
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="headline text-lg">Setlisten</h2>
               <Link href="/setlisten" className="text-sm text-mute hover:text-accent-hi">
@@ -187,39 +187,38 @@ export default async function DashboardPage() {
               </Link>
             </div>
             {upcomingSetlists.length === 0 ? (
-              <p className="text-sm text-faint">
+              <div className="card p-8 text-center text-mute">
                 Keine anstehenden Setlisten.{" "}
                 <Link href="/setlisten/neu" className="text-accent-hi hover:underline">
                   Anlegen →
                 </Link>
-              </p>
+              </div>
             ) : (
-              <ul className="space-y-2">
+              <div className="space-y-2">
                 {upcomingSetlists.map((setlist) => (
-                  <li key={setlist.id}>
-                    <Link
-                      href={`/setlisten/${setlist.id}`}
-                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-raise"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-semibold">
-                          {setlist.name}
-                        </span>
-                        <span className="mono-display block text-xs text-mute">
-                          {setlist.eventDate ? formatDate(setlist.eventDate) : "ohne Datum"}
-                        </span>
+                  <Link
+                    key={setlist.id}
+                    href={`/setlisten/${setlist.id}`}
+                    className="card flex items-center gap-2 p-4 transition hover:border-accent/40"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">
+                        {setlist.name}
                       </span>
-                      <span className="mono-display shrink-0 text-xs text-faint">
-                        {setlist.songCount} {setlist.songCount === 1 ? "Song" : "Songs"}
+                      <span className="mono-display block text-xs text-mute">
+                        {setlist.eventDate ? formatDate(setlist.eventDate) : "ohne Datum"}
                       </span>
-                    </Link>
-                  </li>
+                    </span>
+                    <span className="mono-display shrink-0 text-xs text-faint">
+                      {setlist.songCount} {setlist.songCount === 1 ? "Song" : "Songs"}
+                    </span>
+                  </Link>
                 ))}
-              </ul>
+              </div>
             )}
           </section>
 
-          <section className="card p-5">
+          <section>
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="headline text-lg">Nächste Termine</h2>
               <Link href="/termine" className="text-sm text-mute hover:text-accent-hi">
@@ -227,80 +226,78 @@ export default async function DashboardPage() {
               </Link>
             </div>
             {upcomingEvents.length === 0 ? (
-              <p className="text-sm text-faint">
+              <div className="card p-8 text-center text-mute">
                 Keine anstehenden Termine.{" "}
                 <Link href="/termine" className="text-accent-hi hover:underline">
                   Anlegen →
                 </Link>
-              </p>
+              </div>
             ) : (
-              <ul className="space-y-2">
+              <div className="space-y-2">
                 {upcomingEvents.map((event) => (
-                  <li key={event.id}>
-                    <Link
-                      href={`/termine/${event.id}`}
-                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-raise"
+                  <Link
+                    key={event.id}
+                    href={`/termine/${event.id}`}
+                    className="card flex items-center gap-2 p-4 transition hover:border-accent/40"
+                  >
+                    <span
+                      className={`size-2 shrink-0 rounded-full ${EVENT_KIND[event.kind].bar}`}
+                      title={EVENT_KIND[event.kind].label}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">
+                        {event.title}
+                      </span>
+                      <span className="mono-display block text-xs text-mute">
+                        {formatDate(event.date)}
+                        {event.startTime ? ` · ${event.startTime}` : ""}
+                      </span>
+                    </span>
+                    <span
+                      className={`mono-display shrink-0 text-xs ${
+                        event.myStatus
+                          ? ATTENDANCE_STATUS[event.myStatus].color
+                          : "text-faint"
+                      }`}
                     >
-                      <span
-                        className={`size-2 shrink-0 rounded-full ${EVENT_KIND[event.kind].bar}`}
-                        title={EVENT_KIND[event.kind].label}
-                      />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-semibold">
-                          {event.title}
-                        </span>
-                        <span className="mono-display block text-xs text-mute">
-                          {formatDate(event.date)}
-                          {event.startTime ? ` · ${event.startTime}` : ""}
-                        </span>
-                      </span>
-                      <span
-                        className={`mono-display shrink-0 text-xs ${
-                          event.myStatus
-                            ? ATTENDANCE_STATUS[event.myStatus].color
-                            : "text-faint"
-                        }`}
-                      >
-                        {event.myStatus
-                          ? ATTENDANCE_STATUS[event.myStatus].symbol
-                          : "offen"}
-                      </span>
-                    </Link>
-                  </li>
+                      {event.myStatus
+                        ? ATTENDANCE_STATUS[event.myStatus].symbol
+                        : "offen"}
+                    </span>
+                  </Link>
                 ))}
-              </ul>
+              </div>
             )}
           </section>
 
-          <section className="card p-5">
+          <section>
             <h2 className="headline mb-3 text-lg">Zuletzt im Bandchat</h2>
             {recentComments.length === 0 ? (
-              <p className="text-sm text-faint">Noch keine Kommentare.</p>
+              <div className="card p-8 text-center text-mute">Noch keine Kommentare.</div>
             ) : (
-              <ul className="space-y-3">
+              <div className="space-y-2">
                 {recentComments.map(({ comment, userName, songTitle }) => (
-                  <li key={comment.id} className="text-sm">
-                    <Link
-                      href={`/songs/${comment.songId}`}
-                      className="group block rounded-lg px-2 py-1.5 transition hover:bg-raise"
-                    >
-                      <p className="text-xs text-mute">
-                        <span className="font-semibold text-accent-hi">
-                          {userName}
-                        </span>{" "}
-                        zu{" "}
-                        <span className="font-semibold group-hover:text-accent-hi">
-                          {songTitle}
-                        </span>{" "}
-                        · {formatDateTime(comment.createdAt)}
-                      </p>
-                      <p className="mt-0.5 line-clamp-2 text-ink/90">
-                        {comment.body}
-                      </p>
-                    </Link>
-                  </li>
+                  <Link
+                    key={comment.id}
+                    href={`/songs/${comment.songId}`}
+                    className="card group block p-4 text-sm transition hover:border-accent/40"
+                  >
+                    <p className="text-xs text-mute">
+                      <span className="font-semibold text-accent-hi">
+                        {userName}
+                      </span>{" "}
+                      zu{" "}
+                      <span className="font-semibold group-hover:text-accent-hi">
+                        {songTitle}
+                      </span>{" "}
+                      · {formatDateTime(comment.createdAt)}
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-ink/90">
+                      {comment.body}
+                    </p>
+                  </Link>
                 ))}
-              </ul>
+              </div>
             )}
           </section>
         </div>

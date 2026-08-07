@@ -12,6 +12,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
   Startseite.
 
 ### Geändert
+- **Dashboard-Sektionen einheitlich dargestellt**: „Setlisten", „Nächste Termine" und
+  „Zuletzt im Bandchat" steckten bisher zusammen mit der Überschrift in einer einzigen
+  Karte; „Heiße Vorschläge" und „Gerade in Probe" zeigten die Überschrift frei darüber
+  und jede Zeile als eigene Karte. Alle fünf Sektionen folgen jetzt demselben Muster.
 - **Alle Formular-Labels haben jetzt `htmlFor`/`id`**: Anklicken eines Labels fokussiert
   jetzt zuverlässig das zugehörige Feld, Screenreader haben einen Bezug. Betraf zuletzt
   Termin-, Setlisten-, Song- und Mitgliederformulare.
