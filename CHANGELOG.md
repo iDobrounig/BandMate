@@ -6,6 +6,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
+_Noch nichts._
+
+## [1.15.0] — 2026-08-07
+
+**Konsistenz & Kleinkram.** Die „Laufend"-Liste aus FEATURES.md abgearbeitet: drei echte
+Bugs behoben, dazu Speicher-Rückmeldung, Löschen-Position, Bestätigungsdialoge und
+Ikonografie über die ganze App vereinheitlicht.
+
 ### Hinzugefügt
 - **Dashboard verlinkt jetzt Setlisten**: neue Sidebar-Sektion „Setlisten" mit den
   nächsten anstehenden — bisher ein Hauptmenüpunkt ohne jede Erwähnung auf der
