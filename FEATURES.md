@@ -303,19 +303,17 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 - [ ] Speicherplatz-Übersicht der Uploads
 - [ ] Health-Check / Monitoring (heute merkt niemand, wenn SMTP oder der Prozess ausfällt)
 - [ ] **Auto-Deploy-Runner einrichten** — der Workflow „Deploy nach Release"
-  (`.github/workflows/deploy.yml`, seit 1.14.2) existiert, aber ohne Gegenstück: aktuell
-  0 registrierte Self-hosted-Runner, kein Environment `production`, keine Repo-Variable
-  `DEPLOY_PATH` — jeder Release-Lauf bleibt daher für immer auf „queued" hängen
-  (verifiziert 07.08.2026 bei v1.15.0, Lauf abgebrochen). Bis dahin: `./deploy.sh` manuell
-  auf dem Server. Einrichtung komplett in [docs/auto-deploy.md](docs/auto-deploy.md):
-  1. Runner auf dem Server als Deploy-User installieren (Settings → Actions → Runners →
-     New self-hosted runner; Label **`bandmate`** nicht vergessen), als Dienst
-     einrichten (`svc.sh install/start`), damit er Neustarts übersteht.
-  2. Environment `production` anlegen (Settings → Environments), darin „Required
-     reviewers" aktivieren — das ist das eigentliche Approval-Gate.
-  3. Repo-Variable `DEPLOY_PATH` setzen (absoluter Pfad zum App-Clone auf dem Server).
-  4. Testen ohne echten Release: Actions → „Deploy nach Release" → Run workflow.
-  Punkt 2+3 lassen sich auch per `gh api` setzen; Punkt 1 braucht Serverzugriff.
+  (`.github/workflows/deploy.yml`, seit 1.14.2) existierte bisher ohne Gegenstück; jeder
+  Release-Lauf blieb für immer auf „queued" hängen (verifiziert 07.08.2026 bei v1.15.0,
+  Lauf abgebrochen; Ursache: 0 registrierte Self-hosted-Runner). Bis dahin: `./deploy.sh`
+  manuell auf dem Server. Einrichtung: [docs/auto-deploy.md](docs/auto-deploy.md).
+  - [x] Environment `production` mit „Required reviewers" (`iDobrounig`) — *erledigt
+    07.08.2026 per `gh api`*
+  - [x] Repo-Variable `DEPLOY_PATH` = `/var/www/web24/htdocs/BandMate` — *erledigt
+    07.08.2026 per `gh api`*
+  - [ ] Self-hosted Runner auf dem Server installieren (Label **`bandmate`** nicht
+    vergessen), als Dienst einrichten (`svc.sh install/start`) — braucht Serverzugriff
+  - [ ] Danach testen ohne echten Release: Actions → „Deploy nach Release" → Run workflow
 
 ### Offene Grundsatzentscheidung: Open Source ernst gemeint?
 
