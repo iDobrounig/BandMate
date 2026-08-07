@@ -63,6 +63,7 @@ export async function createSong(
   }
 
   // Optionale Uploads direkt beim Anlegen
+  let uploadFailed = false;
   try {
     const audio = formData.get("audioFile");
     if (audio instanceof File && audio.size > 0) {
@@ -80,8 +81,10 @@ export async function createSong(
       });
     }
   } catch (err) {
-    // Song ist angelegt, nur der Upload schlug fehl — auf der Detailseite nachholbar
+    // Song ist angelegt, nur der Upload schlug fehl — auf der Detailseite nachholbar.
+    // Die Detailseite zeigt einen Hinweis (?upload_error=1), sonst bekommt es niemand mit.
     console.error("Upload beim Anlegen fehlgeschlagen:", err);
+    uploadFailed = true;
   }
 
   notifyBand({
@@ -98,7 +101,7 @@ export async function createSong(
   });
 
   revalidatePath("/", "layout");
-  redirect(`/songs/${song.id}`);
+  redirect(`/songs/${song.id}${uploadFailed ? "?upload_error=1" : ""}`);
 }
 
 export async function updateSong(

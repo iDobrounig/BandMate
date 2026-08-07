@@ -6,7 +6,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
-_Noch nichts._
+### Behoben
+- **Upload-Fehler beim Song-Anlegen wird nicht mehr verschluckt**: Schlägt ein Noten-
+  oder Audio-Upload beim Anlegen eines Songs fehl, zeigt die Detailseite jetzt einen
+  Hinweis-Banner statt den Fehler nur ins Server-Log zu schreiben.
+- **RSVP-Kommentar ging ohne Statusklick verloren**: Das Kommentarfeld bei „Bist du
+  dabei?" ist jetzt gesperrt, bis eine Zu-/Absage gewählt wurde — vorher verschwand ein
+  getippter Kommentar beim Verlassen des Felds stillschweigend, wenn noch kein Status
+  gesetzt war.
+- **`readyCount` zählte deaktivierte Mitglieder mit**: Die „✓ x/y können's"-Anzeige bei
+  Songs und in der Probe-Agenda konnte dadurch mehr Zusagen zeigen als aktive
+  Mitglieder existieren. Zählt jetzt wie `memberCount` nur aktive Mitglieder.
 
 ## [1.14.2] — 2026-07-28
 

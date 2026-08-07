@@ -60,7 +60,7 @@ export default async function TerminDetailPage({
           artist: songs.artist,
           songKey: songs.songKey,
           tempoBpm: songs.tempoBpm,
-          readyCount: sql<number>`(select count(*) from practice_status p where p.song_id = songs.id and p.status = 'ready')`,
+          readyCount: sql<number>`(select count(*) from practice_status p join users u on u.id = p.user_id where p.song_id = songs.id and p.status = 'ready' and u.active = 1)`,
         })
         .from(eventSongs)
         .innerJoin(songs, eq(eventSongs.songId, songs.id))

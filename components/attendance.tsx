@@ -43,14 +43,17 @@ export function AttendanceButtons({
       </div>
       {withComment && (
         <input
-          className="input max-w-xs py-1 text-sm"
+          className="input max-w-xs py-1 text-sm disabled:opacity-50"
           value={comment}
+          disabled={!mine}
           onChange={(e) => setComment(e.target.value)}
           onBlur={() => {
             if (mine && comment !== (myComment ?? ""))
               startTransition(() => setAttendance(eventId, mine, comment));
           }}
-          placeholder="Kommentar (z.B. komme später)"
+          placeholder={
+            mine ? "Kommentar (z.B. komme später)" : "Erst zu-/absagen, dann kommentieren"
+          }
           maxLength={200}
         />
       )}

@@ -236,22 +236,36 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 Kein eigenes Release; wird mitgenommen, wenn die betroffene Datei ohnehin angefasst wird.
 Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026-07.md), Abschnitt 1.
 
-- [ ] `htmlFor`/`id` an allen Formular-Labels (29 von 40 fehlen)
-- [ ] Einheitliche Speicher-Rückmeldung (heute vier verschiedene Muster)
-- [ ] Upload-Fehler beim Song-Anlegen nicht mehr verschlucken (`lib/actions/songs.ts:82`)
-- [ ] RSVP-Kommentar ohne Statusklick geht verloren (`components/attendance.tsx:44`)
-- [ ] Einheitliche Position für „Löschen" (heute drei verschiedene Stellen)
-- [ ] Bestätigungsdialoge vereinheitlichen (u.a. Admin-Rechte vergeben ohne Rückfrage)
+- [ ] `htmlFor`/`id` an allen Formular-Labels (Stand 07.08.2026: noch 24 von 51 ohne)
+- [ ] Einheitliche Speicher-Rückmeldung (Redirect/Text/Text/gar keine — Kommentar und
+  Setlisten-Notiz weiterhin ohne Rückmeldung)
+- [x] Upload-Fehler beim Song-Anlegen nicht mehr verschlucken — *erledigt 07.08.2026:
+  `lib/actions/songs.ts` reicht einen Fehlschlag als `?upload_error=1` an die Detailseite
+  durch, die daraus einen Hinweis-Banner zeigt statt nur `console.error`*
+- [x] RSVP-Kommentar ohne Statusklick geht verloren — *erledigt 07.08.2026:
+  `components/attendance.tsx` sperrt das Kommentarfeld, bis eine Zu-/Absage gewählt ist
+  (Platzhalter „Erst zu-/absagen, dann kommentieren"), statt den Text beim Blur stillschweigend
+  zu verwerfen*
+- [ ] Einheitliche Position für „Löschen" (Stand 07.08.2026 weiterhin drei verschiedene
+  Stellen: Song in der Statusleiste, Setliste im Kopf, Termin am Seitenende)
+- [ ] Bestätigungsdialoge vereinheitlichen (u.a. Admin-Rechte vergeben in
+  `components/member-admin.tsx` weiterhin ohne Rückfrage)
 - [ ] Ikonografie: Emoji/Unicode durch das SVG-Set aus `components/icons.tsx` ersetzen
+  (Stand 07.08.2026 weiterhin in 15 Dateien)
 - [x] „Leg **rechts** die erste an!" stimmt mobil nicht — *erledigt 26.07.2026: Anlegen
   bei Terminen und Setlisten jetzt über „+ Neuer …" auf eigener Seite (`/termine/neu`,
   `/setlisten/neu`), Bearbeiten analog auf `/…/[id]/bearbeiten`, Detailseiten schlank*
-- [ ] Singular/Plural („1 Songs") — *offen u.a. in `components/setlist-editor.tsx` („1 Songs")*
+- [x] Singular/Plural („1 Songs") — *bereits erledigt (vermutlich im Zuge von 1.12.0),
+  verifiziert 07.08.2026 in `components/setlist-editor.tsx`*
 - [x] Setlisten-Liste: Suche/Sortierung, Trennung vergangen/kommend — *erledigt 26.07.2026*
 - [x] Termine: „Vergangene ausblenden"-Weg zurück — *erledigt 26.07.2026*
-- [ ] `readyCount` zählt deaktivierte Mitglieder mit (`lib/queries.ts:40`)
+- [x] `readyCount` zählt deaktivierte Mitglieder mit — *erledigt 07.08.2026: Subquery in
+  `lib/queries.ts` und `app/(app)/termine/[id]/page.tsx` joint jetzt gegen `users.active`,
+  wie es `memberCount` bereits tat*
 - [ ] Dashboard verlinkt Setlisten nirgends
-- [ ] Hilfe-Seite auf aktuellen Stand bringen (Passwort-Reset, Mitgliederverwaltung, Termin-Mails)
+- [ ] Hilfe-Seite auf aktuellen Stand bringen — *Stand 07.08.2026: Passwort-Reset steht
+  inzwischen drin, es fehlen aber weiterhin Mitgliederverwaltung, Bühnenmodus, Sets & Pausen,
+  Gig-Logistik und die Benachrichtigungs-Einstellungen aus Welle 1/2*
 
 ### Später / bei Bedarf
 

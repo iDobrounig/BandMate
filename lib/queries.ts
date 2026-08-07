@@ -44,7 +44,7 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
       commentCount: sql<number>`(select count(*) from comments c where c.song_id = songs.id)`,
       audioCount: sql<number>`(select count(*) from attachments a where a.song_id = songs.id and a.kind = 'audio' and a.deleted_at is null)`,
       sheetCount: sql<number>`(select count(*) from attachments a where a.song_id = songs.id and a.kind = 'sheet' and a.deleted_at is null)`,
-      readyCount: sql<number>`(select count(*) from practice_status p where p.song_id = songs.id and p.status = 'ready')`,
+      readyCount: sql<number>`(select count(*) from practice_status p join users u on u.id = p.user_id where p.song_id = songs.id and p.status = 'ready' and u.active = 1)`,
     })
     .from(songs)
     .leftJoin(users, eq(songs.suggestedById, users.id))

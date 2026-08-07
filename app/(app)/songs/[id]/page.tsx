@@ -17,11 +17,14 @@ import type { PracticeState } from "@/lib/db/schema";
 
 export default async function SongDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ upload_error?: string }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
+  const { upload_error } = await searchParams;
   const data = await fetchSongDetail(Number(id));
   if (!data) notFound();
   const refs = await fetchSongReferences(Number(id));
@@ -45,6 +48,12 @@ export default async function SongDetailPage({
 
   return (
     <div className="space-y-8">
+      {upload_error && (
+        <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          Der Song ist angelegt, aber der Datei-Upload ist fehlgeschlagen. Bitte weiter
+          unten bei Noten bzw. Audio erneut versuchen.
+        </p>
+      )}
       {/* Kopf */}
       <div>
         <Link href="/songs" className="text-sm text-mute hover:text-ink">
