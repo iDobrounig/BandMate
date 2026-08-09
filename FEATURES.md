@@ -216,11 +216,15 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 
 ### Welle 3 — Gedächtnis & Komfort
 
-- [ ] **Repertoire-Gedächtnis**
-  Pro Song: „zuletzt geprobt am …", „zuletzt gespielt am …", „x× auf Setlisten". Die
-  `event_songs`- und `setlist_items`-Daten liegen bereits vor, werden aber nirgends
-  zurückgespielt. Auf der Songseite anzeigen und in der Songliste sortierbar machen
-  („am längsten nicht gespielt").
+- [x] **Repertoire-Gedächtnis + Rückverweise auf der Songseite** — *erledigt 09.08.2026.
+  Entwurf: [docs/superpowers/specs/2026-08-09-welle3-batch-design.md](docs/superpowers/specs/2026-08-09-welle3-batch-design.md)*
+  Neue Karte „Wo kommt der Song vor?" auf der Songseite: „zuletzt geprobt am …",
+  „zuletzt gespielt am …" (je aus vergangenen `event_songs`-Terminen, getrennt nach
+  Proben/Gigs) sowie die Listen der Setlisten und Proben-/Gig-Agenden, in denen der Song
+  vorkommt (Links zu Setliste/Termin). Gemeinsame Query `fetchSongUsage`, weil
+  Repertoire-Gedächtnis und Rückverweise dieselben zwei Verknüpfungstabellen lesen. In der
+  Songliste neue Sortierung „Am längsten nicht gespielt" (zählt Proben *und* Gigs
+  zusammen). Kein Schema-Eingriff.
 - [ ] **Anwesenheits-Statistik** über alle Proben (wer war wie oft da)
 - [ ] **Browser-Audio-Aufnahme** (MediaRecorder) — Proberaum-Mitschnitt direkt am Song statt
   Datei-Transfer vom Handy. Unterschätzt: bester Grund, die App *während* der Probe offen zu haben.
@@ -228,11 +232,16 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Safari ignoriert `audioBitsPerSecond` teils. Für einheitliche, platzsparende Ablage serverseitiges
   **ffmpeg-Transcoding auf OGG/Opus** nötig (WebM→OGG nur Remux, AAC→OGG echtes Transcoding) —
   neue externe Abhängigkeit (Binary auf dem Server), aktuell läuft alles ohne externe Dienste.
-- [ ] **Mitgliederverzeichnis für alle** (Name, Instrument, Kontakt) — heute Admin-only
+- [x] **Mitgliederverzeichnis für alle** — *erledigt 09.08.2026.* `/mitglieder` zeigt
+  Nicht-Admins jetzt eine schlichte Liste der aktiven Mitglieder (Name, Instrument,
+  E-Mail als `mailto:`-Link), Admins weiterhin die volle Verwaltung. Nav-Link für alle
+  Rollen sichtbar.
 - [ ] **Globale Suche** über Songs, Setlisten, Termine
 - [ ] **Serien-Termine gesammelt bearbeiten** (z.B. Uhrzeit der ganzen Serie ändern)
-- [ ] **Dubletten-Warnung** beim Songvorschlag („gibt's schon als …")
-- [ ] Rückverweise auf der Songseite: in welchen Setlisten / Probe-Agenden kommt der Song vor
+- [x] **Dubletten-Warnung** beim Songvorschlag — *erledigt 09.08.2026.* Beim Tippen des
+  Titels (nur beim Anlegen) erscheint bei Treffern eine Warnbox mit Links zu ähnlichen,
+  bestehenden Songs; Absenden erst nach angehakter „Trotzdem anlegen"-Checkbox. Reine
+  Matching-Funktion `matchesDuplicateTitle` in `lib/matching.ts`, getestet.
 - [ ] Akkord-Diagramme / Capo-Rechner in der Lyrics-Ansicht
 
 ### Welle 4 — Mandantenfähigkeit
