@@ -224,6 +224,10 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 - [ ] **Anwesenheits-Statistik** über alle Proben (wer war wie oft da)
 - [ ] **Browser-Audio-Aufnahme** (MediaRecorder) — Proberaum-Mitschnitt direkt am Song statt
   Datei-Transfer vom Handy. Unterschätzt: bester Grund, die App *während* der Probe offen zu haben.
+  Format je nach Browser unterschiedlich (Chrome/Firefox: WebM/OGG+Opus, Safari/iOS: MP4+AAC) und
+  Safari ignoriert `audioBitsPerSecond` teils. Für einheitliche, platzsparende Ablage serverseitiges
+  **ffmpeg-Transcoding auf OGG/Opus** nötig (WebM→OGG nur Remux, AAC→OGG echtes Transcoding) —
+  neue externe Abhängigkeit (Binary auf dem Server), aktuell läuft alles ohne externe Dienste.
 - [ ] **Mitgliederverzeichnis für alle** (Name, Instrument, Kontakt) — heute Admin-only
 - [ ] **Globale Suche** über Songs, Setlisten, Termine
 - [ ] **Serien-Termine gesammelt bearbeiten** (z.B. Uhrzeit der ganzen Serie ändern)
