@@ -235,6 +235,38 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 - [ ] Rückverweise auf der Songseite: in welchen Setlisten / Probe-Agenden kommt der Song vor
 - [ ] Akkord-Diagramme / Capo-Rechner in der Lyrics-Ansicht
 
+### Welle 4 — Mandantenfähigkeit
+
+> **Warum:** BandMate läuft heute als eine Installation pro Band. Ingo will mehrere Bands auf
+> derselben Installation betreiben können — jede mit eigenen Songs, Setlisten, Terminen und
+> Mitgliedern, ohne dass sie sich gegenseitig sehen. Dafür braucht es eine Ebene über den
+> Bands: einen Super-Admin, der Bands und User verwaltet, aber keine Bandinhalte sieht.
+>
+> **Entwurf abgestimmt 09.08.2026:**
+> [docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md](docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md)
+> — gemeinsame DB mit `band_id` statt eigener Datei je Band (globale User-Identität über
+> mehrere Bands hinweg), eine Domain mit Band-Wechsel im Profilmenü, halb-offen zum Start
+> (nur der Super-Admin legt neue Bands samt erstem Band-Admin an).
+
+- [ ] **Datenmodell**: neue Tabellen `bands`, `band_members` (Rolle wandert hierher, pro Band
+  unterschiedlich), `invites` (Verallgemeinerung des bestehenden Reset-Token-Musters);
+  `band_id` auf `songs`/`setlists`/`events`; `users.role` entfällt zugunsten von
+  `band_members.role`, neues `users.isSuperAdmin`
+- [ ] **Auth & Session**: `activeBandId` in der Session, Rolle je Request aus `band_members`
+  aufgelöst (nicht gecacht), neue Guards `requireBandAdmin()`/`requireSuperAdmin()`
+- [ ] **Super-Admin-Oberfläche**: eigener Bereich (`/verwaltung`) nur für Band- und
+  User-Verwaltung — keine Songs/Setlisten/Termine irgendeiner Band
+- [ ] **Band-Wechsel** für Mehrfach-Mitglieder über das Profil-Icon-Kontextmenü
+- [ ] **Einladungslink** für Band-Admins — für neue wie für bereits bei BandMate registrierte
+  Personen, zusätzlich zur bestehenden Direktanlage mit Passwort
+- [ ] **ICS-Feed-Token bandbezogen statt global** — heute liefert `calendarToken()` einen
+  einzigen, installationsweiten Token ohne Filter; unter Mandantenfähigkeit ein sofortiges
+  Datenleck zwischen Bands. Trifft sich mit dem Welle-2-Punkt „Pro-Mitglied-Token"
+- [ ] `notifyBand()` auf Empfänger der jeweiligen Band beschränken
+- [ ] **Scoping-Sicherheitsnetz**: Tests, die zwei Bands seeden und für jede Lese-/
+  Schreibfunktion prüfen, dass sie strikt auf die aktive Band beschränkt bleibt
+- [ ] Datenmigration bestehender Installationen zu „Band 1" (nach Backup, siehe Welle 0)
+
 ### Laufend — Konsistenz & Kleinkram
 
 Kein eigenes Release; wird mitgenommen, wenn die betroffene Datei ohnehin angefasst wird.
@@ -306,6 +338,11 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 - [ ] Uploads streamen statt komplett in den RAM zu lesen (`lib/files.ts:52`)
 - [ ] Speicherplatz-Übersicht der Uploads
 - [ ] Health-Check / Monitoring (heute merkt niemand, wenn SMTP oder der Prozess ausfällt)
+- [ ] **Öffentliches Self-Service-Signup für neue Bands** (Welle 4 macht Mandantenfähigkeit
+  halb-offen: nur der Super-Admin legt neue Bands an. Ein Datenmodell dafür existiert bereits
+  — `bands`, `invites` —, es fehlt aber die öffentliche Anmeldeseite, Email-Verifizierung für
+  Fremdregistrierung und die nötigen Rechtstexte. Siehe
+  [docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md](docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md))
 - [x] **Auto-Deploy-Runner einrichten — auf diesem Hosting nicht möglich, verworfen
   07.08.2026.** Environment `production` mit „Required reviewers" (`iDobrounig`) und
   Repo-Variable `DEPLOY_PATH` sind per `gh api` gesetzt, bleiben aber ohne Wirkung: Der
