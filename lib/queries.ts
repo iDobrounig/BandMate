@@ -8,11 +8,14 @@ import {
   practiceStatus,
   users,
   events,
+  eventSongs,
   setlists,
+  setlistItems,
   type Song,
   type Setlist,
   type BandEvent,
   type AttendanceStatus,
+  type EventKind,
 } from "@/lib/db/schema";
 import {
   songAktiv,
@@ -30,10 +33,12 @@ export type SongListItem = Song & {
   sheetCount: number;
   readyCount: number;
   suggestedByName: string | null;
+  lastEventAt: string | null;
 };
 
 /** Songliste mit allen Zählern (Votes, Kommentare, Dateien, Übe-Status). */
 export async function fetchSongList(currentUserId: number): Promise<SongListItem[]> {
+  const today = new Date().toISOString().slice(0, 10);
   const rows = await db
     .select({
       song: songs,
@@ -45,6 +50,10 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
       audioCount: sql<number>`(select count(*) from attachments a where a.song_id = songs.id and a.kind = 'audio' and a.deleted_at is null)`,
       sheetCount: sql<number>`(select count(*) from attachments a where a.song_id = songs.id and a.kind = 'sheet' and a.deleted_at is null)`,
       readyCount: sql<number>`(select count(*) from practice_status p join users u on u.id = p.user_id where p.song_id = songs.id and p.status = 'ready' and u.active = 1)`,
+      // Repertoire-Gedächtnis: letzter (vergangener) Proben- ODER Gig-Termin mit
+      // diesem Song in der Agenda. Für die Sortierung „am längsten nicht
+      // gespielt" — Details/Aufschlüsselung nach Proben/Gigs liefert fetchSongUsage.
+      lastEventAt: sql<string | null>`(select max(e.date) from event_songs es join events e on e.id = es.event_id where es.song_id = songs.id and e.deleted_at is null and e.date <= ${today})`,
     })
     .from(songs)
     .leftJoin(users, eq(songs.suggestedById, users.id))
@@ -61,6 +70,7 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
     audioCount: r.audioCount,
     sheetCount: r.sheetCount,
     readyCount: r.readyCount,
+    lastEventAt: r.lastEventAt,
   }));
 }
 
@@ -100,6 +110,44 @@ export async function fetchSongReferences(songId: number) {
     .where(eq(songs.id, songId))
     .limit(1);
   return zeile ?? { setlistCount: 0, agendaCount: 0 };
+}
+
+export type SongUsage = {
+  lastRehearsedAt: string | null;
+  lastPlayedAt: string | null;
+  setlists: { id: number; name: string; eventDate: string | null }[];
+  agenda: { id: number; title: string; date: string; kind: EventKind }[];
+};
+
+/**
+ * Repertoire-Gedächtnis + Rückverweise für die Songseite: wo kommt der Song vor,
+ * wann zuletzt geprobt/gespielt. Beides aus denselben zwei Verknüpfungstabellen,
+ * daher eine gemeinsame Funktion statt zwei getrennter Abfragen.
+ */
+export async function fetchSongUsage(songId: number): Promise<SongUsage> {
+  const today = new Date().toISOString().slice(0, 10);
+  const [agenda, setlistRows] = await Promise.all([
+    db
+      .select({ id: events.id, title: events.title, date: events.date, kind: events.kind })
+      .from(eventSongs)
+      .innerJoin(events, eq(eventSongs.eventId, events.id))
+      .where(and(eq(eventSongs.songId, songId), eventAktiv))
+      .orderBy(desc(events.date)),
+    db
+      .select({ id: setlists.id, name: setlists.name, eventDate: setlists.eventDate })
+      .from(setlistItems)
+      .innerJoin(setlists, eq(setlistItems.setlistId, setlists.id))
+      .where(and(eq(setlistItems.songId, songId), setlistAktiv))
+      .orderBy(desc(setlists.eventDate)),
+  ]);
+
+  const past = agenda.filter((a) => a.date <= today);
+  const lastRehearsedAt =
+    past.filter((a) => a.kind === "rehearsal").map((a) => a.date).sort().at(-1) ?? null;
+  const lastPlayedAt =
+    past.filter((a) => a.kind === "gig").map((a) => a.date).sort().at(-1) ?? null;
+
+  return { lastRehearsedAt, lastPlayedAt, setlists: setlistRows, agenda };
 }
 
 export type SetlistListItem = Setlist & {

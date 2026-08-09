@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { fetchSongDetail, fetchSongReferences } from "@/lib/queries";
-import { SONG_STATUS, PRACTICE_STATUS } from "@/lib/constants";
-import { formatDuration, formatDateTime, formatBytes } from "@/lib/format";
+import { fetchSongDetail, fetchSongReferences, fetchSongUsage } from "@/lib/queries";
+import { SONG_STATUS, PRACTICE_STATUS, EVENT_KIND } from "@/lib/constants";
+import { formatDuration, formatDateTime, formatDate, formatBytes } from "@/lib/format";
 import { VoteButtons } from "@/components/vote-buttons";
 import { PracticePicker } from "@/components/practice";
 import { CommentForm, DeleteCommentButton } from "@/components/comments";
@@ -29,6 +29,7 @@ export default async function SongDetailPage({
   const data = await fetchSongDetail(Number(id));
   if (!data) notFound();
   const refs = await fetchSongReferences(Number(id));
+  const usage = await fetchSongUsage(Number(id));
 
   const { song, links, files, comments, votes, practice, allUsers, suggestedByName } =
     data;
@@ -310,6 +311,72 @@ export default async function SongDetailPage({
             <div className="mt-4 border-t border-line-soft pt-4">
               <UploadForm songId={song.id} kind="sheet" />
             </div>
+          </section>
+
+          {/* Repertoire-Gedächtnis & Rückverweise */}
+          <section className="card p-5">
+            <h2 className="headline mb-3 text-lg">Wo kommt der Song vor?</h2>
+            <div className="mono-display flex flex-wrap gap-x-6 gap-y-1 text-sm">
+              <span>
+                <span className="text-faint">ZULETZT GEPROBT </span>
+                {formatDate(usage.lastRehearsedAt)}
+              </span>
+              <span>
+                <span className="text-faint">ZULETZT GESPIELT </span>
+                {formatDate(usage.lastPlayedAt)}
+              </span>
+            </div>
+
+            <h3 className="label mt-5">
+              Auf {usage.setlists.length} Setliste{usage.setlists.length === 1 ? "" : "n"}
+            </h3>
+            {usage.setlists.length === 0 ? (
+              <p className="text-sm text-faint">Noch auf keiner Setliste.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {usage.setlists.map((sl) => (
+                  <li key={sl.id} className="text-sm">
+                    <Link
+                      href={`/setlisten/${sl.id}`}
+                      className="flex items-center justify-between gap-2 text-accent-hi hover:underline"
+                    >
+                      <span className="min-w-0 truncate">{sl.name}</span>
+                      <span className="mono-display shrink-0 text-xs text-faint">
+                        {formatDate(sl.eventDate)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <h3 className="label mt-5">
+              In {usage.agenda.length} Proben-/Gig-Agenda{usage.agenda.length === 1 ? "" : "s"}
+            </h3>
+            {usage.agenda.length === 0 ? (
+              <p className="text-sm text-faint">Noch in keiner Agenda.</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {usage.agenda.map((ev) => (
+                  <li key={ev.id} className="text-sm">
+                    <Link
+                      href={`/termine/${ev.id}`}
+                      className="flex items-center justify-between gap-2 text-accent-hi hover:underline"
+                    >
+                      <span className="min-w-0 truncate">
+                        {ev.title}
+                        <span className="ml-1.5 text-xs text-faint">
+                          {EVENT_KIND[ev.kind].label}
+                        </span>
+                      </span>
+                      <span className="mono-display shrink-0 text-xs text-faint">
+                        {formatDate(ev.date)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
       </div>

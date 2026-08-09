@@ -68,6 +68,12 @@ export default async function SongsPage({
   list.sort((a, b) => {
     if (sort === "votes") return b.upvotes - b.downvotes - (a.upvotes - a.downvotes);
     if (sort === "neueste") return b.createdAt.getTime() - a.createdAt.getTime();
+    if (sort === "ungespielt") {
+      // Noch nie geprobt/gespielt sortiert wie ein sehr altes Datum ganz nach oben.
+      const av = a.lastEventAt ?? "0000-00-00";
+      const bv = b.lastEventAt ?? "0000-00-00";
+      if (av !== bv) return av.localeCompare(bv);
+    }
     if (sort === "status") {
       const d = STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status);
       if (d !== 0) return d;
@@ -132,6 +138,7 @@ export default async function SongsPage({
           <option value="votes">Nach Votes</option>
           <option value="title">Nach Titel</option>
           <option value="neueste">Neueste zuerst</option>
+          <option value="ungespielt">Am längsten nicht gespielt</option>
         </select>
         <button className="btn w-full sm:w-auto" type="submit">
           Filtern
