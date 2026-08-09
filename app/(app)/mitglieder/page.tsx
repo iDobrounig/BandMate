@@ -1,5 +1,5 @@
-import { asc } from "drizzle-orm";
-import { requireAdmin } from "@/lib/auth";
+import { asc, eq } from "drizzle-orm";
+import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { fetchSettings } from "@/lib/notifications";
@@ -9,7 +9,37 @@ import { SmtpTestForm } from "@/components/smtp-test";
 export const metadata = { title: "Mitglieder" };
 
 export default async function MitgliederPage() {
-  const admin = await requireAdmin();
+  const user = await requireUser();
+
+  if (user.role !== "admin") {
+    const members = await db
+      .select({ id: users.id, name: users.name, instrument: users.instrument, email: users.email })
+      .from(users)
+      .where(eq(users.active, true))
+      .orderBy(asc(users.name));
+
+    return (
+      <div className="max-w-3xl">
+        <h1 className="headline text-3xl">Mitglieder</h1>
+        <p className="mt-1 text-sm text-mute">Wer spielt was — und wie erreicht man wen.</p>
+        <section className="mt-8 space-y-3">
+          {members.map((member) => (
+            <div key={member.id} className="card p-4">
+              <p className="font-semibold">{member.name}</p>
+              <p className="truncate text-sm text-mute">
+                {member.instrument && `${member.instrument} · `}
+                <a className="text-accent-hi hover:underline" href={`mailto:${member.email}`}>
+                  {member.email}
+                </a>
+              </p>
+            </div>
+          ))}
+        </section>
+      </div>
+    );
+  }
+
+  const admin = user;
   const members = await db.select().from(users).orderBy(asc(users.name));
   // Je Mitglied die aufgelösten Einstellungen (Standardwerte eingesetzt)
   const settings = await Promise.all(members.map((m) => fetchSettings(m.id)));

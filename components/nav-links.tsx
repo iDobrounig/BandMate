@@ -16,7 +16,7 @@ type NavItem = {
   Icon: (props: { className?: string }) => React.ReactNode;
 };
 
-export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
+export function NavLinks() {
   const pathname = usePathname();
 
   const links: NavItem[] = [
@@ -24,9 +24,7 @@ export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
     { href: "/songs", label: "Songs", Icon: IconSongs },
     { href: "/setlisten", label: "Setlisten", Icon: IconSetlists },
     { href: "/termine", label: "Termine", Icon: IconCalendar },
-    ...(isAdmin
-      ? [{ href: "/mitglieder", label: "Mitglieder", Icon: IconMembers }]
-      : []),
+    { href: "/mitglieder", label: "Mitglieder", Icon: IconMembers },
   ];
 
   return (

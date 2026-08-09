@@ -50,7 +50,7 @@ export default async function AppLayout({
             </div>
           </div>
           <div className="w-full min-w-0 sm:flex-1">
-            <NavLinks isAdmin={user.role === "admin"} />
+            <NavLinks />
           </div>
           <div className="hidden ml-auto items-center gap-2 sm:flex">
             <Link
