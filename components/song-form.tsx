@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { createSong, updateSong } from "@/lib/actions/songs";
+import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
+import { createSong, updateSong, checkDuplicateTitle, type DuplicateMatch } from "@/lib/actions/songs";
 import type { FormState } from "@/lib/actions/auth";
 import { SubmitButton, FormMsg } from "@/components/form";
 import { IconClose } from "@/components/icons";
-import { INSTRUMENT_SUGGESTIONS } from "@/lib/constants";
+import { INSTRUMENT_SUGGESTIONS, SONG_STATUS } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
 import type { Song, SongLink } from "@/lib/db/schema";
 
@@ -28,6 +29,26 @@ export function SongForm({
       : [{ id: 0, url: "", label: "" }]
   );
 
+  // Dubletten-Warnung: nur beim Anlegen, nicht beim Bearbeiten.
+  const [title, setTitle] = useState(song?.title ?? "");
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
+  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (isEdit) return;
+    setConfirmed(false);
+    if (title.trim().length < 2) {
+      setDuplicates([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      checkDuplicateTitle(title).then(setDuplicates);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [title, isEdit]);
+
+  const blockedByDuplicates = !isEdit && duplicates.length > 0 && !confirmed;
+
   const addRow = () =>
     setLinkRows((rows) => [...rows, { id: Date.now(), url: "", label: "" }]);
   const removeRow = (id: number) =>
@@ -44,10 +65,41 @@ export function SongForm({
             id="sf-title"
             className="input text-lg"
             name="title"
-            defaultValue={song?.title ?? ""}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             required
             autoFocus={!isEdit}
           />
+          {!isEdit && duplicates.length > 0 && (
+            <div className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
+              <p className="mb-2">Gibt&apos;s schon:</p>
+              <ul className="mb-3 space-y-1">
+                {duplicates.map((d) => (
+                  <li key={d.id}>
+                    <Link
+                      href={`/songs/${d.id}`}
+                      target="_blank"
+                      rel="noopener"
+                      className="underline hover:no-underline"
+                    >
+                      {d.title}
+                      {d.artist ? ` – ${d.artist}` : ""}
+                    </Link>{" "}
+                    <span className="text-xs">({SONG_STATUS[d.status].label})</span>
+                  </li>
+                ))}
+              </ul>
+              <label className="flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                  className="size-4 accent-(--color-accent)"
+                />
+                Trotzdem anlegen
+              </label>
+            </div>
+          )}
         </div>
         <div className="sm:col-span-2">
           <label className="label" htmlFor="sf-artist">Interpret / Original</label>
@@ -208,7 +260,10 @@ export function SongForm({
 
       <FormMsg state={state} />
       <div className="flex gap-3">
-        <SubmitButton pendingText={isEdit ? "Speichern …" : "Anlegen …"}>
+        <SubmitButton
+          pendingText={isEdit ? "Speichern …" : "Anlegen …"}
+          disabled={blockedByDuplicates}
+        >
           {isEdit ? "Änderungen speichern" : "Song vorschlagen"}
         </SubmitButton>
       </div>

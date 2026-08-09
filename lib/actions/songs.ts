@@ -10,6 +10,8 @@ import { detectLinkKind } from "@/lib/links";
 import { parseDuration } from "@/lib/format";
 import { saveUpload } from "@/lib/files";
 import { notifyBand } from "@/lib/mail";
+import { songAktiv } from "@/lib/db/filters";
+import { matchesDuplicateTitle } from "@/lib/matching";
 import type { FormState } from "@/lib/actions/auth";
 
 function readSongFields(formData: FormData) {
@@ -42,6 +44,35 @@ function readLinks(formData: FormData) {
     .map((url, i) => ({ url: url.trim(), label: labels[i]?.trim() || null }))
     .filter((l) => l.url.length > 0)
     .map((l) => ({ ...l, kind: detectLinkKind(l.url) }));
+}
+
+export type DuplicateMatch = {
+  id: number;
+  title: string;
+  artist: string | null;
+  status: SongStatus;
+};
+
+/** Für die Dubletten-Warnung beim Songvorschlag: bis zu 5 ähnliche, aktive Songs. */
+export async function checkDuplicateTitle(title: string): Promise<DuplicateMatch[]> {
+  await requireUser();
+  const input = title.trim();
+  if (input.length < 2) return [];
+
+  const candidates = await db
+    .select({ id: songs.id, title: songs.title, artist: songs.artist, status: songs.status })
+    .from(songs)
+    .where(songAktiv);
+
+  const inputLower = input.toLowerCase();
+  return candidates
+    .filter((c) => matchesDuplicateTitle(c.title, input))
+    .sort((a, b) => {
+      const aExact = a.title.trim().toLowerCase() === inputLower;
+      const bExact = b.title.trim().toLowerCase() === inputLower;
+      return Number(bExact) - Number(aExact);
+    })
+    .slice(0, 5);
 }
 
 export async function createSong(
