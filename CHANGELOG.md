@@ -8,6 +8,29 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.16.0] — 2026-08-10
+
+**Welle 3, vier weitere Häppchen.** Anwesenheits-Statistik, Serien-Termine im Bulk
+bearbeiten, ein Capo-Rechner in der Lyrics-Ansicht sowie Termine-Suche statt einer vollen
+globalen Suche.
+
+### Hinzugefügt
+- **Anwesenheits-Statistik**: neue Karte auf „Mitglieder" (für alle Rollen sichtbar) —
+  Zu-/Absagen/Vielleicht je aktivem Mitglied aus allen vergangenen Proben, dazu eine Quote
+  (Zusagen ⁄ (Zusagen+Absagen), „Vielleicht" und offene Rückmeldungen zählen nicht mit).
+- **Serien-Termine gesammelt bearbeiten**: neue Seite „Serie bearbeiten" an jedem
+  Serientermin — Uhrzeit, Ort und Notizen für alle kommenden Termine der Serie auf einmal
+  ändern, vergangene Termine bleiben unangetastet.
+- **Capo-Rechner in der Lyrics-Ansicht**: Capo-Auswahl in der Transponieren-Werkzeugleiste
+  (Songseite und Bühnenmodus) zeigt die zu greifenden Akkorde bei gewähltem Capo-Bund.
+- **Termine-Suche**: „Termine" hat jetzt dieselbe Titel-/Ort-Suche wie Songs und
+  Setlisten.
+
+### Geändert
+- **„Globale Suche" aus der Roadmap gestrichen** — eine echte seitenübergreifende Suche
+  über Songs/Setlisten/Termine wurde bewusst nicht gebaut (zu wenig Mehrwert bei dieser
+  Bandgröße), Termine-Suche schließt die eigentliche Lücke stattdessen.
+
 ## [1.15.0] — 2026-08-07
 
 **Konsistenz & Kleinkram.** Die „Laufend"-Liste aus FEATURES.md abgearbeitet: drei echte
