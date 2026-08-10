@@ -236,7 +236,14 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Nicht-Admins jetzt eine schlichte Liste der aktiven Mitglieder (Name, Instrument,
   E-Mail als `mailto:`-Link), Admins weiterhin die volle Verwaltung. Nav-Link für alle
   Rollen sichtbar.
-- [ ] **Globale Suche** über Songs, Setlisten, Termine
+- [x] **Termine-Suche statt „Globale Suche"** — *erledigt 10.08.2026. Entwurf:
+  [docs/superpowers/specs/2026-08-10-welle3-rest-design.md](docs/superpowers/specs/2026-08-10-welle3-rest-design.md)*
+  Eine echte bandübergreifende Suche über Songs/Setlisten/Termine wurde bewusst
+  verworfen — bei dieser Bandgröße (50–300 Songs, fünf flache Nav-Punkte) zu wenig
+  Mehrwert für den Aufwand, zumal das Dashboard das Aktuelle schon vorne zeigt.
+  Stattdessen Parität hergestellt: `/termine` hat jetzt dieselbe `q`-Parameter-Suche
+  wie Songs/Setlisten (Titel + Ort, Substring, case-insensitive), inklusive Erhalt
+  der Suche beim Umschalten „Vergangene Termine".
 - [ ] **Serien-Termine gesammelt bearbeiten** (z.B. Uhrzeit der ganzen Serie ändern)
 - [x] **Dubletten-Warnung** beim Songvorschlag — *erledigt 09.08.2026.* Beim Tippen des
   Titels (nur beim Anlegen) erscheint bei Treffern eine Warnbox mit Links zu ähnlichen,

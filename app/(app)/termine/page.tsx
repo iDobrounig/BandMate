@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { fetchEvents } from "@/lib/queries";
+import { fetchEvents, type EventListItem } from "@/lib/queries";
 import { EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { CalendarSubscribe } from "@/components/calendar-subscribe";
@@ -10,19 +10,42 @@ import { IconRepeat } from "@/components/icons";
 
 export const metadata = { title: "Termine" };
 
+type Search = { vergangene?: string; undo?: string; q?: string };
+
 export default async function TerminePage({
   searchParams,
 }: {
-  searchParams: Promise<{ vergangene?: string; undo?: string }>;
+  searchParams: Promise<Search>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
   const showPast = params.vergangene === "1";
+  const q = (params.q ?? "").toLowerCase().trim();
 
-  const [upcoming, past] = await Promise.all([
+  const [allUpcoming, allPast] = await Promise.all([
     fetchEvents(user.id),
     showPast ? fetchEvents(user.id, { past: true, limit: 20 }) : Promise.resolve([]),
   ]);
+
+  const matches = (e: EventListItem) =>
+    !q ||
+    e.title.toLowerCase().includes(q) ||
+    (e.location ?? "").toLowerCase().includes(q);
+  const upcoming = allUpcoming.filter(matches);
+  const past = allPast.filter(matches);
+
+  const buildQuery = (overrides: Partial<Search>) => {
+    const p = new URLSearchParams();
+    const merged: Partial<Search> = {
+      q: params.q || undefined,
+      vergangene: showPast ? "1" : undefined,
+      ...overrides,
+    };
+    if (merged.q) p.set("q", merged.q);
+    if (merged.vergangene) p.set("vergangene", merged.vergangene);
+    const qs = p.toString();
+    return qs ? `/termine?${qs}` : "/termine";
+  };
 
   return (
     <div>
@@ -45,10 +68,24 @@ export default async function TerminePage({
         </div>
       </div>
 
-      <div className="mt-8 space-y-3">
+      <form method="get" className="mt-6 max-w-64">
+        <input
+          className="input"
+          type="search"
+          name="q"
+          defaultValue={params.q ?? ""}
+          placeholder="Titel oder Ort suchen …"
+          aria-label="Termine suchen"
+        />
+        {showPast && <input type="hidden" name="vergangene" value="1" />}
+      </form>
+
+      <div className="mt-4 space-y-3">
         {upcoming.length === 0 && (
           <div className="card p-10 text-center text-mute">
-            Noch keine anstehenden Termine — oben auf „+ Neuer Termin".
+            {q
+              ? "Nichts gefunden."
+              : `Noch keine anstehenden Termine — oben auf „+ Neuer Termin".`}
           </div>
         )}
         {upcoming.map((event) => {
@@ -133,14 +170,17 @@ export default async function TerminePage({
                 )}
               </div>
               <Link
-                href="/termine"
+                href={buildQuery({ vergangene: undefined })}
                 className="mt-3 inline-block text-sm text-mute hover:text-ink"
               >
                 ← Vergangene ausblenden
               </Link>
             </>
           ) : (
-            <Link href="/termine?vergangene=1" className="text-sm text-mute hover:text-ink">
+            <Link
+              href={buildQuery({ vergangene: "1" })}
+              className="text-sm text-mute hover:text-ink"
+            >
               Vergangene Termine anzeigen →
             </Link>
           )}
