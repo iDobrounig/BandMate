@@ -166,6 +166,12 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Block ganz oben mit offenen Zu-/Absagen (14 Tage), ungestimmten Vorschlägen, ungeübten
   Agenda-Songs und neuen Kommentaren seit dem letzten Besuch (`lastSeenAt`). Verschwindet,
   wenn nichts offen ist. `lib/todo.ts`, 15 Tests, per Mutationsprobe abgesichert.
+- [x] **Dashboard: „Nächste Probe & Gig"** — *erledigt 10.08.2026. Entwurf:
+  [docs/superpowers/specs/2026-08-10-naechste-programme-design.md](docs/superpowers/specs/2026-08-10-naechste-programme-design.md)*
+  Eigene, immer sichtbare Karte in der Seitenspalte: zeitlich nächste Probe **und**
+  nächster Gig getrennt, mit Probe-Agenda bzw. — falls keine Agenda — der verknüpften
+  Setliste (Name + Songzahl). Reine Information unabhängig vom eigenen Übe-Status,
+  bewusst getrennt vom Todo-Block. `fetchUpcomingPrograms` in `lib/queries.ts`.
 
 ### Welle 2 — Bühnenwert *(das, was WhatsApp nie können wird)*
 

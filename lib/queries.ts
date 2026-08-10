@@ -273,6 +273,70 @@ export async function fetchSeriesInstances(
     .orderBy(asc(events.date));
 }
 
+export type ProgramEntry = {
+  event: { id: number; title: string; date: string; startTime: string | null };
+  agendaSongs: { id: number; title: string }[];
+  setlist: { id: number; name: string; songCount: number } | null;
+};
+
+/**
+ * Für die Dashboard-Karte „Nächste Probe & Gig": je Terminart der zeitlich
+ * nächste aktive Termin mit seiner Agenda bzw. verknüpften Setliste. Reine
+ * Information, unabhängig vom eigenen Übe-Status (anders als `fetchTodo`s
+ * `ungeuebteAgenda`).
+ */
+export async function fetchUpcomingPrograms(): Promise<{
+  probe: ProgramEntry | null;
+  gig: ProgramEntry | null;
+}> {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const naechster = async (kind: EventKind): Promise<ProgramEntry | null> => {
+    const [event] = await db
+      .select({
+        id: events.id,
+        title: events.title,
+        date: events.date,
+        startTime: events.startTime,
+        setlistId: events.setlistId,
+      })
+      .from(events)
+      .where(and(eventAktiv, eq(events.kind, kind), gte(events.date, today)))
+      .orderBy(asc(events.date), asc(events.startTime))
+      .limit(1);
+    if (!event) return null;
+
+    const [agendaSongs, setlistRows] = await Promise.all([
+      db
+        .select({ id: songs.id, title: songs.title })
+        .from(eventSongs)
+        .innerJoin(songs, eq(eventSongs.songId, songs.id))
+        .where(and(eq(eventSongs.eventId, event.id), songAktiv))
+        .orderBy(asc(eventSongs.position)),
+      event.setlistId
+        ? db
+            .select({
+              id: setlists.id,
+              name: setlists.name,
+              songCount: sql<number>`(select count(*) from setlist_items i join songs s on s.id = i.song_id where i.setlist_id = setlists.id and s.deleted_at is null)`,
+            })
+            .from(setlists)
+            .where(and(eq(setlists.id, event.setlistId), setlistAktiv))
+            .limit(1)
+        : Promise.resolve([]),
+    ]);
+
+    return {
+      event: { id: event.id, title: event.title, date: event.date, startTime: event.startTime },
+      agendaSongs,
+      setlist: setlistRows[0] ?? null,
+    };
+  };
+
+  const [probe, gig] = await Promise.all([naechster("rehearsal"), naechster("gig")]);
+  return { probe, gig };
+}
+
 /** Alles für die Song-Detailseite. */
 export async function fetchSongDetail(songId: number) {
   const song = await db.query.songs.findFirst({

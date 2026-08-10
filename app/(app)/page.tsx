@@ -3,7 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { songs, comments, users } from "@/lib/db/schema";
-import { fetchSongList, fetchEvents, fetchSetlists } from "@/lib/queries";
+import { fetchSongList, fetchEvents, fetchSetlists, fetchUpcomingPrograms } from "@/lib/queries";
 import { fetchReminderStatus } from "@/lib/notifications";
 import { fetchTodo, touchLastSeen } from "@/lib/todo";
 import { songAktiv } from "@/lib/db/filters";
@@ -11,6 +11,7 @@ import { SONG_STATUS, EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ReminderStatusLine } from "@/components/reminder-status";
 import { TodoBlock } from "@/components/todo-block";
+import { NextProgramsCard } from "@/components/next-programs";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
   // letztem Besuch" den vorigen Wert, und rasche Reloads verlieren ihn nicht.
   const lastSeen = await touchLastSeen(user.id);
 
-  const [allSongs, recentComments, upcomingEvents, allSetlists, reminderStatus, todo] =
+  const [allSongs, recentComments, upcomingEvents, allSetlists, reminderStatus, todo, programs] =
     await Promise.all([
       fetchSongList(user.id),
       db
@@ -36,6 +37,7 @@ export default async function DashboardPage() {
       // Nur Admins sehen die Statuszeile — für alle anderen gar nicht erst laden.
       isAdmin ? fetchReminderStatus() : Promise.resolve(null),
       fetchTodo(user.id, lastSeen),
+      fetchUpcomingPrograms(),
     ]);
 
   const suggestions = allSongs.filter((s) => s.status === "suggestion");
@@ -217,6 +219,8 @@ export default async function DashboardPage() {
               </div>
             )}
           </section>
+
+          <NextProgramsCard probe={programs.probe} gig={programs.gig} />
 
           <section>
             <div className="mb-3 flex items-baseline justify-between">
