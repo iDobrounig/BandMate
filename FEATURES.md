@@ -249,7 +249,13 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Stattdessen Parität hergestellt: `/termine` hat jetzt dieselbe `q`-Parameter-Suche
   wie Songs/Setlisten (Titel + Ort, Substring, case-insensitive), inklusive Erhalt
   der Suche beim Umschalten „Vergangene Termine".
-- [ ] **Serien-Termine gesammelt bearbeiten** (z.B. Uhrzeit der ganzen Serie ändern)
+- [x] **Serien-Termine gesammelt bearbeiten** (z.B. Uhrzeit der ganzen Serie ändern)
+  — *erledigt 10.08.2026.* Neue Seite `/termine/[id]/serie-bearbeiten`: Uhrzeit, Ort
+  und Notizen für **alle kommenden** Termine einer Serie auf einmal ändern —
+  vergangene Termine der Serie bleiben unangetastet (`date >= heute`, JS-berechnet,
+  wie bei den anderen Zeitzonen-sensiblen Stellen im Projekt). Eine gesammelte
+  Benachrichtigungs-Mail statt einer pro Termin, `describeEventChanges`
+  wiederverwendet. Titel/Datum bleiben bewusst Sache des Einzeltermins.
 - [x] **Dubletten-Warnung** beim Songvorschlag — *erledigt 09.08.2026.* Beim Tippen des
   Titels (nur beim Anlegen) erscheint bei Treffern eine Warnbox mit Links zu ähnlichen,
   bestehenden Songs; Absenden erst nach angehakter „Trotzdem anlegen"-Checkbox. Reine

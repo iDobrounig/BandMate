@@ -134,6 +134,11 @@ export default async function TerminDetailPage({
             <Link href={`/termine/${event.id}/bearbeiten`} className="btn">
               <IconEdit className="size-4" /> Bearbeiten
             </Link>
+            {event.seriesId && (
+              <Link href={`/termine/${event.id}/serie-bearbeiten`} className="btn">
+                <IconRepeat className="size-4" /> Serie bearbeiten
+              </Link>
+            )}
             <DeleteEventButtons eventId={event.id} isSeries={Boolean(event.seriesId)} />
           </div>
         </div>

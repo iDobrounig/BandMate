@@ -262,6 +262,17 @@ export async function fetchAttendanceStats(): Promise<AttendanceStats[]> {
   }));
 }
 
+/** Aktive Termine einer Serie, für die Zusammenfassung auf der Serien-Bearbeiten-Seite. */
+export async function fetchSeriesInstances(
+  seriesId: string
+): Promise<{ id: number; date: string }[]> {
+  return db
+    .select({ id: events.id, date: events.date })
+    .from(events)
+    .where(and(eq(events.seriesId, seriesId), eventAktiv))
+    .orderBy(asc(events.date));
+}
+
 /** Alles für die Song-Detailseite. */
 export async function fetchSongDetail(songId: number) {
   const song = await db.query.songs.findFirst({

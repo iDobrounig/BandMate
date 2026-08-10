@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { createEvent, updateEvent, deleteEvent } from "@/lib/actions/events";
+import { createEvent, updateEvent, updateEventSeries, deleteEvent } from "@/lib/actions/events";
 import type { FormState } from "@/lib/actions/auth";
 import { SubmitButton, FormMsg } from "@/components/form";
 import type { BandEvent, EventKind } from "@/lib/db/schema";
@@ -267,6 +267,68 @@ export function EventForm({
 
       <FormMsg state={state} />
       <SubmitButton>{isEdit ? "Speichern" : "Termin anlegen"}</SubmitButton>
+    </form>
+  );
+}
+
+export function EventSeriesForm({
+  event,
+  futureCount,
+}: {
+  event: BandEvent;
+  futureCount: number;
+}) {
+  const [state, action] = useActionState(updateEventSeries, initial);
+
+  return (
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="eventId" value={event.id} />
+      <div>
+        <label className="label" htmlFor="ser-startTime">
+          {event.kind === "gig" ? "Load-in" : "Uhrzeit"} (optional)
+        </label>
+        <input
+          id="ser-startTime"
+          className="input"
+          name="startTime"
+          type="time"
+          defaultValue={event.startTime ?? ""}
+        />
+      </div>
+      <div>
+        <label className="label" htmlFor="ser-location">Ort (optional)</label>
+        <input
+          id="ser-location"
+          className="input"
+          name="location"
+          defaultValue={event.location ?? ""}
+          placeholder="z.B. Proberaum"
+        />
+      </div>
+      <div>
+        <label className="label" htmlFor="ser-notes">Notizen</label>
+        <textarea
+          id="ser-notes"
+          className="input min-h-16"
+          name="notes"
+          defaultValue={event.notes ?? ""}
+        />
+      </div>
+
+      <label className="flex items-center gap-2 text-sm text-mute">
+        <input
+          type="checkbox"
+          name="sendMail"
+          defaultChecked
+          className="size-4 accent-(--color-accent)"
+        />
+        Band bei Änderung von Uhrzeit/Ort benachrichtigen
+      </label>
+
+      <FormMsg state={state} />
+      <SubmitButton disabled={futureCount === 0}>
+        Alle {futureCount} kommenden Termine speichern
+      </SubmitButton>
     </form>
   );
 }

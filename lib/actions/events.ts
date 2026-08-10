@@ -1,7 +1,7 @@
 "use server";
 
 import crypto from "node:crypto";
-import { eq, max } from "drizzle-orm";
+import { and, eq, gte, max } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
@@ -12,6 +12,7 @@ import {
   type AttendanceStatus,
 } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth";
+import { eventAktiv } from "@/lib/db/filters";
 import { notifyBand } from "@/lib/mail";
 import { describeEventChanges } from "@/lib/event-notify";
 import { formatDate } from "@/lib/format";
@@ -152,6 +153,60 @@ export async function updateEvent(
         subject: `Termin geändert: ${fields.title} (${kindLabel})`,
         heading: "Termin geändert",
         intro: `${user.name} hat „${fields.title}" geändert:`,
+        details: changes,
+        cta: {
+          label: "Zum Termin",
+          url: `${process.env.APP_URL ?? ""}/termine/${eventId}`,
+        },
+        excludeUserId: user.id,
+      });
+    }
+  }
+
+  revalidatePath("/", "layout");
+  redirect(`/termine/${eventId}`);
+}
+
+/**
+ * Uhrzeit/Ort/Notiz für alle KÜNFTIGEN Termine einer Serie auf einmal ändern.
+ * Titel und Datum bleiben Sache des Einzeltermins. Anders als beim Löschen der
+ * ganzen Serie (das bewusst keine Datumsgrenze kennt) bleiben bereits
+ * stattgefundene Termine der Serie unangetastet.
+ */
+export async function updateEventSeries(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const user = await requireUser();
+  const eventId = Number(formData.get("eventId"));
+  const startTime = String(formData.get("startTime") ?? "").trim() || null;
+  const location = String(formData.get("location") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  const event = await db.query.events.findFirst({ where: eq(events.id, eventId) });
+  if (!event) return { error: "Termin nicht gefunden." };
+  if (!event.seriesId) return { error: "Dieser Termin gehört zu keiner Serie." };
+
+  const today = new Date().toISOString().slice(0, 10);
+  await db
+    .update(events)
+    .set({ startTime, location, notes })
+    .where(and(eq(events.seriesId, event.seriesId), gte(events.date, today), eventAktiv));
+
+  const sendMail = formData.get("sendMail") === "on";
+  if (sendMail) {
+    const changes = describeEventChanges(
+      { date: event.date, startTime: event.startTime, location: event.location },
+      { date: event.date, startTime, location },
+      event.kind
+    );
+    if (changes.length > 0) {
+      const kindLabel = event.kind === "gig" ? "Gig" : "Probe";
+      notifyBand({
+        kind: "event_changed",
+        subject: `Serientermin geändert: ${event.title} (${kindLabel})`,
+        heading: "Serientermin geändert",
+        intro: `${user.name} hat alle kommenden Termine der Serie „${event.title}" geändert:`,
         details: changes,
         cta: {
           label: "Zum Termin",
