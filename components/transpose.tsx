@@ -1,26 +1,35 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { transposeLyrics, transposeKey } from "@/lib/chords";
+import { useMemo, useTransition } from "react";
+import { transposeLyrics, transposeKey, capoShapeLyrics, capoShapeKey } from "@/lib/chords";
 import { saveTransposedLyrics } from "@/lib/actions/songs";
+import { useCapoOffset } from "@/lib/hooks/use-capo-offset";
+import { CapoSelect } from "@/components/capo-control";
 
 export function TransposableLyrics({
   songId,
   lyrics,
   songKey,
+  capo,
 }: {
   songId: number;
   lyrics: string;
   songKey: string | null;
+  capo?: number | null;
 }) {
-  const [offset, setOffset] = useState(0);
+  const { offset, capoFret, capoMode, bumpSemitone, setCapo, reset } = useCapoOffset();
   const [pending, startTransition] = useTransition();
 
-  const shown = useMemo(() => transposeLyrics(lyrics, offset), [lyrics, offset]);
-  const shownKey = useMemo(
-    () => (songKey && offset !== 0 ? transposeKey(songKey, offset) : songKey),
-    [songKey, offset]
+  const shown = useMemo(
+    () => (capoMode ? capoShapeLyrics(lyrics, capoFret) : transposeLyrics(lyrics, offset)),
+    [lyrics, offset, capoMode, capoFret]
   );
+  const shownKey = useMemo(() => {
+    if (!songKey) return songKey;
+    if (capoMode) return capoShapeKey(songKey, capoFret);
+    if (offset !== 0) return transposeKey(songKey, offset);
+    return songKey;
+  }, [songKey, offset, capoMode, capoFret]);
 
   const save = () => {
     if (
@@ -34,7 +43,7 @@ export function TransposableLyrics({
       return;
     startTransition(async () => {
       await saveTransposedLyrics(songId, shown, shownKey);
-      setOffset(0);
+      reset();
     });
   };
 
@@ -45,7 +54,7 @@ export function TransposableLyrics({
         <button
           type="button"
           className="btn btn-sm"
-          onClick={() => setOffset((o) => Math.max(-11, o - 1))}
+          onClick={() => bumpSemitone(-1)}
         >
           − ½
         </button>
@@ -59,27 +68,46 @@ export function TransposableLyrics({
         <button
           type="button"
           className="btn btn-sm"
-          onClick={() => setOffset((o) => Math.min(11, o + 1))}
+          onClick={() => bumpSemitone(1)}
         >
           + ½
         </button>
-        {offset !== 0 && (
+
+        <CapoSelect capoFret={capoFret} onChange={setCapo} />
+        {capo != null && capo > 0 && !capoMode && (
+          <button type="button" className="btn btn-sm" onClick={() => setCapo(capo)}>
+            Griffe (Capo {capo})
+          </button>
+        )}
+
+        {capoMode ? (
           <>
-            {shownKey && (
-              <span className="mono-display text-sm text-mute">→ {shownKey}</span>
-            )}
-            <button type="button" className="btn btn-sm" onClick={() => setOffset(0)}>
-              ↺ Original
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              disabled={pending}
-              onClick={save}
-            >
-              {pending ? "Speichert …" : "Transponierung speichern"}
+            <span className="mono-display text-sm text-accent-hi">
+              Griffe bei Capo {capoFret}
+            </span>
+            <button type="button" className="btn btn-sm" onClick={reset}>
+              Klingend anzeigen
             </button>
           </>
+        ) : (
+          offset !== 0 && (
+            <>
+              {shownKey && (
+                <span className="mono-display text-sm text-mute">→ {shownKey}</span>
+              )}
+              <button type="button" className="btn btn-sm" onClick={reset}>
+                ↺ Original
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={pending}
+                onClick={save}
+              >
+                {pending ? "Speichert …" : "Transponierung speichern"}
+              </button>
+            </>
+          )
         )}
       </div>
       <pre className="card mono-display overflow-x-auto p-4 sm:p-5 text-xs sm:text-sm leading-relaxed whitespace-pre">

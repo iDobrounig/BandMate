@@ -193,6 +193,7 @@ export default async function SongDetailPage({
                 songId={song.id}
                 lyrics={song.lyricsChords}
                 songKey={song.songKey}
+                capo={song.capo}
               />
             </section>
           )}

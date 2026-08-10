@@ -158,3 +158,18 @@ export function transposeKey(key: string, semitones: number): string | null {
     rest
   );
 }
+
+/**
+ * Griffe (Shapes) bei Capo-Bund N: welcher Akkord muss gegriffen werden, damit
+ * der Klang dem geschriebenen (klingenden) Akkord entspricht? Ein Capo an
+ * Bund N hebt den Klang um N Halbtöne — die Griffe sind daher der klingende
+ * Akkord um N Halbtöne HERUNTER transponiert. Benannte Wrapper um
+ * transposeLyrics/transposeKey, damit die Vorzeichen-Richtung an genau einer
+ * Stelle steht statt an jeder Aufrufstelle neu bedacht zu werden.
+ */
+export function capoShapeLyrics(text: string, capoFret: number): string {
+  return transposeLyrics(text, -capoFret);
+}
+export function capoShapeKey(key: string, capoFret: number): string | null {
+  return transposeKey(key, -capoFret);
+}

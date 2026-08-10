@@ -260,7 +260,18 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Titels (nur beim Anlegen) erscheint bei Treffern eine Warnbox mit Links zu ähnlichen,
   bestehenden Songs; Absenden erst nach angehakter „Trotzdem anlegen"-Checkbox. Reine
   Matching-Funktion `matchesDuplicateTitle` in `lib/matching.ts`, getestet.
-- [ ] Akkord-Diagramme / Capo-Rechner in der Lyrics-Ansicht
+- [x] Capo-Rechner in der Lyrics-Ansicht — *erledigt 10.08.2026.* Capo-Auswahl
+  (0–7) in der Transponieren-Werkzeugleiste (Songseite) und im Bühnenmodus, zeigt
+  die zu greifenden Akkorde bei gewähltem Capo-Bund — dieselbe Transpositionslogik
+  aus `lib/chords.ts`, nur mit umgekehrtem Vorzeichen (`capoShapeLyrics`/
+  `capoShapeKey`). Opt-in per Button (kein automatisches Umschalten beim Laden),
+  Speichern-Button im Capo-Modus ausgeblendet, damit nie gegriffene statt
+  klingender Akkorde als neue Song-Wahrheit gespeichert werden. Absichtlich nur
+  der Rechner, keine Fretboard-Grafiken — Architektur (`useCapoOffset`-Hook,
+  eigene Chord-Utility-Schicht) hält eine spätere Diagramm-Ergänzung additiv.
+- [ ] Akkord-Diagramme in der Lyrics-Ansicht (zurückgestellt — Erweiterungspunkt
+  im Capo-Rechner-Entwurf vorbereitet, siehe
+  [docs/superpowers/specs/2026-08-10-welle3-rest-design.md](docs/superpowers/specs/2026-08-10-welle3-rest-design.md))
 
 ### Welle 4 — Mandantenfähigkeit
 

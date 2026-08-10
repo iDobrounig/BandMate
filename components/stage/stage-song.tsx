@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import type { StagePage, StageSheet } from "./types";
-import { transposeLyrics, transposeKey } from "@/lib/chords";
+import { transposeLyrics, transposeKey, capoShapeLyrics, capoShapeKey } from "@/lib/chords";
+import { useCapoOffset } from "@/lib/hooks/use-capo-offset";
+import { CapoSelect } from "@/components/capo-control";
 import { StageMetronome } from "./stage-metronome";
 
 export type ViewSel = { kind: "lyrics" } | { kind: "instrument"; instrument: string };
@@ -22,7 +24,7 @@ export function StageSong({
   fontScale: number;
   onFontChange: (delta: number) => void;
 }) {
-  const [offset, setOffset] = useState(0);
+  const { offset, capoFret, capoMode, bumpSemitone, setCapo, reset } = useCapoOffset();
   const [showTools, setShowTools] = useState(false);
 
   // Eindeutige Instrumente dieses Songs (erste Datei je Instrument gewinnt).
@@ -45,12 +47,19 @@ export function StageSong({
   const showSheet = !!activeSheet;
   const showLyrics = !showSheet && !!page.lyricsChords;
 
-  const shownLyrics = useMemo(
-    () => (page.lyricsChords ? transposeLyrics(page.lyricsChords, offset) : ""),
-    [page.lyricsChords, offset]
-  );
-  const shownKey =
-    page.songKey && offset !== 0 ? transposeKey(page.songKey, offset) : page.songKey;
+  const shownLyrics = useMemo(() => {
+    if (!page.lyricsChords) return "";
+    return capoMode
+      ? capoShapeLyrics(page.lyricsChords, capoFret)
+      : transposeLyrics(page.lyricsChords, offset);
+  }, [page.lyricsChords, offset, capoMode, capoFret]);
+  const shownKey = !page.songKey
+    ? page.songKey
+    : capoMode
+      ? capoShapeKey(page.songKey, capoFret)
+      : offset !== 0
+        ? transposeKey(page.songKey, offset)
+        : page.songKey;
 
   const hasSwitcher = byLabel.size > 0 || !!page.lyricsChords;
 
@@ -172,7 +181,7 @@ export function StageSong({
                 <button
                   type="button"
                   className="btn btn-sm"
-                  onClick={() => setOffset((o) => Math.max(-11, o - 1))}
+                  onClick={() => bumpSemitone(-1)}
                 >
                   − ½
                 </button>
@@ -186,12 +195,13 @@ export function StageSong({
                 <button
                   type="button"
                   className="btn btn-sm"
-                  onClick={() => setOffset((o) => Math.min(11, o + 1))}
+                  onClick={() => bumpSemitone(1)}
                 >
                   + ½
                 </button>
+                <CapoSelect compact capoFret={capoFret} onChange={setCapo} />
                 {offset !== 0 && (
-                  <button type="button" className="btn btn-sm" onClick={() => setOffset(0)}>
+                  <button type="button" className="btn btn-sm" onClick={reset}>
                     ↺
                   </button>
                 )}
