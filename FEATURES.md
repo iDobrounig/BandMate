@@ -225,7 +225,12 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Repertoire-Gedächtnis und Rückverweise dieselben zwei Verknüpfungstabellen lesen. In der
   Songliste neue Sortierung „Am längsten nicht gespielt" (zählt Proben *und* Gigs
   zusammen). Kein Schema-Eingriff.
-- [ ] **Anwesenheits-Statistik** über alle Proben (wer war wie oft da)
+- [x] **Anwesenheits-Statistik** über alle Proben (wer war wie oft da) — *erledigt
+  10.08.2026.* Neue Karte auf `/mitglieder`, für alle Rollen sichtbar: je aktives
+  Mitglied Zu-/Absagen/Vielleicht aus allen vergangenen Proben (keine Gigs) sowie
+  eine Quote (Zusagen ⁄ (Zusagen+Absagen) — „Vielleicht" und offene Rückmeldungen
+  zählen nicht mit, „–" ohne jede Rückmeldung). `fetchAttendanceStats` in
+  `lib/queries.ts`, reine Prozent-Funktion in `lib/attendance.ts`.
 - [ ] **Browser-Audio-Aufnahme** (MediaRecorder) — Proberaum-Mitschnitt direkt am Song statt
   Datei-Transfer vom Handy. Unterschätzt: bester Grund, die App *während* der Probe offen zu haben.
   Format je nach Browser unterschiedlich (Chrome/Firefox: WebM/OGG+Opus, Safari/iOS: MP4+AAC) und

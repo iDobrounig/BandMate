@@ -23,6 +23,7 @@ import {
   eventAktiv,
   anhangAktiv,
 } from "@/lib/db/filters";
+import { attendancePercentage } from "@/lib/attendance";
 
 export type SongListItem = Song & {
   upvotes: number;
@@ -223,6 +224,41 @@ export async function fetchEvents(
     noCount: r.noCount,
     maybeCount: r.maybeCount,
     myStatus: r.myStatus,
+  }));
+}
+
+export type AttendanceStats = {
+  userId: number;
+  name: string;
+  instrument: string | null;
+  yes: number;
+  no: number;
+  maybe: number;
+  percentage: number | null;
+};
+
+/**
+ * Anwesenheits-Statistik je aktivem Mitglied, nur vergangene Proben (keine
+ * Gigs, siehe FEATURES.md). Quote über `attendancePercentage`.
+ */
+export async function fetchAttendanceStats(): Promise<AttendanceStats[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const rows = await db
+    .select({
+      userId: users.id,
+      name: users.name,
+      instrument: users.instrument,
+      yes: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'yes' and e.kind = 'rehearsal' and e.deleted_at is null and e.date <= ${today})`,
+      no: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'no' and e.kind = 'rehearsal' and e.deleted_at is null and e.date <= ${today})`,
+      maybe: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'maybe' and e.kind = 'rehearsal' and e.deleted_at is null and e.date <= ${today})`,
+    })
+    .from(users)
+    .where(eq(users.active, true))
+    .orderBy(asc(users.name));
+
+  return rows.map((r) => ({
+    ...r,
+    percentage: attendancePercentage(r.yes, r.no),
   }));
 }
 

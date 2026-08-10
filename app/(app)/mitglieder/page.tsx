@@ -3,13 +3,57 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { fetchSettings } from "@/lib/notifications";
+import { fetchAttendanceStats, type AttendanceStats } from "@/lib/queries";
+import { ATTENDANCE_STATUS } from "@/lib/constants";
 import { NewMemberForm, MemberRow } from "@/components/member-admin";
 import { SmtpTestForm } from "@/components/smtp-test";
 
 export const metadata = { title: "Mitglieder" };
 
+function AttendanceStatsCard({ stats }: { stats: AttendanceStats[] }) {
+  return (
+    <section className="card mt-8 p-5">
+      <h2 className="headline text-lg">Anwesenheits-Statistik</h2>
+      <p className="mt-1 text-sm text-mute">Nur vergangene Proben, ohne Gigs.</p>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-line-soft text-left text-xs text-faint uppercase">
+              <th className="py-2 pr-3 font-semibold">Mitglied</th>
+              <th className="px-3 py-2 text-right font-semibold">{ATTENDANCE_STATUS.yes.symbol}</th>
+              <th className="px-3 py-2 text-right font-semibold">{ATTENDANCE_STATUS.no.symbol}</th>
+              <th className="px-3 py-2 text-right font-semibold">{ATTENDANCE_STATUS.maybe.symbol}</th>
+              <th className="py-2 pl-3 text-right font-semibold">Quote</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stats.map((s) => (
+              <tr key={s.userId} className="border-b border-line-soft last:border-0">
+                <td className="py-2 pr-3">{s.name}</td>
+                <td className={`mono-display px-3 py-2 text-right ${ATTENDANCE_STATUS.yes.color}`}>
+                  {s.yes}
+                </td>
+                <td className={`mono-display px-3 py-2 text-right ${ATTENDANCE_STATUS.no.color}`}>
+                  {s.no}
+                </td>
+                <td className={`mono-display px-3 py-2 text-right ${ATTENDANCE_STATUS.maybe.color}`}>
+                  {s.maybe}
+                </td>
+                <td className="mono-display py-2 pl-3 text-right font-semibold">
+                  {s.percentage == null ? "–" : `${s.percentage}%`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 export default async function MitgliederPage() {
   const user = await requireUser();
+  const stats = await fetchAttendanceStats();
 
   if (user.role !== "admin") {
     const members = await db
@@ -35,6 +79,7 @@ export default async function MitgliederPage() {
             </div>
           ))}
         </section>
+        <AttendanceStatsCard stats={stats} />
       </div>
     );
   }
@@ -66,6 +111,8 @@ export default async function MitgliederPage() {
           />
         ))}
       </section>
+
+      <AttendanceStatsCard stats={stats} />
 
       <section className="card mt-8 p-5">
         <h2 className="headline mb-4 text-lg">SMTP-Verbindung testen</h2>
