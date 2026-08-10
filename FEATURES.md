@@ -334,6 +334,21 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 
 ### Später / bei Bedarf
 
+- [ ] **Umstieg SQLite → MariaDB** — *bewusst zurückgestellt, Stand 09.08.2026.* Kein
+  Datenmengen-Thema, sondern ein Prozess-Thema: BandMate läuft heute deshalb als **eine
+  einzige** PM2-Instanz im Fork-Modus (`ecosystem.config.js`: „mehrere Instanzen /
+  Cluster-Modus würden zu Sperr-/Schreibkonflikten führen"), weil `better-sqlite3` nur einen
+  Schreiber gleichzeitig verträgt. Für die in Welle 4 geplante halb-offene
+  Mandantenfähigkeit (Super-Admin legt Bands von Hand an, überschaubare Mitgliederzahl je
+  Band) reicht WAL-SQLite weiterhin aus. Sinnvoller Zeitpunkt für den Wechsel: sobald
+  mehrere App-Prozesse/Server gleichzeitig laufen sollen (Cluster-Modus, Zero-Downtime-
+  Deploys, mehrere Server hinter einem Load Balancer), Self-Signup real geöffnet wird und
+  die Band-/User-Zahl über „von Hand überschaubar" hinauswächst, oder spürbare
+  Schreib-Verzögerungen unter gleichzeitiger Last auftreten (bisher keiner der drei Fälle
+  gegeben). Kein kleiner Schnitt: `lib/db/schema.ts` müsste auf `mysql-core` umgeschrieben
+  werden, die raw-SQL-Subqueries in `lib/queries.ts` (AGENTS.md-Stolperfalle mit der
+  Spalten-Qualifizierung) verhalten sich anders, und das komplette Backup/Restore-System
+  (`scripts/backup.sh`, SQLite-Online-Backup-API) müsste neu gebaut werden.
 - [ ] **Web-Push-Benachrichtigungen** (zusätzlich zu E-Mail, nicht statt)
   Machbar und nicht besonders komplex (~300–400 Zeilen mit `web-push`), aber zwei harte
   Einschränkungen: Auf iOS funktioniert Push **nur**, wenn die Seite vorher über „Zum
