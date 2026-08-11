@@ -8,6 +8,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.17.0] — 2026-08-11
+
+### Hinzugefügt
+- **Dashboard: „Nächste Probe & Gig"**: der Block „Was für dich ansteht" zeigt jetzt
+  ganz oben zusätzlich die zeitlich nächste Probe und den nächsten Gig — mit
+  Probe-Agenda bzw., falls keine Agenda existiert, der verknüpften Setliste (Name +
+  Songzahl). Reine Information unabhängig vom eigenen Übe-Status. Der Block
+  verschwindet dadurch nicht mehr ganz, wenn sonst nichts offen ist — Sichtbarkeit auf
+  dem Handy (Hauptnutzung von BandMate) war hier wichtiger als das bisherige „nur wenn
+  was offen ist".
+
 ## [1.16.0] — 2026-08-10
 
 **Welle 3, vier weitere Häppchen.** Anwesenheits-Statistik, Serien-Termine im Bulk
