@@ -8,6 +8,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.18.0] — 2026-08-11
+
+### Hinzugefügt
+- **Browser-Audio-Aufnahme**: Proberaum-Mitschnitte lassen sich jetzt direkt an einem Song
+  aufnehmen, statt eine Datei vom Handy hochladen zu müssen — Overlay mit Aufnehmen →
+  Vorhören/Benennen (Vorschlag „Songtitel JJJJ-MM-TT HH:MM") → Speichern/Verwerfen. Die
+  Aufnahme wird serverseitig per ffmpeg immer echt zu OGG/Opus transkodiert (48 kbps), damit
+  sie platzsparend abgelegt wird — unabhängig vom Browser-Ausgangsformat (Chrome/Firefox
+  liefern WebM+Opus, Safari/iOS MP4+AAC) und ohne Änderung an bestehenden Upload-Limits.
+  Aufnahmen sind in der Dateiliste am Mikro-Icon von normalen Uploads unterschieden.
+
 ## [1.17.0] — 2026-08-11
 
 ### Hinzugefügt
