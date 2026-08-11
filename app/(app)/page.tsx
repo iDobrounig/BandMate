@@ -11,7 +11,6 @@ import { SONG_STATUS, EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ReminderStatusLine } from "@/components/reminder-status";
 import { TodoBlock } from "@/components/todo-block";
-import { NextProgramsCard } from "@/components/next-programs";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -79,7 +78,9 @@ export default async function DashboardPage() {
       </div>
 
       {reminderStatus && <ReminderStatusLine status={reminderStatus} />}
-      {todo.gesamt > 0 && <TodoBlock todo={todo} />}
+      {(todo.gesamt > 0 || programs.probe || programs.gig) && (
+        <TodoBlock todo={todo} programs={programs} />
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8 min-w-0">
@@ -219,8 +220,6 @@ export default async function DashboardPage() {
               </div>
             )}
           </section>
-
-          <NextProgramsCard probe={programs.probe} gig={programs.gig} />
 
           <section>
             <div className="mb-3 flex items-baseline justify-between">

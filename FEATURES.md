@@ -162,16 +162,21 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   Zeigt den letzten Erinnerungs-Lauf aus `notification_runs`, wird ab 2 Tagen ohne Lauf
   oder bei Fehlern auffällig. Das Sicherheitsnetz zum Cron-Dispatcher.
 
-- [x] **Dashboard: „Was für dich ansteht"** — *erledigt 23.07.2026*
+- [x] **Dashboard: „Was für dich ansteht"** — *erledigt 23.07.2026, erweitert
+  10.08.2026 um „Nächste Probe & Gig" (siehe unten).*
   Block ganz oben mit offenen Zu-/Absagen (14 Tage), ungestimmten Vorschlägen, ungeübten
-  Agenda-Songs und neuen Kommentaren seit dem letzten Besuch (`lastSeenAt`). Verschwindet,
-  wenn nichts offen ist. `lib/todo.ts`, 15 Tests, per Mutationsprobe abgesichert.
-- [x] **Dashboard: „Nächste Probe & Gig"** — *erledigt 10.08.2026. Entwurf:
+  Agenda-Songs und neuen Kommentaren seit dem letzten Besuch (`lastSeenAt`). `lib/todo.ts`,
+  15 Tests, per Mutationsprobe abgesichert.
+- [x] **Dashboard: „Nächste Probe & Gig"** — *erledigt 10.08.2026, Platzierung
+  überarbeitet 11.08.2026. Entwurf:
   [docs/superpowers/specs/2026-08-10-naechste-programme-design.md](docs/superpowers/specs/2026-08-10-naechste-programme-design.md)*
-  Eigene, immer sichtbare Karte in der Seitenspalte: zeitlich nächste Probe **und**
-  nächster Gig getrennt, mit Probe-Agenda bzw. — falls keine Agenda — der verknüpften
-  Setliste (Name + Songzahl). Reine Information unabhängig vom eigenen Übe-Status,
-  bewusst getrennt vom Todo-Block. `fetchUpcomingPrograms` in `lib/queries.ts`.
+  Zeitlich nächste Probe **und** nächster Gig getrennt, mit Probe-Agenda bzw. — falls
+  keine Agenda — der verknüpften Setliste (Name + Songzahl). Reine Information
+  unabhängig vom eigenen Übe-Status. Stand jetzt als zwei Zeilen ganz oben im Block
+  „Was für dich ansteht" (ursprünglich eigene Seitenspalten-Karte — auf Mobilgeräten,
+  der Hauptnutzung, ging die dort unter). Der Block verschwindet dadurch nicht mehr
+  ganz, wenn sonst nichts offen ist — bewusst in Kauf genommen, Sichtbarkeit war
+  wichtiger. `fetchUpcomingPrograms` in `lib/queries.ts`.
 
 ### Welle 2 — Bühnenwert *(das, was WhatsApp nie können wird)*
 
