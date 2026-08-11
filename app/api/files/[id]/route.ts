@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import fs from "node:fs";
+import path from "node:path";
 import { Readable } from "node:stream";
 import { currentUser } from "@/lib/auth";
 import { fetchServableAttachment } from "@/lib/queries";
@@ -23,11 +24,18 @@ export async function GET(
   const stat = fs.statSync(filePath);
 
   const download = req.nextUrl.searchParams.has("download");
+  // Aufnahmen tragen als originalName nur die frei vergebene Bezeichnung ohne
+  // Endung (anders als Uploads, deren originalName vom Datei-Input kommt) —
+  // die tatsächliche Endung liegt im storedName, sonst fehlt sie beim Download.
+  const ext = path.extname(attachment.storedName);
+  const filename = attachment.originalName.toLowerCase().endsWith(ext.toLowerCase())
+    ? attachment.originalName
+    : `${attachment.originalName}${ext}`;
   const baseHeaders: Record<string, string> = {
     "Content-Type": attachment.mime,
     "Accept-Ranges": "bytes",
     "Content-Disposition": `${download ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(
-      attachment.originalName
+      filename
     )}`,
     "Cache-Control": "private, max-age=3600",
   };

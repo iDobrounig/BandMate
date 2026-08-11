@@ -246,7 +246,10 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   [docs/superpowers/specs/2026-08-11-browser-audio-aufnahme-design.md](docs/superpowers/specs/2026-08-11-browser-audio-aufnahme-design.md)*
   Proberaum-Mitschnitt direkt am Song statt Datei-Transfer vom Handy: Overlay
   (`components/audio-recorder.tsx`, `fixed inset-0`-Muster wie im Bühnenmodus) mit
-  Aufnehmen → Vorhören+Benennen (Vorschlag „Songtitel – Datum, Uhrzeit") → Speichern/Verwerfen.
+  Aufnehmen → Vorhören+Benennen (Vorschlag „Songtitel JJJJ-MM-TT HH:MM") → Speichern/Verwerfen.
+  Der Download bekommt über `app/api/files/[id]/route.ts` immer die passende Dateiendung, auch
+  wenn `originalName` (bei Aufnahmen der frei vergebene Name statt eines Datei-Input-Namens)
+  selbst keine trägt.
   Rohes Browser-Format (WebM/Opus oder MP4/AAC, je nach Browser) wird serverseitig per
   **ffmpeg** (`lib/audio-transcode.ts`, `execFile`) immer echt nach **OGG/Opus** transkodiert,
   bewusst kein Remux-Sonderfall — garantiert eine vorhersagbare Zielgröße unabhängig davon, ob

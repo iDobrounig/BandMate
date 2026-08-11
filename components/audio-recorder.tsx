@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveRecording } from "@/lib/actions/recordings";
-import { formatDateTime } from "@/lib/format";
+import { formatIsoDateTime } from "@/lib/format";
 import { RECORDING_BITRATE_KBPS, RECORDING_MAX_MS } from "@/lib/constants";
 import { IconMic, IconStop, IconClose } from "@/components/icons";
 
@@ -125,7 +125,7 @@ function AudioRecorderOverlay({
         });
         setBlob(finalBlob);
         setAudioUrl(URL.createObjectURL(finalBlob));
-        setLabel(`${songTitle} – ${formatDateTime(new Date())}`);
+        setLabel(`${songTitle} ${formatIsoDateTime(new Date())}`);
         setStep("review");
         stopStream();
         stopTimers();

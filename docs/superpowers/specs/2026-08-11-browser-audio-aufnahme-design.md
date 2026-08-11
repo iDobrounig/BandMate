@@ -23,8 +23,12 @@ WebM+Opus, Safari/iOS MP4+AAC).
   `next.config.ts` und die nginx-Konfiguration bleiben unangetastet. Zusätzlich ein
   Sicherheits-Auto-Stopp nach 3 h, falls das Stoppen vergessen wird.
 - **Review-Schritt vor dem Speichern:** nach dem Stoppen gibt es ein Vorhören + einen
-  vorausgefüllten, editierbaren Namen (`Songtitel – TT.MM.JJJJ, HH:MM`) mit
-  „Speichern"/„Verwerfen" — kein automatischer Upload direkt nach Stop.
+  vorausgefüllten, editierbaren Namen (`Songtitel JJJJ-MM-TT HH:MM`, 24h-Format,
+  `formatIsoDateTime` in `lib/format.ts`) mit „Speichern"/„Verwerfen" — kein automatischer
+  Upload direkt nach Stop.
+- **Download-Dateiendung:** `originalName` ist bei Aufnahmen der frei vergebene Name ohne
+  Endung (anders als bei Uploads, wo er vom Datei-Input kommt). `app/api/files/[id]/route.ts`
+  ergänzt die Endung beim Download deshalb bei Bedarf aus `storedName`.
 - **Aufnahmen sind als solche erkennbar** (Mikro-Icon in der Liste), nicht optisch identisch
   zu manuellen Uploads.
 - Bewusst **kein Remux-Sonderfall** (WebM+Opus umkopieren statt neu zu kodieren): es wird immer

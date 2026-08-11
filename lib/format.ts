@@ -37,6 +37,14 @@ export function formatDateTime(date: Date | null | undefined): string {
   });
 }
 
+/** Für Aufnahme-Bezeichnungsvorschläge: "2026-08-11 20:15" (lokale Zeit, 24h). */
+export function formatIsoDateTime(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
