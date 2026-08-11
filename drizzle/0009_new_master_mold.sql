@@ -1,0 +1,1 @@
+ALTER TABLE `attachments` ADD `source` text DEFAULT 'upload' NOT NULL;

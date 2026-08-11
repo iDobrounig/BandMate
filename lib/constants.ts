@@ -198,3 +198,13 @@ export const SHEET_MIMES = new Set([
   "image/jpeg",
   "image/webp",
 ]);
+
+/**
+ * Browser-Audio-Aufnahme (MediaRecorder): Ziel-Bitrate fürs ffmpeg-Transcoding
+ * nach OGG/Opus. Bewusst niedrig, damit auch mehrstündige Proben-Mitschnitte
+ * unter dem Server-Action-Limit (next.config.ts, 60 MB) bleiben.
+ */
+export const RECORDING_BITRATE_KBPS = 48;
+
+/** Sicherheits-Auto-Stopp, falls das Stoppen der Aufnahme vergessen wird. */
+export const RECORDING_MAX_MS = 3 * 60 * 60 * 1000;

@@ -274,6 +274,25 @@ export function IconCopy({ className }: IconProps) {
   );
 }
 
+export function IconMic({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <rect x="9" y="2" width="6" height="12" rx="3" />
+      <path d="M5 10a7 7 0 0 0 14 0" />
+      <line x1="12" y1="17" x2="12" y2="22" />
+      <line x1="8" y1="22" x2="16" y2="22" />
+    </Svg>
+  );
+}
+
+export function IconStop({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <rect x="5" y="5" width="14" height="14" rx="1.5" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
 export function IconExpand({ className }: IconProps) {
   return (
     <Svg className={className}>

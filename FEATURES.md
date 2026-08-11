@@ -242,12 +242,21 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   eine Quote (Zusagen ⁄ (Zusagen+Absagen) — „Vielleicht" und offene Rückmeldungen
   zählen nicht mit, „–" ohne jede Rückmeldung). `fetchAttendanceStats` in
   `lib/queries.ts`, reine Prozent-Funktion in `lib/attendance.ts`.
-- [ ] **Browser-Audio-Aufnahme** (MediaRecorder) — Proberaum-Mitschnitt direkt am Song statt
-  Datei-Transfer vom Handy. Unterschätzt: bester Grund, die App *während* der Probe offen zu haben.
-  Format je nach Browser unterschiedlich (Chrome/Firefox: WebM/OGG+Opus, Safari/iOS: MP4+AAC) und
-  Safari ignoriert `audioBitsPerSecond` teils. Für einheitliche, platzsparende Ablage serverseitiges
-  **ffmpeg-Transcoding auf OGG/Opus** nötig (WebM→OGG nur Remux, AAC→OGG echtes Transcoding) —
-  neue externe Abhängigkeit (Binary auf dem Server), aktuell läuft alles ohne externe Dienste.
+- [x] **Browser-Audio-Aufnahme** (MediaRecorder) — *erledigt 11.08.2026. Entwurf:
+  [docs/superpowers/specs/2026-08-11-browser-audio-aufnahme-design.md](docs/superpowers/specs/2026-08-11-browser-audio-aufnahme-design.md)*
+  Proberaum-Mitschnitt direkt am Song statt Datei-Transfer vom Handy: Overlay
+  (`components/audio-recorder.tsx`, `fixed inset-0`-Muster wie im Bühnenmodus) mit
+  Aufnehmen → Vorhören+Benennen (Vorschlag „Songtitel – Datum, Uhrzeit") → Speichern/Verwerfen.
+  Rohes Browser-Format (WebM/Opus oder MP4/AAC, je nach Browser) wird serverseitig per
+  **ffmpeg** (`lib/audio-transcode.ts`, `execFile`) immer echt nach **OGG/Opus** transkodiert,
+  bewusst kein Remux-Sonderfall — garantiert eine vorhersagbare Zielgröße unabhängig davon, ob
+  der Browser `audioBitsPerSecond` beachtet (Safari tut das teils nicht). Niedrige Ziel-Bitrate
+  (48 kbps, `RECORDING_BITRATE_KBPS`) statt Limit-Erhöhung, damit auch mehrstündige Aufnahmen
+  unter dem bestehenden 60-MB-Server-Action-Limit bleiben, dazu ein 3h-Sicherheits-Auto-Stopp.
+  Aufnahmen sind in der bestehenden `attachments`-Tabelle (`source`-Spalte) als solche markiert
+  und mit Mikro-Icon von normalen Uploads unterschieden. Vorerst nur auf der Songseite; die
+  Server Action (`lib/actions/recordings.ts`) ist so geschnitten, dass ein späterer
+  Gig-Mitschnitt an Terminen/Setlisten denselben Kern wiederverwenden könnte.
 - [x] **Mitgliederverzeichnis für alle** — *erledigt 09.08.2026.* `/mitglieder` zeigt
   Nicht-Admins jetzt eine schlichte Liste der aktiven Mitglieder (Name, Instrument,
   E-Mail als `mailto:`-Link), Admins weiterhin die volle Verwaltung. Nav-Link für alle

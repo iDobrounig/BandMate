@@ -8,12 +8,13 @@ import { VoteButtons } from "@/components/vote-buttons";
 import { PracticePicker } from "@/components/practice";
 import { CommentForm, DeleteCommentButton } from "@/components/comments";
 import { UploadForm, DeleteAttachmentButton } from "@/components/uploads";
+import { AudioRecorderButton } from "@/components/audio-recorder";
 import { SheetViewer } from "@/components/sheet-viewer";
 import { TransposableLyrics } from "@/components/transpose";
 import { LinkEmbed } from "@/components/embeds";
 import { Metronome } from "@/components/metronome";
 import { SongStatusActions, DeleteSongButton } from "@/components/song-actions";
-import { IconEdit, IconSheet } from "@/components/icons";
+import { IconEdit, IconSheet, IconMic } from "@/components/icons";
 import type { PracticeState } from "@/lib/db/schema";
 
 export default async function SongDetailPage({
@@ -151,11 +152,17 @@ export default async function SongDetailPage({
 
           {/* Audio-Dateien */}
           <section className="space-y-3">
-            <h2 className="headline text-lg">Aufnahmen &amp; Audio</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="headline text-lg">Aufnahmen &amp; Audio</h2>
+              <AudioRecorderButton songId={song.id} songTitle={song.title} />
+            </div>
             {audioFiles.map((file) => (
               <div key={file.id} className="card p-4">
                 <div className="mb-2 flex items-baseline justify-between gap-3">
                   <p className="min-w-0 truncate text-sm font-semibold">
+                    {file.source === "recording" && (
+                      <IconMic className="mr-1.5 inline size-3.5 shrink-0 align-[-2px] text-faint" />
+                    )}
                     {file.originalName}
                     <span className="ml-2 font-normal text-faint">
                       {formatBytes(file.size)}

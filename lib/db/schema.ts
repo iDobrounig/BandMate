@@ -76,6 +76,9 @@ export const attachments = sqliteTable("attachments", {
     .notNull()
     .references(() => songs.id, { onDelete: "cascade" }),
   kind: text("kind", { enum: ["audio", "sheet"] }).notNull(),
+  source: text("source", { enum: ["upload", "recording"] })
+    .notNull()
+    .default("upload"),
   instrument: text("instrument"),
   storedName: text("stored_name").notNull(),
   originalName: text("original_name").notNull(),
