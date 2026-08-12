@@ -8,6 +8,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.19.1] — 2026-08-12
+
+### Behoben
+- **Bühnenmodus-Kopfzeile lief bei Smartphone-Breite über**: durch die größeren
+  Touch-Targets aus v1.19.0 passte die Kopfzeile bei längeren Setlisten nicht mehr auf
+  einen Blick ins Display — der „Beenden"-Button war ohne Scrollen kaum oder gar nicht
+  erreichbar. Der Voll/Notenpult-Umschalter zeigt auf dem Handy jetzt nur noch Icons
+  (Text erst ab Tablet-Breite, wie schon beim „Beenden"-Button), zusätzlich etwas
+  schlankeres Padding bei Vollbild/Beenden — die Kopfzeile passt dadurch wieder ohne
+  Scrollen komplett ins Display.
+
 ## [1.19.0] — 2026-08-12
 
 ### Hinzugefügt
