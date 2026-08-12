@@ -8,6 +8,12 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.19.4] — 2026-08-13
+
+### Geändert
+- **Bestätigungsdialog vor Logout**: der Abmelden-Button (mobil & Desktop) fragt jetzt
+  vor dem Ausloggen nach — verhindert versehentliches Abmelden bei Fehlklick.
+
 ## [1.19.3] — 2026-08-13
 
 ### Geändert
