@@ -108,8 +108,9 @@ export function DeleteSetlistButton({
 
 export function PrintButton() {
   return (
-    <button type="button" className="btn" onClick={() => window.print()}>
-      <IconPrint className="size-4" /> Drucken / PDF
+    <button type="button" className="btn" onClick={() => window.print()} aria-label="Drucken / PDF">
+      <IconPrint className="size-4" />
+      <span className="hidden sm:inline">Drucken / PDF</span>
     </button>
   );
 }
