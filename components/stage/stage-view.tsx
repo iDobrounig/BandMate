@@ -159,7 +159,7 @@ export function StageView({
       onTouchEnd={onTouchEnd}
     >
       {/* Kopfzeile */}
-      <div className="stage-px stage-pt flex items-center gap-2 overflow-x-auto border-b border-line pb-2 text-sm">
+      <div className="stage-px stage-pt flex items-center gap-1.5 overflow-x-auto border-b border-line pb-2 text-sm">
         <button
           type="button"
           className="btn btn-stage shrink-0"
@@ -182,11 +182,11 @@ export function StageView({
           ›
         </button>
         <span className="hidden truncate text-mute sm:block">{setlistName}</span>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
           <div className="flex items-center rounded-md border border-line p-0.5">
             <button
               type="button"
-              className={`btn btn-stage border-0 ${density === "full" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
+              className={`btn btn-stage border-0 px-2 sm:px-4 ${density === "full" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
               onClick={() => changeDensity("full")}
               aria-label="Vollständig"
             >
@@ -195,7 +195,7 @@ export function StageView({
             </button>
             <button
               type="button"
-              className={`btn btn-stage border-0 ${density === "minimal" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
+              className={`btn btn-stage border-0 px-2 sm:px-4 ${density === "minimal" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
               onClick={() => changeDensity("minimal")}
               aria-label="Notenpult"
             >
@@ -205,7 +205,7 @@ export function StageView({
           </div>
           <button
             type="button"
-            className="btn btn-stage"
+            className="btn btn-stage px-2 sm:px-4"
             onClick={toggleFullscreen}
             title="Vollbild"
           >
@@ -213,7 +213,7 @@ export function StageView({
           </button>
           <button
             type="button"
-            className="btn btn-stage"
+            className="btn btn-stage px-2 sm:px-4"
             onClick={exit}
             aria-label="Beenden"
           >
