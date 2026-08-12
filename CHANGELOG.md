@@ -8,6 +8,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.19.2] — 2026-08-12
+
+### Behoben
+- **„Drucken / PDF"-Button umbrach mobil**: in der Setlisten-Druckansicht (vollständig und
+  kompakt) zeigt der Button auf schmalen Bildschirmen jetzt nur noch das Drucker-Icon statt
+  den Text zweizeilig umzubrechen — Text erscheint wie beim Bühnenmodus-Muster erst ab
+  Tablet-Breite.
+
 ## [1.19.1] — 2026-08-12
 
 ### Behoben
