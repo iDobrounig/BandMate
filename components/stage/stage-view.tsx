@@ -159,7 +159,7 @@ export function StageView({
       onTouchEnd={onTouchEnd}
     >
       {/* Kopfzeile */}
-      <div className="stage-px stage-pt flex items-center gap-2 border-b border-line pb-2 text-sm">
+      <div className="stage-px stage-pt flex items-center gap-2 overflow-x-auto border-b border-line pb-2 text-sm">
         <button
           type="button"
           className="btn btn-stage shrink-0"
@@ -253,7 +253,7 @@ export function StageView({
           </>
         )}
         <div
-          className="pointer-events-none absolute inset-0 z-10 bg-accent transition-opacity duration-75"
+          className="pointer-events-none absolute inset-0 z-10 bg-accent transition-opacity duration-75 motion-reduce:hidden"
           style={{ opacity: beatFlash ? (beatAccent ? 0.45 : 0.22) : 0 }}
         />
       </div>

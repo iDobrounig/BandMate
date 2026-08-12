@@ -50,21 +50,44 @@ dort per `key={page.id}` neu gemountet).
 
 `onFlash` wird durchgereicht: `StageSong` und `StageMinimal` bekommen je eine neue optionale
 Prop `onMetronomeFlash` und geben sie 1:1 an `StageMetronome` weiter. `StageView` hält
-`const [flash, setFlash] = useState<{ on: boolean; accent: boolean }>(...)`, übergibt
-`onMetronomeFlash={(on, accent) => setFlash({ on, accent })}` an die jeweils aktive
+`const [beatFlash, setBeatFlash] = useState(false)` / `const [beatAccent, setBeatAccent] =
+useState(false)`, übergibt `onMetronomeFlash={onMetronomeFlash}` an die jeweils aktive
 Content-Komponente und rendert zusätzlich eine klickdurchlässige (`pointer-events-none`)
-Overlay-Ebene über den gesamten `fixed inset-0`-Container:
+Overlay-Ebene — **nicht** als eigenes `fixed`-Geschwisterelement des Kopfzeilen-Containers,
+sondern als `absolute inset-0` Kind *innerhalb* des Inhalts-Wrappers (`<div className="relative
+min-h-0 flex-1">`, der Kopfzeile und Inhalt trennt):
 
 ```
-<div
-  className="pointer-events-none fixed inset-0 z-40 bg-accent transition-opacity duration-75"
-  style={{ opacity: flash.on ? (flash.accent ? 0.45 : 0.22) : 0 }}
-/>
+<div className="relative min-h-0 flex-1">
+  {/* StageSong / StageSection / StageBreak / StageMinimal */}
+  <div
+    className="pointer-events-none absolute inset-0 z-10 bg-accent transition-opacity duration-75 motion-reduce:hidden"
+    style={{ opacity: beatFlash ? (beatAccent ? 0.45 : 0.22) : 0 }}
+  />
+</div>
 ```
+
+Ein früherer Entwurf sah stattdessen ein `fixed inset-0 z-40`-Overlay als direktes Kind des
+äußeren `fixed inset-0 z-50`-Containers vor (Geschwister der Kopfzeile). Das funktioniert so
+nicht: Innerhalb dieses Stacking-Contexts ist die Kopfzeile ein *unpositioniertes* Element
+(kein `position: relative/absolute/fixed`), ein positioniertes `z-40`-Geschwister würde also
+unabhängig vom z-Index-Wert **über** ihr gemalt und sie verdecken. Die tatsächliche Lösung
+umgeht das strukturell: `absolute inset-0` innerhalb des Inhalts-Wrappers kann die Kopfzeile
+gar nicht erreichen, weil sie außerhalb dieses Wrappers liegt — kein `z-40` nötig, `z-10`
+reicht (nur relativ zum eigenen Inhalts-Wrapper, dessen Song-/Lyrics-Inhalt darunterliegt).
+
+Bewusste Entscheidung (nach Live-Demo bestätigt): Der Blitz überzieht damit auch die
+Werkzeugleiste/Bedienelemente *innerhalb* des Inhalts (Metronom-Buttons, Transponieren, Capo
+etc. im Footer von `StageSong`, sowie das Metronom in `StageMinimal`), da diese im selben
+Inhalts-Wrapper wie Noten/Lyrics liegen — das ist gewollt, nicht der zuvor beschriebene Bug:
+Buttons bleiben dank `pointer-events-none` auf dem Overlay voll klickbar, und der Blitz
+verstärkt den Beat genau dort, wo ohnehin gerade hingeschaut/getippt wird. Nur die Kopfzeile
+(Navigation, Vollbild, Beenden) bleibt ausgenommen.
 
 Der betonte erste Schlag blitzt sichtbar heller als die Schläge 2–4 (spiegelt den bereits
-vorhandenen Audio-Akzent). `z-40` liegt unter der Kopfzeile/den Bedienelementen (die bleiben
-klar lesbar), aber über dem Song-/Lyrics-Inhalt.
+vorhandenen Audio-Akzent). Für Nutzer mit `prefers-reduced-motion: reduce` bleibt das Overlay
+per `motion-reduce:hidden` komplett unsichtbar (Metronom-Audio/-Bedienelemente sind davon
+nicht betroffen).
 
 Der Text-Flash in `StageMetronome` selbst (`text-accent-hi` auf der BPM-Ziffer) bleibt
 zusätzlich bestehen — er ist die Bestätigung direkt am Bedienelement, wenn man draufschaut.
