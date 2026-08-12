@@ -303,3 +303,20 @@ export function IconExpand({ className }: IconProps) {
     </Svg>
   );
 }
+
+export function IconLayoutFull({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+    </Svg>
+  );
+}
+
+export function IconLayoutSplit({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+    </Svg>
+  );
+}

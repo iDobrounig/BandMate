@@ -8,7 +8,7 @@ import { StageSong, type ViewSel } from "./stage-song";
 import { StageBreak } from "./stage-break";
 import { StageSection } from "./stage-section";
 import { StageMinimal } from "./stage-minimal";
-import { IconExpand, IconClose } from "@/components/icons";
+import { IconExpand, IconClose, IconLayoutFull, IconLayoutSplit } from "@/components/icons";
 
 const FONT_KEY = "stage-font-scale";
 const DENSITY_KEY = "stage-density";
@@ -188,15 +188,19 @@ export function StageView({
               type="button"
               className={`btn btn-stage border-0 ${density === "full" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
               onClick={() => changeDensity("full")}
+              aria-label="Vollständig"
             >
-              Voll
+              <IconLayoutFull className="size-5" />
+              <span className="hidden sm:inline">Voll</span>
             </button>
             <button
               type="button"
               className={`btn btn-stage border-0 ${density === "minimal" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
               onClick={() => changeDensity("minimal")}
+              aria-label="Notenpult"
             >
-              Notenpult
+              <IconLayoutSplit className="size-5" />
+              <span className="hidden sm:inline">Notenpult</span>
             </button>
           </div>
           <button
