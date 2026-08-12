@@ -8,6 +8,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.19.0] — 2026-08-12
+
+### Hinzugefügt
+- **Kompakte Druckansicht für Setlisten**: Neben der bestehenden vollständigen Druckansicht
+  gibt es jetzt eine zweite, platzsparendere Variante (`/setlisten/[id]/druck-kompakt`) —
+  nur Tonart und Tempo statt aller Spalten, engerer Zeilenabstand, damit deutlich mehr Songs
+  auf eine Seite passen. Praktisch als Spickzettel am Notenständer oder für einen sparsameren
+  Ausdruck fürs ganze Team. Ein Umschalter „Vollständig · Kompakt" direkt auf der Druckseite
+  wechselt zwischen beiden Ansichten; die Setlisten-Detailseite selbst bleibt unverändert mit
+  einem einzigen Druck-Link.
+
 ## [1.18.0] — 2026-08-11
 
 ### Hinzugefügt
