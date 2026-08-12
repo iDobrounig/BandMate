@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getSetlistPrintData } from "@/lib/queries";
 import { formatDate, formatDuration } from "@/lib/format";
-import { PrintButton } from "@/components/setlist-forms";
+import { PrintButton, PrintViewSwitcher } from "@/components/setlist-forms";
 
 export const metadata = { title: "Druckansicht (kompakt)" };
 
@@ -26,7 +26,10 @@ export default async function SetlistDruckKompaktPage({
         <Link href={`/setlisten/${setlistId}`} className="text-sm text-mute hover:text-ink">
           ← Zurück zur Setliste
         </Link>
-        <PrintButton />
+        <div className="flex items-center gap-3">
+          <PrintViewSwitcher setlistId={setlistId} active="kompakt" />
+          <PrintButton />
+        </div>
       </div>
 
       <div className="mx-auto max-w-3xl rounded-xl bg-white p-10 text-neutral-900 shadow-2xl print:max-w-none print:rounded-none print:p-0 print:shadow-none">

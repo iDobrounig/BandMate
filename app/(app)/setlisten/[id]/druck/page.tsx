@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getSetlistPrintData } from "@/lib/queries";
 import { formatDate, formatDuration } from "@/lib/format";
-import { PrintButton } from "@/components/setlist-forms";
+import { PrintButton, PrintViewSwitcher } from "@/components/setlist-forms";
 
 export const metadata = { title: "Druckansicht" };
 
@@ -26,7 +26,10 @@ export default async function SetlistDruckPage({
         <Link href={`/setlisten/${setlistId}`} className="text-sm text-mute hover:text-ink">
           ← Zurück zur Setliste
         </Link>
-        <PrintButton />
+        <div className="flex items-center gap-3">
+          <PrintViewSwitcher setlistId={setlistId} active="voll" />
+          <PrintButton />
+        </div>
       </div>
 
       {/* Weißes „Blatt" — am Bildschirm Vorschau, beim Druck die Seite selbst */}
