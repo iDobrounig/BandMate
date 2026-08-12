@@ -8,6 +8,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.19.3] — 2026-08-13
+
+### Geändert
+- **Bühnenmodus-Umschalter (Voll/Notenpult) an Druckansicht-Optik angeglichen**: zeigt jetzt
+  wie der „Vollständig/Kompakt"-Umschalter der Druckansicht eine volle Amber-Pille für den
+  aktiven Tab statt der bisherigen transparenten Einfärbung — beide Umschalter wirken jetzt
+  als dieselbe Komponentenfamilie. Touch-Fläche und Layout unverändert.
+
 ## [1.19.2] — 2026-08-12
 
 ### Behoben
