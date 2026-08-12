@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { logout } from "@/lib/actions/auth";
 import { NavLinks } from "@/components/nav-links";
 import { VersionWatcher } from "@/components/version-watcher";
+import { LogoutForm } from "@/components/logout-form";
 import { IconUser, IconLogout, IconHelp, IconTrash } from "@/components/icons";
 
 export default async function AppLayout({
@@ -37,16 +37,13 @@ export default async function AppLayout({
               >
                 <IconUser className="size-5" />
               </Link>
-              <form action={logout}>
-                <button
-                  type="submit"
-                  aria-label="Abmelden"
-                  title="Abmelden"
-                  className="rounded-lg p-2 text-faint transition hover:bg-raise hover:text-ink cursor-pointer"
-                >
-                  <IconLogout className="size-5" />
-                </button>
-              </form>
+              <LogoutForm
+                ariaLabel="Abmelden"
+                title="Abmelden"
+                className="rounded-lg p-2 text-faint transition hover:bg-raise hover:text-ink cursor-pointer"
+              >
+                <IconLogout className="size-5" />
+              </LogoutForm>
             </div>
           </div>
           <div className="w-full min-w-0 sm:flex-1">
@@ -67,15 +64,12 @@ export default async function AppLayout({
             >
               {user.name}
             </Link>
-            <form action={logout}>
-              <button
-                type="submit"
-                className="rounded-lg px-2 py-1.5 text-sm text-faint transition hover:text-ink cursor-pointer"
-                title="Abmelden"
-              >
-                Abmelden
-              </button>
-            </form>
+            <LogoutForm
+              title="Abmelden"
+              className="rounded-lg px-2 py-1.5 text-sm text-faint transition hover:text-ink cursor-pointer"
+            >
+              Abmelden
+            </LogoutForm>
           </div>
         </div>
       </header>
