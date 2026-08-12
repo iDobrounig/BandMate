@@ -17,12 +17,14 @@ export function StageSong({
   onViewChange,
   fontScale,
   onFontChange,
+  onMetronomeFlash,
 }: {
   page: StagePage;
   view: ViewSel;
   onViewChange: (v: ViewSel) => void;
   fontScale: number;
   onFontChange: (delta: number) => void;
+  onMetronomeFlash?: (flash: boolean, accent: boolean) => void;
 }) {
   const { offset, capoFret, capoMode, bumpSemitone, setCapo, reset } = useCapoOffset();
   const [showTools, setShowTools] = useState(false);
@@ -154,7 +156,7 @@ export function StageSong({
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          <StageMetronome initialBpm={page.tempoBpm} />
+          <StageMetronome initialBpm={page.tempoBpm} onFlash={onMetronomeFlash} />
           <button
             type="button"
             className="btn btn-stage ml-auto"

@@ -1,12 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMetronome } from "@/lib/use-metronome";
 
 /** Kompaktes Metronom für die Bühne — auf die Song-BPM vorbelegt. */
-export function StageMetronome({ initialBpm }: { initialBpm: number | null }) {
+export function StageMetronome({
+  initialBpm,
+  onFlash,
+}: {
+  initialBpm: number | null;
+  onFlash?: (flash: boolean, accent: boolean) => void;
+}) {
   const [bpm, setBpm] = useState(initialBpm ?? 120);
-  const { running, beatFlash, start, stop } = useMetronome(bpm);
+  const { running, beatFlash, beatAccent, start, stop } = useMetronome(bpm);
+
+  // Beat-Zustand nach oben melden (für den Bildschirm-Blitz in StageView).
+  useEffect(() => {
+    onFlash?.(beatFlash, beatAccent);
+  }, [beatFlash, beatAccent, onFlash]);
+
+  // Beim Verlassen des Songs (Remount über key={page.id}) sicherstellen, dass ein
+  // gerade laufender Blitz nicht "hängen bleibt".
+  useEffect(() => {
+    return () => onFlash?.(false, false);
+  }, [onFlash]);
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">

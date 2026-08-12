@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 export function useMetronome(bpm: number) {
   const [running, setRunning] = useState(false);
   const [beatFlash, setBeatFlash] = useState(false);
+  const [beatAccent, setBeatAccent] = useState(false);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const nextNoteTimeRef = useRef(0);
@@ -56,6 +57,7 @@ export function useMetronome(bpm: number) {
         );
         setTimeout(() => {
           setBeatFlash(true);
+          setBeatAccent(accent);
           setTimeout(() => setBeatFlash(false), 80);
         }, delay);
         nextNoteTimeRef.current += 60 / bpmRef.current;
@@ -68,5 +70,5 @@ export function useMetronome(bpm: number) {
   // Beim Unmount den Scheduler sauber abräumen.
   useEffect(() => stop, []);
 
-  return { running, beatFlash, start, stop };
+  return { running, beatFlash, beatAccent, start, stop };
 }

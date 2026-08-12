@@ -41,6 +41,12 @@ export function StageView({
   );
   const [fontScale, setFontScale] = useState(1);
   const [density, setDensity] = useState<Density>("full");
+  const [beatFlash, setBeatFlash] = useState(false);
+  const [beatAccent, setBeatAccent] = useState(false);
+  const onMetronomeFlash = useCallback((flash: boolean, accent: boolean) => {
+    setBeatFlash(flash);
+    setBeatAccent(accent);
+  }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const wakeRef = useRef<WakeLockSentinel | null>(null);
 
@@ -214,9 +220,14 @@ export function StageView({
       </div>
 
       {/* Inhalt */}
-      <div className="min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         {density === "minimal" ? (
-          <StageMinimal key={page.id} pages={pages} index={index} />
+          <StageMinimal
+            key={page.id}
+            pages={pages}
+            index={index}
+            onMetronomeFlash={onMetronomeFlash}
+          />
         ) : (
           <>
             {page.kind === "song" && (
@@ -227,6 +238,7 @@ export function StageView({
                 onViewChange={setView}
                 fontScale={fontScale}
                 onFontChange={changeFont}
+                onMetronomeFlash={onMetronomeFlash}
               />
             )}
             {page.kind === "section" && <StageSection key={page.id} label={page.label} />}
@@ -240,6 +252,10 @@ export function StageView({
             )}
           </>
         )}
+        <div
+          className="pointer-events-none absolute inset-0 z-10 bg-accent transition-opacity duration-75"
+          style={{ opacity: beatFlash ? (beatAccent ? 0.45 : 0.22) : 0 }}
+        />
       </div>
     </div>
   );
