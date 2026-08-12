@@ -1,10 +1,14 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
 import {
   fetchSongList,
   fetchSongDetail,
   fetchSetlists,
   fetchEvents,
+  getSetlistPrintData,
 } from "@/lib/queries";
+import { db } from "@/lib/db";
+import { setlists, setlistItems, songs } from "@/lib/db/schema";
 import { anlegen, isoTag } from "./helpers/fixtures";
 
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
@@ -138,5 +142,117 @@ describe("fetchEvents", () => {
     const kommend = await fetchEvents(f.users.anna.id, { limit: 1 });
     expect(kommend).toHaveLength(1);
     expect(kommend[0].date).toBe(isoTag(3)); // das näheste zuerst
+  });
+});
+
+describe("getSetlistPrintData", () => {
+  it("liefert null für eine unbekannte Setliste", async () => {
+    expect(await getSetlistPrintData(999_999)).toBeNull();
+  });
+
+  it("liefert null für eine in den Papierkorb gelegte Setliste", async () => {
+    const [sl] = await db.insert(setlists).values({ name: "Gelöschter Testabend" }).returning();
+    await db.update(setlists).set({ deletedAt: new Date() }).where(eq(setlists.id, sl.id));
+
+    expect(await getSetlistPrintData(sl.id)).toBeNull();
+
+    await db.delete(setlists).where(eq(setlists.id, sl.id));
+  });
+
+  describe("mit Sets, Pausen und Songs", () => {
+    let setlistId: number;
+    let songAId: number;
+    let songBId: number;
+
+    beforeAll(async () => {
+      const [sl] = await db
+        .insert(setlists)
+        .values({ name: "Testabend", targetSeconds: 500 })
+        .returning();
+      setlistId = sl.id;
+
+      const [songA] = await db
+        .insert(songs)
+        .values({
+          title: "Opener",
+          artist: "Testband",
+          status: "repertoire",
+          songKey: "G",
+          capo: 2,
+          tempoBpm: 100,
+          durationSeconds: 200,
+        })
+        .returning();
+      songAId = songA.id;
+      const [songB] = await db
+        .insert(songs)
+        .values({ title: "Rausschmeißer", status: "repertoire", songKey: "D", durationSeconds: 220 })
+        .returning();
+      songBId = songB.id;
+
+      await db.insert(setlistItems).values([
+        { setlistId, kind: "section", label: "Set 1", position: 1 },
+        { setlistId, kind: "song", songId: songAId, position: 2, note: "Intro leise" },
+        { setlistId, kind: "break", breakSeconds: 600, label: "Umbau", position: 3 },
+        { setlistId, kind: "section", label: "Set 2", position: 4 },
+        { setlistId, kind: "song", songId: songBId, position: 5 },
+      ]);
+    });
+
+    afterAll(async () => {
+      await db.delete(setlists).where(eq(setlists.id, setlistId)); // FK cascade räumt setlistItems mit auf
+      await db.delete(songs).where(eq(songs.id, songAId));
+      await db.delete(songs).where(eq(songs.id, songBId));
+    });
+
+    it("fasst Sets, Pausen und Zielzeit-Abgleich zusammen", async () => {
+      const data = await getSetlistPrintData(setlistId);
+      expect(data).not.toBeNull();
+      expect(data!.setlist.name).toBe("Testabend");
+      expect(data!.items.map((i) => i.kind)).toEqual([
+        "section",
+        "song",
+        "break",
+        "section",
+        "song",
+      ]);
+      expect(data!.structure.musicSeconds).toBe(420);
+      expect(data!.structure.breakSeconds).toBe(600);
+      expect(data!.structure.totalSeconds).toBe(1020);
+      expect(data!.cmp).toEqual({ diffSeconds: 520, over: true });
+
+      const set1 = data!.items.find((i) => i.label === "Set 1")!;
+      const set2 = data!.items.find((i) => i.label === "Set 2")!;
+      expect(data!.sectionSummaries.get(set1.id)).toEqual({ songCount: 1, seconds: 200 });
+      expect(data!.sectionSummaries.get(set2.id)).toEqual({ songCount: 1, seconds: 220 });
+
+      // Verifiziere Song-Feld-Mapping: songA mit allen Feldern
+      const itemA = data!.items.find((i) => i.kind === "song" && i.note === "Intro leise")!;
+      expect(itemA.title).toBe("Opener");
+      expect(itemA.artist).toBe("Testband");
+      expect(itemA.songKey).toBe("G");
+      expect(itemA.capo).toBe(2);
+      expect(itemA.tempoBpm).toBe(100);
+      expect(itemA.durationSeconds).toBe(200);
+
+      // Verifiziere Song-Feld-Mapping: songB
+      const itemB = data!.items.find((i) => i.kind === "song" && i.title === "Rausschmeißer")!;
+      expect(itemB.artist).toBeNull();
+      expect(itemB.songKey).toBe("D");
+      expect(itemB.capo).toBeNull();
+      expect(itemB.tempoBpm).toBeNull();
+      expect(itemB.note).toBeNull();
+      expect(itemB.durationSeconds).toBe(220);
+    });
+
+    it("blendet einen in den Papierkorb gelegten Song aus, behält Sets und Pausen", async () => {
+      await db.update(songs).set({ deletedAt: new Date() }).where(eq(songs.id, songAId));
+
+      const data = await getSetlistPrintData(setlistId);
+      expect(data).not.toBeNull();
+      expect(data!.items.map((i) => i.kind)).toEqual(["section", "break", "section", "song"]);
+
+      await db.update(songs).set({ deletedAt: null }).where(eq(songs.id, songAId));
+    });
   });
 });

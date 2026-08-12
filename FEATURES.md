@@ -23,7 +23,7 @@ Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 - [x] Beliebig viele Setlisten (Name, Datum, Notizen), **duplizierbar** als Basis fürs nächste Programm
 - [x] Songs aus Repertoire/In-Probe hinzufügen, **Drag-&-Drop-Reihenfolge**
 - [x] Notiz pro Song (z.B. „Pause danach"), Gesamtdauer
-- [x] **Druck-/PDF-Ansicht** (weißes Blatt, Tonart/Capo/Tempo/Dauer)
+- [x] **Druck-/PDF-Ansicht**, wahlweise vollständig (Tonart/Capo/Tempo/Dauer) oder kompakt (nur Tonart/Tempo, mehr Songs pro Seite)
 
 ### Termine
 - [x] **Proben & Gigs** (farblich unterschieden), Datum/Uhrzeit/Ort/Notizen

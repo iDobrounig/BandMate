@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useTransition } from "react";
 import {
   createSetlist,
@@ -110,5 +111,35 @@ export function PrintButton() {
     <button type="button" className="btn" onClick={() => window.print()}>
       <IconPrint className="size-4" /> Drucken / PDF
     </button>
+  );
+}
+
+export function PrintViewSwitcher({
+  setlistId,
+  active,
+}: {
+  setlistId: number;
+  active: "voll" | "kompakt";
+}) {
+  const tabs = [
+    { key: "voll" as const, label: "Vollständig", href: `/setlisten/${setlistId}/druck` },
+    { key: "kompakt" as const, label: "Kompakt", href: `/setlisten/${setlistId}/druck-kompakt` },
+  ];
+  return (
+    <div className="inline-flex rounded-full border border-line bg-raise p-0.5 text-sm">
+      {tabs.map((tab) => (
+        <Link
+          key={tab.key}
+          href={tab.href}
+          className={
+            tab.key === active
+              ? "rounded-full bg-accent px-3 py-1 font-semibold text-[#1a1508]"
+              : "rounded-full px-3 py-1 text-mute transition hover:text-ink"
+          }
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </div>
   );
 }
