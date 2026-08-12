@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { setlists, setlistItems, songs } from "@/lib/db/schema";
-import { songAktiv, setlistAktiv } from "@/lib/db/filters";
+import { getSetlistPrintData } from "@/lib/queries";
 import { formatDate, formatDuration } from "@/lib/format";
-import { summarizeSetlist, compareTarget } from "@/lib/setlist-structure";
 import { PrintButton } from "@/components/setlist-forms";
 
 export const metadata = { title: "Druckansicht" };
@@ -20,61 +16,9 @@ export default async function SetlistDruckPage({
   const { id } = await params;
   const setlistId = Number(id);
 
-  const setlist = await db.query.setlists.findFirst({
-    where: and(eq(setlists.id, setlistId), setlistAktiv),
-  });
-  if (!setlist) notFound();
-
-  const items = await db
-    .select({
-      id: setlistItems.id,
-      kind: setlistItems.kind,
-      label: setlistItems.label,
-      breakSeconds: setlistItems.breakSeconds,
-      note: setlistItems.note,
-      title: songs.title,
-      artist: songs.artist,
-      songKey: songs.songKey,
-      capo: songs.capo,
-      tempoBpm: songs.tempoBpm,
-      durationSeconds: songs.durationSeconds,
-    })
-    .from(setlistItems)
-    .leftJoin(songs, eq(setlistItems.songId, songs.id))
-    .where(and(eq(setlistItems.setlistId, setlistId), songAktiv))
-    .orderBy(asc(setlistItems.position));
-
-  const structure = summarizeSetlist(
-    items.map((i) => ({
-      kind: i.kind,
-      label: i.label,
-      durationSeconds: i.durationSeconds,
-      breakSeconds: i.breakSeconds,
-    }))
-  );
-  const cmp = compareTarget(structure.totalSeconds, setlist.targetSeconds);
-
-  const sectionSummaries = new Map<number, { songCount: number; seconds: number }>();
-  {
-    let songCount = 0;
-    let seconds = 0;
-    let curId: number | null = null;
-    const flush = () => {
-      if (curId != null) sectionSummaries.set(curId, { songCount, seconds });
-    };
-    for (const it of items) {
-      if (it.kind === "section") {
-        flush();
-        curId = it.id;
-        songCount = 0;
-        seconds = 0;
-      } else if (it.kind === "song") {
-        songCount += 1;
-        seconds += it.durationSeconds ?? 0;
-      }
-    }
-    flush();
-  }
+  const data = await getSetlistPrintData(setlistId);
+  if (!data) notFound();
+  const { setlist, items, structure, cmp, sectionSummaries } = data;
 
   return (
     <div>

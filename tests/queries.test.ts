@@ -4,7 +4,10 @@ import {
   fetchSongDetail,
   fetchSetlists,
   fetchEvents,
+  getSetlistPrintData,
 } from "@/lib/queries";
+import { db } from "@/lib/db";
+import { setlists, setlistItems, songs } from "@/lib/db/schema";
 import { anlegen, isoTag } from "./helpers/fixtures";
 
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
@@ -138,5 +141,57 @@ describe("fetchEvents", () => {
     const kommend = await fetchEvents(f.users.anna.id, { limit: 1 });
     expect(kommend).toHaveLength(1);
     expect(kommend[0].date).toBe(isoTag(3)); // das näheste zuerst
+  });
+});
+
+describe("getSetlistPrintData", () => {
+  it("liefert null für eine unbekannte Setliste", async () => {
+    expect(await getSetlistPrintData(999_999)).toBeNull();
+  });
+
+  it("fasst Sets, Pausen und Zielzeit-Abgleich zusammen", async () => {
+    const [sl] = await db
+      .insert(setlists)
+      .values({ name: "Testabend", targetSeconds: 500 })
+      .returning();
+
+    const [songA] = await db
+      .insert(songs)
+      .values({
+        title: "Opener",
+        artist: "Testband",
+        status: "repertoire",
+        songKey: "G",
+        capo: 2,
+        tempoBpm: 100,
+        durationSeconds: 200,
+      })
+      .returning();
+    const [songB] = await db
+      .insert(songs)
+      .values({ title: "Rausschmeißer", status: "repertoire", songKey: "D", durationSeconds: 220 })
+      .returning();
+
+    await db.insert(setlistItems).values([
+      { setlistId: sl.id, kind: "section", label: "Set 1", position: 1 },
+      { setlistId: sl.id, kind: "song", songId: songA.id, position: 2, note: "Intro leise" },
+      { setlistId: sl.id, kind: "break", breakSeconds: 600, label: "Umbau", position: 3 },
+      { setlistId: sl.id, kind: "section", label: "Set 2", position: 4 },
+      { setlistId: sl.id, kind: "song", songId: songB.id, position: 5 },
+    ]);
+
+    const data = await getSetlistPrintData(sl.id);
+    expect(data).not.toBeNull();
+    expect(data!.setlist.name).toBe("Testabend");
+    expect(data!.items.map((i) => i.kind)).toEqual(["section", "song", "break", "section", "song"]);
+    expect(data!.structure.musicSeconds).toBe(420);
+    expect(data!.structure.breakSeconds).toBe(600);
+    expect(data!.structure.totalSeconds).toBe(1020);
+    expect(data!.cmp).toEqual({ diffSeconds: 520, over: true });
+
+    const set1 = data!.items.find((i) => i.label === "Set 1")!;
+    const set2 = data!.items.find((i) => i.label === "Set 2")!;
+    expect(data!.sectionSummaries.get(set1.id)).toEqual({ songCount: 1, seconds: 200 });
+    expect(data!.sectionSummaries.get(set2.id)).toEqual({ songCount: 1, seconds: 220 });
   });
 });

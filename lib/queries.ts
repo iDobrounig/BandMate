@@ -24,6 +24,7 @@ import {
   anhangAktiv,
 } from "@/lib/db/filters";
 import { attendancePercentage } from "@/lib/attendance";
+import { summarizeSetlist, compareTarget, type SetlistStructure } from "@/lib/setlist-structure";
 
 export type SongListItem = Song & {
   upvotes: number;
@@ -173,6 +174,89 @@ export async function fetchSetlists(): Promise<SetlistListItem[]> {
     songCount: r.songCount,
     totalSeconds: r.totalSeconds,
   }));
+}
+
+export type SetlistPrintItem = {
+  id: number;
+  kind: "song" | "section" | "break";
+  label: string | null;
+  breakSeconds: number | null;
+  note: string | null;
+  title: string | null;
+  artist: string | null;
+  songKey: string | null;
+  capo: number | null;
+  tempoBpm: number | null;
+  durationSeconds: number | null;
+};
+
+export type SetlistPrintData = {
+  setlist: Setlist;
+  items: SetlistPrintItem[];
+  structure: SetlistStructure;
+  cmp: { diffSeconds: number; over: boolean } | null;
+  sectionSummaries: Map<number, { songCount: number; seconds: number }>;
+};
+
+/** Daten für beide Druckansichten (voll & kompakt) einer Setliste. null, wenn unbekannt/gelöscht. */
+export async function getSetlistPrintData(setlistId: number): Promise<SetlistPrintData | null> {
+  const setlist = await db.query.setlists.findFirst({
+    where: and(eq(setlists.id, setlistId), setlistAktiv),
+  });
+  if (!setlist) return null;
+
+  const items = await db
+    .select({
+      id: setlistItems.id,
+      kind: setlistItems.kind,
+      label: setlistItems.label,
+      breakSeconds: setlistItems.breakSeconds,
+      note: setlistItems.note,
+      title: songs.title,
+      artist: songs.artist,
+      songKey: songs.songKey,
+      capo: songs.capo,
+      tempoBpm: songs.tempoBpm,
+      durationSeconds: songs.durationSeconds,
+    })
+    .from(setlistItems)
+    .leftJoin(songs, eq(setlistItems.songId, songs.id))
+    .where(and(eq(setlistItems.setlistId, setlistId), songAktiv))
+    .orderBy(asc(setlistItems.position));
+
+  const structure = summarizeSetlist(
+    items.map((i) => ({
+      kind: i.kind,
+      label: i.label,
+      durationSeconds: i.durationSeconds,
+      breakSeconds: i.breakSeconds,
+    }))
+  );
+  const cmp = compareTarget(structure.totalSeconds, setlist.targetSeconds);
+
+  const sectionSummaries = new Map<number, { songCount: number; seconds: number }>();
+  {
+    let songCount = 0;
+    let seconds = 0;
+    let curId: number | null = null;
+    const flush = () => {
+      if (curId != null) sectionSummaries.set(curId, { songCount, seconds });
+    };
+    for (const it of items) {
+      if (it.kind === "section") {
+        flush();
+        curId = it.id;
+        songCount = 0;
+        seconds = 0;
+      } else if (it.kind === "song") {
+        songCount += 1;
+        seconds += it.durationSeconds ?? 0;
+      }
+    }
+    flush();
+  }
+
+  return { setlist, items, structure, cmp, sectionSummaries };
 }
 
 export type EventListItem = BandEvent & {
