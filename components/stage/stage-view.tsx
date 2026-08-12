@@ -183,10 +183,10 @@ export function StageView({
         </button>
         <span className="hidden truncate text-mute sm:block">{setlistName}</span>
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
-          <div className="flex items-center rounded-md border border-line p-0.5">
+          <div className="flex items-center rounded-full border border-line bg-raise p-0.5">
             <button
               type="button"
-              className={`btn btn-stage border-0 px-2 sm:px-4 ${density === "full" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
+              className={`btn btn-stage border-0 rounded-full px-2 sm:px-4 ${density === "full" ? "bg-accent font-semibold text-[#1a1508]" : "bg-transparent text-mute hover:text-ink"}`}
               onClick={() => changeDensity("full")}
               aria-label="Vollständig"
             >
@@ -195,7 +195,7 @@ export function StageView({
             </button>
             <button
               type="button"
-              className={`btn btn-stage border-0 px-2 sm:px-4 ${density === "minimal" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
+              className={`btn btn-stage border-0 rounded-full px-2 sm:px-4 ${density === "minimal" ? "bg-accent font-semibold text-[#1a1508]" : "bg-transparent text-mute hover:text-ink"}`}
               onClick={() => changeDensity("minimal")}
               aria-label="Notenpult"
             >
