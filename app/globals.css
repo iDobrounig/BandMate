@@ -63,6 +63,11 @@ body {
   .btn-sm {
     @apply px-2.5 py-1 text-xs rounded-md;
   }
+  /* Touch-taugliche Variante für den Bühnenmodus (Smartphone am Notenständer) —
+     mindestens 44×44px Zielfläche, größere Schrift/Icons als .btn-sm. */
+  .btn-stage {
+    @apply min-h-11 min-w-11 px-4 py-2.5 text-base rounded-lg;
+  }
   /* Zerstörende Aktionen müssen auch OHNE Hover erkennbar sein — am Handy
      (Hauptgerät) gibt es keinen Hover-Zustand. */
   .btn-danger {

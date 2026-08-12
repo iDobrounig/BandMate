@@ -9,18 +9,18 @@ export function StageMetronome({ initialBpm }: { initialBpm: number | null }) {
   const { running, beatFlash, start, stop } = useMetronome(bpm);
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1.5">
       <button
         type="button"
         onClick={running ? stop : start}
-        className={`btn btn-sm ${running ? "border-accent bg-accent/20 text-accent-hi" : "btn-primary"}`}
+        className={`btn btn-stage ${running ? "border-accent bg-accent/20 text-accent-hi" : "btn-primary"}`}
       >
         {running ? "■" : "▶"}
       </button>
-      <button type="button" className="btn btn-sm" onClick={() => setBpm((b) => Math.max(20, b - 5))}>
+      <button type="button" className="btn btn-stage" onClick={() => setBpm((b) => Math.max(20, b - 5))}>
         −5
       </button>
-      <button type="button" className="btn btn-sm" onClick={() => setBpm((b) => Math.max(20, b - 1))}>
+      <button type="button" className="btn btn-stage" onClick={() => setBpm((b) => Math.max(20, b - 1))}>
         −1
       </button>
       <span
@@ -31,14 +31,14 @@ export function StageMetronome({ initialBpm }: { initialBpm: number | null }) {
         {bpm}
         <span className="ml-0.5 text-xs text-mute">BPM</span>
       </span>
-      <button type="button" className="btn btn-sm" onClick={() => setBpm((b) => Math.min(300, b + 1))}>
+      <button type="button" className="btn btn-stage" onClick={() => setBpm((b) => Math.min(300, b + 1))}>
         +1
       </button>
-      <button type="button" className="btn btn-sm" onClick={() => setBpm((b) => Math.min(300, b + 5))}>
+      <button type="button" className="btn btn-stage" onClick={() => setBpm((b) => Math.min(300, b + 5))}>
         +5
       </button>
       {initialBpm != null && bpm !== initialBpm && (
-        <button type="button" className="btn btn-sm" onClick={() => setBpm(initialBpm)} title="Song-Tempo">
+        <button type="button" className="btn btn-stage" onClick={() => setBpm(initialBpm)} title="Song-Tempo">
           ↺
         </button>
       )}
