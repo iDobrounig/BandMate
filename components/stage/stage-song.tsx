@@ -17,12 +17,14 @@ export function StageSong({
   onViewChange,
   fontScale,
   onFontChange,
+  onMetronomeFlash,
 }: {
   page: StagePage;
   view: ViewSel;
   onViewChange: (v: ViewSel) => void;
   fontScale: number;
   onFontChange: (delta: number) => void;
+  onMetronomeFlash?: (flash: boolean, accent: boolean) => void;
 }) {
   const { offset, capoFret, capoMode, bumpSemitone, setCapo, reset } = useCapoOffset();
   const [showTools, setShowTools] = useState(false);
@@ -136,7 +138,7 @@ export function StageSong({
                 <button
                   key={label}
                   type="button"
-                  className={`btn btn-sm ${active ? "border-accent bg-accent/20 text-accent-hi" : ""}`}
+                  className={`btn btn-stage ${active ? "border-accent bg-accent/20 text-accent-hi" : ""}`}
                   onClick={() => onViewChange({ kind: "instrument", instrument: raw })}
                 >
                   {label}
@@ -145,7 +147,7 @@ export function StageSong({
             })}
             <button
               type="button"
-              className={`btn btn-sm ${!showSheet ? "border-accent bg-accent/20 text-accent-hi" : ""}`}
+              className={`btn btn-stage ${!showSheet ? "border-accent bg-accent/20 text-accent-hi" : ""}`}
               onClick={() => onViewChange({ kind: "lyrics" })}
             >
               Lyrics/Akkorde
@@ -154,10 +156,10 @@ export function StageSong({
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          <StageMetronome initialBpm={page.tempoBpm} />
+          <StageMetronome initialBpm={page.tempoBpm} onFlash={onMetronomeFlash} />
           <button
             type="button"
-            className="btn btn-sm ml-auto"
+            className="btn btn-stage ml-auto"
             onClick={() => setShowTools((v) => !v)}
           >
             {showTools ? "▾ Werkzeuge" : "▸ Werkzeuge"}
@@ -168,10 +170,10 @@ export function StageSong({
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1">
               <span className="label mb-0 text-xs">Schrift</span>
-              <button type="button" className="btn btn-sm" onClick={() => onFontChange(-0.1)}>
+              <button type="button" className="btn btn-stage" onClick={() => onFontChange(-0.1)}>
                 A−
               </button>
-              <button type="button" className="btn btn-sm" onClick={() => onFontChange(0.1)}>
+              <button type="button" className="btn btn-stage" onClick={() => onFontChange(0.1)}>
                 A+
               </button>
             </div>
@@ -180,7 +182,7 @@ export function StageSong({
                 <span className="label mb-0 text-xs">Transponieren</span>
                 <button
                   type="button"
-                  className="btn btn-sm"
+                  className="btn btn-stage"
                   onClick={() => bumpSemitone(-1)}
                 >
                   − ½
@@ -194,14 +196,14 @@ export function StageSong({
                 </span>
                 <button
                   type="button"
-                  className="btn btn-sm"
+                  className="btn btn-stage"
                   onClick={() => bumpSemitone(1)}
                 >
                   + ½
                 </button>
-                <CapoSelect compact capoFret={capoFret} onChange={setCapo} />
+                <CapoSelect capoFret={capoFret} onChange={setCapo} />
                 {offset !== 0 && (
-                  <button type="button" className="btn btn-sm" onClick={reset}>
+                  <button type="button" className="btn btn-stage" onClick={reset}>
                     ↺
                   </button>
                 )}

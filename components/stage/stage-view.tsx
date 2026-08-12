@@ -41,6 +41,12 @@ export function StageView({
   );
   const [fontScale, setFontScale] = useState(1);
   const [density, setDensity] = useState<Density>("full");
+  const [beatFlash, setBeatFlash] = useState(false);
+  const [beatAccent, setBeatAccent] = useState(false);
+  const onMetronomeFlash = useCallback((flash: boolean, accent: boolean) => {
+    setBeatFlash(flash);
+    setBeatAccent(accent);
+  }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const wakeRef = useRef<WakeLockSentinel | null>(null);
 
@@ -153,10 +159,10 @@ export function StageView({
       onTouchEnd={onTouchEnd}
     >
       {/* Kopfzeile */}
-      <div className="stage-px stage-pt flex items-center gap-2 border-b border-line pb-2 text-sm">
+      <div className="stage-px stage-pt flex items-center gap-2 overflow-x-auto border-b border-line pb-2 text-sm">
         <button
           type="button"
-          className="btn btn-sm shrink-0"
+          className="btn btn-stage shrink-0"
           onClick={() => go(-1)}
           disabled={index === 0}
           aria-label="Zurück"
@@ -168,7 +174,7 @@ export function StageView({
         </span>
         <button
           type="button"
-          className="btn btn-sm shrink-0"
+          className="btn btn-stage shrink-0"
           onClick={() => go(1)}
           disabled={index === count - 1}
           aria-label="Weiter"
@@ -180,14 +186,14 @@ export function StageView({
           <div className="flex items-center rounded-md border border-line p-0.5">
             <button
               type="button"
-              className={`btn btn-sm border-0 ${density === "full" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
+              className={`btn btn-stage border-0 ${density === "full" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
               onClick={() => changeDensity("full")}
             >
               Voll
             </button>
             <button
               type="button"
-              className={`btn btn-sm border-0 ${density === "minimal" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
+              className={`btn btn-stage border-0 ${density === "minimal" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
               onClick={() => changeDensity("minimal")}
             >
               Notenpult
@@ -195,28 +201,33 @@ export function StageView({
           </div>
           <button
             type="button"
-            className="btn btn-sm"
+            className="btn btn-stage"
             onClick={toggleFullscreen}
             title="Vollbild"
           >
-            <IconExpand className="size-4" />
+            <IconExpand className="size-5" />
           </button>
           <button
             type="button"
-            className="btn btn-sm"
+            className="btn btn-stage"
             onClick={exit}
             aria-label="Beenden"
           >
-            <IconClose className="size-4" />
+            <IconClose className="size-5" />
             <span className="hidden sm:inline">Beenden</span>
           </button>
         </div>
       </div>
 
       {/* Inhalt */}
-      <div className="min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         {density === "minimal" ? (
-          <StageMinimal key={page.id} pages={pages} index={index} />
+          <StageMinimal
+            key={page.id}
+            pages={pages}
+            index={index}
+            onMetronomeFlash={onMetronomeFlash}
+          />
         ) : (
           <>
             {page.kind === "song" && (
@@ -227,6 +238,7 @@ export function StageView({
                 onViewChange={setView}
                 fontScale={fontScale}
                 onFontChange={changeFont}
+                onMetronomeFlash={onMetronomeFlash}
               />
             )}
             {page.kind === "section" && <StageSection key={page.id} label={page.label} />}
@@ -240,6 +252,10 @@ export function StageView({
             )}
           </>
         )}
+        <div
+          className="pointer-events-none absolute inset-0 z-10 bg-accent transition-opacity duration-75 motion-reduce:hidden"
+          style={{ opacity: beatFlash ? (beatAccent ? 0.45 : 0.22) : 0 }}
+        />
       </div>
     </div>
   );

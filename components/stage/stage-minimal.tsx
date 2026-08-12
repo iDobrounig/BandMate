@@ -11,9 +11,11 @@ import { upcomingItems, describeUpcoming } from "@/lib/stage";
 export function StageMinimal({
   pages,
   index,
+  onMetronomeFlash,
 }: {
   pages: StagePage[];
   index: number;
+  onMetronomeFlash?: (flash: boolean, accent: boolean) => void;
 }) {
   const current = pages[index];
   const upcoming = upcomingItems(pages, index, 2);
@@ -41,7 +43,7 @@ export function StageMinimal({
             </p>
             {current.note && <p className="text-lg text-accent-hi">» {current.note}</p>}
             <div className="mt-2">
-              <StageMetronome initialBpm={current.tempoBpm} />
+              <StageMetronome initialBpm={current.tempoBpm} onFlash={onMetronomeFlash} />
             </div>
           </>
         )}
