@@ -193,5 +193,23 @@ describe("getSetlistPrintData", () => {
     const set2 = data!.items.find((i) => i.label === "Set 2")!;
     expect(data!.sectionSummaries.get(set1.id)).toEqual({ songCount: 1, seconds: 200 });
     expect(data!.sectionSummaries.get(set2.id)).toEqual({ songCount: 1, seconds: 220 });
+
+    // Verifiziere Song-Feld-Mapping: songA mit allen Feldern
+    const itemA = data!.items.find((i) => i.kind === "song" && i.note === "Intro leise")!;
+    expect(itemA.title).toBe("Opener");
+    expect(itemA.artist).toBe("Testband");
+    expect(itemA.songKey).toBe("G");
+    expect(itemA.capo).toBe(2);
+    expect(itemA.tempoBpm).toBe(100);
+    expect(itemA.durationSeconds).toBe(200);
+
+    // Verifiziere Song-Feld-Mapping: songB
+    const itemB = data!.items.find((i) => i.kind === "song" && i.title === "Rausschmeißer")!;
+    expect(itemB.artist).toBeNull();
+    expect(itemB.songKey).toBe("D");
+    expect(itemB.capo).toBeNull();
+    expect(itemB.tempoBpm).toBeNull();
+    expect(itemB.note).toBeNull();
+    expect(itemB.durationSeconds).toBe(220);
   });
 });
