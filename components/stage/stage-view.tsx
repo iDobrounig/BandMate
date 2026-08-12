@@ -156,7 +156,7 @@ export function StageView({
       <div className="stage-px stage-pt flex items-center gap-2 border-b border-line pb-2 text-sm">
         <button
           type="button"
-          className="btn btn-sm shrink-0"
+          className="btn btn-stage shrink-0"
           onClick={() => go(-1)}
           disabled={index === 0}
           aria-label="Zurück"
@@ -168,7 +168,7 @@ export function StageView({
         </span>
         <button
           type="button"
-          className="btn btn-sm shrink-0"
+          className="btn btn-stage shrink-0"
           onClick={() => go(1)}
           disabled={index === count - 1}
           aria-label="Weiter"
@@ -180,14 +180,14 @@ export function StageView({
           <div className="flex items-center rounded-md border border-line p-0.5">
             <button
               type="button"
-              className={`btn btn-sm border-0 ${density === "full" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
+              className={`btn btn-stage border-0 ${density === "full" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
               onClick={() => changeDensity("full")}
             >
               Voll
             </button>
             <button
               type="button"
-              className={`btn btn-sm border-0 ${density === "minimal" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
+              className={`btn btn-stage border-0 ${density === "minimal" ? "bg-accent/20 text-accent-hi" : "text-mute"}`}
               onClick={() => changeDensity("minimal")}
             >
               Notenpult
@@ -195,19 +195,19 @@ export function StageView({
           </div>
           <button
             type="button"
-            className="btn btn-sm"
+            className="btn btn-stage"
             onClick={toggleFullscreen}
             title="Vollbild"
           >
-            <IconExpand className="size-4" />
+            <IconExpand className="size-5" />
           </button>
           <button
             type="button"
-            className="btn btn-sm"
+            className="btn btn-stage"
             onClick={exit}
             aria-label="Beenden"
           >
-            <IconClose className="size-4" />
+            <IconClose className="size-5" />
             <span className="hidden sm:inline">Beenden</span>
           </button>
         </div>
