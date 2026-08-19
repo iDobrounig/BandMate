@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import fs from "node:fs";
 import { db, uploadsDir } from "@/lib/db";
-import { songs, events, attachments, setlists } from "@/lib/db/schema";
+import { songs, events, attachments, setlists, equipment, equipmentAttachments } from "@/lib/db/schema";
 import {
   fetchTrash,
   fetchTrashLabel,
@@ -24,6 +24,9 @@ beforeEach(async () => {
 
 const loeschen = (id: number, wann = new Date()) =>
   db.update(songs).set({ deletedAt: wann, deletedById: f.users.anna.id }).where(eq(songs.id, id));
+
+const loeschenEquipment = (id: number, wann = new Date()) =>
+  db.update(equipment).set({ deletedAt: wann, deletedById: f.users.anna.id }).where(eq(equipment.id, id));
 
 /** Zeitpunkt, der garantiert außerhalb der Aufbewahrungsfrist liegt. */
 const langeHer = () =>
@@ -143,6 +146,51 @@ describe("Terminserien im Papierkorb", () => {
   });
 });
 
+describe("Equipment im Papierkorb", () => {
+  it("erscheint im Papierkorb und lässt sich wiederherstellen", async () => {
+    await loeschenEquipment(f.equipment.verstaerker.id);
+    const liste = await fetchTrash();
+    const eintrag = liste.find((e) => e.kind === "equipment")!;
+    expect(eintrag.label).toBe("Marshall JCM800");
+
+    const n = await restore("equipment", f.equipment.verstaerker.id);
+    expect(n).toBe(1);
+    expect((await fetchTrash()).some((e) => e.kind === "equipment")).toBe(false);
+  });
+
+  it("löscht beim endgültigen Entfernen auch die zugehörigen Dateien", async () => {
+    await loeschenEquipment(f.equipment.verstaerker.id);
+    const dir = `${uploadsDir}/equipment/${f.equipment.verstaerker.id}`;
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(`${dir}/amp.jpg`, "x");
+
+    const n = await purge("equipment", f.equipment.verstaerker.id);
+    expect(n).toBe(1);
+    expect(fs.existsSync(`${dir}/amp.jpg`)).toBe(false);
+  });
+});
+
+describe("Equipment-Anhänge im Papierkorb", () => {
+  it("erscheint mit Bezug zum Gerät und lässt sich wiederherstellen", async () => {
+    const [datei] = await db
+      .select()
+      .from(equipmentAttachments)
+      .where(eq(equipmentAttachments.equipmentId, f.equipment.verstaerker.id))
+      .limit(1);
+    await db
+      .update(equipmentAttachments)
+      .set({ deletedAt: new Date(), deletedById: f.users.anna.id })
+      .where(eq(equipmentAttachments.id, datei.id));
+
+    const liste = await fetchTrash();
+    const eintrag = liste.find((e) => e.kind === "equipmentAttachment")!;
+    expect(eintrag.sublabel).toContain("Marshall JCM800");
+
+    const n = await restore("equipmentAttachment", datei.id);
+    expect(n).toBe(1);
+  });
+});
+
 describe("wiederherstellen", () => {
   it("bringt den Song zurück in die Liste", async () => {
     await loeschen(f.songs.vorschlag.id);
@@ -230,6 +278,16 @@ describe("automatisches Aufräumen", () => {
     expect(bericht.event).toBe(2);
     const rest = await db.select().from(events).where(eq(events.seriesId, "serie-alt"));
     expect(rest).toHaveLength(0);
+  });
+
+  it("räumt ein abgelaufenes Equipment mitsamt Anhängen weg", async () => {
+    await loeschenEquipment(f.equipment.verstaerker.id, langeHer());
+
+    const bericht = await purgeExpired();
+    expect(bericht.equipment).toBe(1);
+
+    const liste = await fetchTrash();
+    expect(liste.some((e) => e.kind === "equipment")).toBe(false);
   });
 });
 

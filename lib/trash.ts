@@ -1,7 +1,7 @@
 import { and, desc, eq, isNotNull, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { songs, setlists, events, attachments, users } from "@/lib/db/schema";
-import { deleteStoredFile } from "@/lib/files";
+import { songs, setlists, events, attachments, users, equipment, equipmentAttachments } from "@/lib/db/schema";
+import { deleteStoredFile, deleteStoredEquipmentFile } from "@/lib/files";
 import { TRASH_RETENTION_DAYS } from "@/lib/constants";
 
 /**
@@ -13,13 +13,15 @@ import { TRASH_RETENTION_DAYS } from "@/lib/constants";
  * auch aus dem Cron-Script (scripts/purge-trash.ts) nutzbar ist.
  */
 
-export type TrashKind = "song" | "setlist" | "event" | "attachment";
+export type TrashKind = "song" | "setlist" | "event" | "attachment" | "equipment" | "equipmentAttachment";
 
 export const TRASH_LABEL: Record<TrashKind, string> = {
   song: "Song",
   setlist: "Setliste",
   event: "Termin",
   attachment: "Datei",
+  equipment: "Equipment",
+  equipmentAttachment: "Equipment-Datei",
 };
 
 export type TrashEntry = {
@@ -36,7 +38,7 @@ export type TrashEntry = {
   restTage: number;
 };
 
-const KINDS: TrashKind[] = ["song", "setlist", "event", "attachment"];
+const KINDS: TrashKind[] = ["song", "setlist", "event", "attachment", "equipment", "equipmentAttachment"];
 
 /**
  * Zerlegt den `?undo=song:42`-Parameter. Liefert null bei allem, was nicht
@@ -65,7 +67,7 @@ function restTage(deletedAt: Date): number {
 
 /** Alle Einträge im Papierkorb, neueste zuerst. */
 export async function fetchTrash(): Promise<TrashEntry[]> {
-  const [songRows, setlistRows, eventRows, attachmentRows] = await Promise.all([
+  const [songRows, setlistRows, eventRows, attachmentRows, equipmentRows, equipmentAttachmentRows] = await Promise.all([
     db
       .select({ id: songs.id, title: songs.title, artist: songs.artist, deletedAt: songs.deletedAt, byName: users.name })
       .from(songs)
@@ -88,6 +90,23 @@ export async function fetchTrash(): Promise<TrashEntry[]> {
       .innerJoin(songs, eq(attachments.songId, songs.id))
       .leftJoin(users, eq(attachments.deletedById, users.id))
       .where(isNotNull(attachments.deletedAt)),
+    db
+      .select({ id: equipment.id, name: equipment.name, deletedAt: equipment.deletedAt, byName: users.name })
+      .from(equipment)
+      .leftJoin(users, eq(equipment.deletedById, users.id))
+      .where(isNotNull(equipment.deletedAt)),
+    db
+      .select({
+        id: equipmentAttachments.id,
+        name: equipmentAttachments.originalName,
+        equipmentName: equipment.name,
+        deletedAt: equipmentAttachments.deletedAt,
+        byName: users.name,
+      })
+      .from(equipmentAttachments)
+      .innerJoin(equipment, eq(equipmentAttachments.equipmentId, equipment.id))
+      .leftJoin(users, eq(equipmentAttachments.deletedById, users.id))
+      .where(isNotNull(equipmentAttachments.deletedAt)),
   ]);
 
   const eintraege: TrashEntry[] = [];
@@ -138,6 +157,20 @@ export async function fetchTrash(): Promise<TrashEntry[]> {
     });
   }
 
+  for (const r of equipmentRows) {
+    eintraege.push({
+      kind: "equipment", id: r.id, label: r.name, sublabel: null,
+      deletedAt: r.deletedAt!, deletedByName: r.byName, count: 1, restTage: restTage(r.deletedAt!),
+    });
+  }
+
+  for (const r of equipmentAttachmentRows) {
+    eintraege.push({
+      kind: "equipmentAttachment", id: r.id, label: r.name, sublabel: `zu „${r.equipmentName}"`,
+      deletedAt: r.deletedAt!, deletedByName: r.byName, count: 1, restTage: restTage(r.deletedAt!),
+    });
+  }
+
   return eintraege.sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime());
 }
 
@@ -154,6 +187,14 @@ export async function fetchTrashLabel(kind: TrashKind, id: number): Promise<stri
   if (kind === "event") {
     const r = await db.query.events.findFirst({ where: eq(events.id, id), columns: { title: true, deletedAt: true } });
     return r?.deletedAt ? r.title : null;
+  }
+  if (kind === "equipment") {
+    const r = await db.query.equipment.findFirst({ where: eq(equipment.id, id), columns: { name: true, deletedAt: true } });
+    return r?.deletedAt ? r.name : null;
+  }
+  if (kind === "equipmentAttachment") {
+    const r = await db.query.equipmentAttachments.findFirst({ where: eq(equipmentAttachments.id, id), columns: { originalName: true, deletedAt: true } });
+    return r?.deletedAt ? r.originalName : null;
   }
   const r = await db.query.attachments.findFirst({ where: eq(attachments.id, id), columns: { originalName: true, deletedAt: true } });
   return r?.deletedAt ? r.originalName : null;
@@ -195,6 +236,14 @@ export async function restore(kind: TrashKind, id: number): Promise<number> {
     }
     return n;
   }
+  if (kind === "equipment") {
+    const r = await db.update(equipment).set(zurueck).where(and(eq(equipment.id, id), isNotNull(equipment.deletedAt))).returning({ id: equipment.id });
+    return r.length;
+  }
+  if (kind === "equipmentAttachment") {
+    const r = await db.update(equipmentAttachments).set(zurueck).where(and(eq(equipmentAttachments.id, id), isNotNull(equipmentAttachments.deletedAt))).returning({ id: equipmentAttachments.id });
+    return r.length;
+  }
   const r = await db.update(attachments).set(zurueck).where(and(eq(attachments.id, id), isNotNull(attachments.deletedAt))).returning({ id: attachments.id });
   return r.length;
 }
@@ -227,6 +276,21 @@ export async function purge(kind: TrashKind, id: number): Promise<number> {
     }
     return n;
   }
+  if (kind === "equipment") {
+    const item = await db.query.equipment.findFirst({ where: and(eq(equipment.id, id), isNotNull(equipment.deletedAt)) });
+    if (!item) return 0;
+    const dateien = await db.query.equipmentAttachments.findMany({ where: eq(equipmentAttachments.equipmentId, id) });
+    for (const datei of dateien) deleteStoredEquipmentFile(id, datei.storedName);
+    await db.delete(equipment).where(eq(equipment.id, id));
+    return 1;
+  }
+  if (kind === "equipmentAttachment") {
+    const anhang = await db.query.equipmentAttachments.findFirst({ where: and(eq(equipmentAttachments.id, id), isNotNull(equipmentAttachments.deletedAt)) });
+    if (!anhang) return 0;
+    deleteStoredEquipmentFile(anhang.equipmentId, anhang.storedName);
+    await db.delete(equipmentAttachments).where(eq(equipmentAttachments.id, id));
+    return 1;
+  }
   const anhang = await db.query.attachments.findFirst({ where: and(eq(attachments.id, id), isNotNull(attachments.deletedAt)) });
   if (!anhang) return 0;
   deleteStoredFile(anhang.songId, anhang.storedName);
@@ -243,7 +307,7 @@ export type PurgeReport = Record<TrashKind, number>;
  */
 export async function purgeExpired(): Promise<PurgeReport> {
   const grenze = ablaufDatum();
-  const bericht: PurgeReport = { song: 0, setlist: 0, event: 0, attachment: 0 };
+  const bericht: PurgeReport = { song: 0, setlist: 0, event: 0, attachment: 0, equipment: 0, equipmentAttachment: 0 };
 
   // Anhänge zuerst: sonst nimmt ein purge des Songs sie per Cascade mit, bevor
   // sie einzeln gezählt werden könnten.
@@ -275,6 +339,18 @@ export async function purgeExpired(): Promise<PurgeReport> {
     const noch = await db.query.events.findFirst({ where: eq(events.id, e.id) });
     if (noch) bericht.event += await purge("event", e.id);
   }
+
+  const alteEquipmentAnhaenge = await db
+    .select({ id: equipmentAttachments.id })
+    .from(equipmentAttachments)
+    .where(and(isNotNull(equipmentAttachments.deletedAt), lt(equipmentAttachments.deletedAt, grenze)));
+  for (const a of alteEquipmentAnhaenge) bericht.equipmentAttachment += await purge("equipmentAttachment", a.id);
+
+  const alteEquipment = await db
+    .select({ id: equipment.id })
+    .from(equipment)
+    .where(and(isNotNull(equipment.deletedAt), lt(equipment.deletedAt, grenze)));
+  for (const e of alteEquipment) bericht.equipment += await purge("equipment", e.id);
 
   return bericht;
 }
