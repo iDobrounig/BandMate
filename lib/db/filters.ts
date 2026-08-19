@@ -1,5 +1,5 @@
 import { isNull } from "drizzle-orm";
-import { songs, setlists, events, attachments } from "@/lib/db/schema";
+import { songs, setlists, events, attachments, equipment, equipmentAttachments } from "@/lib/db/schema";
 
 /**
  * Papierkorb-Filter: alles mit `deletedAt IS NULL` gilt als aktiv.
@@ -18,3 +18,5 @@ export const songAktiv = isNull(songs.deletedAt);
 export const setlistAktiv = isNull(setlists.deletedAt);
 export const eventAktiv = isNull(events.deletedAt);
 export const anhangAktiv = isNull(attachments.deletedAt);
+export const equipmentAktiv = isNull(equipment.deletedAt);
+export const equipmentAttachmentAktiv = isNull(equipmentAttachments.deletedAt);

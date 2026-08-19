@@ -58,6 +58,69 @@ export const songs = sqliteTable("songs", {
   deletedById: integer("deleted_by_id").references(() => users.id),
 });
 
+export const equipment = sqliteTable("equipment", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  category: text("category", {
+    enum: ["amp", "mic", "cable_accessory", "pa_speaker", "light", "other"],
+  })
+    .notNull()
+    .default("other"),
+  status: text("status", {
+    enum: ["in_use", "lent_out", "broken", "retired"],
+  })
+    .notNull()
+    .default("in_use"),
+  acquisitionDate: text("acquisition_date"), // ISO-Datum YYYY-MM-DD, wie events.date
+  acquisitionCost: real("acquisition_cost"), // Euro
+  location: text("location"),
+  notes: text("notes"),
+  createdById: integer("created_by_id").references(() => users.id),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  deletedById: integer("deleted_by_id").references(() => users.id),
+});
+
+export const equipmentContributions = sqliteTable(
+  "equipment_contributions",
+  {
+    equipmentId: integer("equipment_id")
+      .notNull()
+      .references(() => equipment.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    amount: real("amount").notNull(), // Euro
+    note: text("note"),
+  },
+  (t) => [primaryKey({ columns: [t.equipmentId, t.userId] })]
+);
+
+export const equipmentAttachments = sqliteTable("equipment_attachments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  equipmentId: integer("equipment_id")
+    .notNull()
+    .references(() => equipment.id, { onDelete: "cascade" }),
+  kind: text("kind", { enum: ["foto", "rechnung"] }).notNull(),
+  storedName: text("stored_name").notNull(),
+  originalName: text("original_name").notNull(),
+  mime: text("mime").notNull(),
+  size: integer("size").notNull(),
+  uploadedById: integer("uploaded_by_id").references(() => users.id),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
+  deletedById: integer("deleted_by_id").references(() => users.id),
+});
+
 export const songLinks = sqliteTable("song_links", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   songId: integer("song_id")
@@ -313,3 +376,8 @@ export type PracticeState = (typeof practiceStatus.$inferSelect)["status"];
 export type BandEvent = typeof events.$inferSelect;
 export type EventKind = BandEvent["kind"];
 export type AttendanceStatus = (typeof eventAttendance.$inferSelect)["status"];
+export type Equipment = typeof equipment.$inferSelect;
+export type EquipmentCategory = Equipment["category"];
+export type EquipmentStatus = Equipment["status"];
+export type EquipmentContribution = typeof equipmentContributions.$inferSelect;
+export type EquipmentAttachment = typeof equipmentAttachments.$inferSelect;

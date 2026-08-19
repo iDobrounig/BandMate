@@ -5,6 +5,8 @@ import type {
   AttendanceStatus,
   NotificationKind,
   NotificationMode,
+  EquipmentCategory,
+  EquipmentStatus,
 } from "@/lib/db/schema";
 
 export const SONG_STATUS: Record<
@@ -92,6 +94,80 @@ export const ATTENDANCE_STATUS: Record<
     btnActive: "border-red-500/60 bg-red-500/15 text-red-300",
   },
 };
+
+export const EQUIPMENT_CATEGORY: Record<
+  EquipmentCategory,
+  { label: string; badge: string }
+> = {
+  amp: { label: "Verstärker", badge: "bg-sky-500/15 text-sky-300 border-sky-500/30" },
+  mic: { label: "Mikrofon", badge: "bg-violet-500/15 text-violet-300 border-violet-500/30" },
+  pa_speaker: { label: "Lautsprecher/PA", badge: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
+  light: { label: "Licht", badge: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30" },
+  cable_accessory: { label: "Kabel/Zubehör", badge: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" },
+  other: { label: "Sonstiges", badge: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30" },
+};
+
+export const EQUIPMENT_CATEGORY_ORDER: EquipmentCategory[] = [
+  "amp",
+  "mic",
+  "pa_speaker",
+  "light",
+  "cable_accessory",
+  "other",
+];
+
+export const EQUIPMENT_STATUS: Record<
+  EquipmentStatus,
+  { label: string; badge: string; dot: string }
+> = {
+  in_use: {
+    label: "In Nutzung",
+    badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    dot: "bg-emerald-400",
+  },
+  lent_out: {
+    label: "Verliehen",
+    badge: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+    dot: "bg-amber-400",
+  },
+  broken: {
+    label: "Defekt",
+    badge: "bg-red-500/15 text-red-300 border-red-500/30",
+    dot: "bg-red-400",
+  },
+  retired: {
+    label: "Ausgemustert",
+    badge: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
+    dot: "bg-zinc-500",
+  },
+};
+
+export const EQUIPMENT_STATUS_ORDER: EquipmentStatus[] = [
+  "in_use",
+  "lent_out",
+  "broken",
+  "retired",
+];
+
+export const EQUIPMENT_PHOTO_MAX_BYTES = 20 * 1024 * 1024;
+export const EQUIPMENT_INVOICE_MAX_BYTES = 20 * 1024 * 1024;
+
+export const EQUIPMENT_PHOTO_MIMES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
+
+export const EQUIPMENT_INVOICE_MIMES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
 
 export const INSTRUMENT_SUGGESTIONS = [
   "Gesang",

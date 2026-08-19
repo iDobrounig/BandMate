@@ -71,6 +71,13 @@
       "when": 1786436238915,
       "tag": "0009_new_master_mold",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1787172091436,
+      "tag": "0010_colorful_dagger",
+      "breakpoints": true
     }
   ]
 }
