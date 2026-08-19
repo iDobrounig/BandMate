@@ -1,4 +1,7 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { equipment, equipmentAttachments } from "@/lib/db/schema";
 import {
   fetchEquipmentList,
   fetchEquipmentDetail,
@@ -9,7 +12,11 @@ import { anlegen } from "./helpers/fixtures";
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
 let f: Fixtures;
 
-beforeAll(async () => {
+// Ab hier beforeEach statt beforeAll: die neuen Tests unten löschen (weich)
+// Geräte/Anhänge und dürfen die anderen Tests in dieser Datei nicht mit
+// verändertem Zustand kontaminieren — jeder Test startet frisch, wie in
+// tests/papierkorb.test.ts und tests/trash.test.ts.
+beforeEach(async () => {
   f = await anlegen();
 });
 
@@ -66,5 +73,55 @@ describe("fetchServableEquipmentAttachment", () => {
 
   it("liefert null für unbekannte Anhänge", async () => {
     expect(await fetchServableEquipmentAttachment(999999)).toBeNull();
+  });
+});
+
+describe("gelöschtes Gerät", () => {
+  async function geraetLoeschen(id: number) {
+    await db.update(equipment).set({ deletedAt: new Date() }).where(eq(equipment.id, id));
+  }
+
+  it("verschwindet aus fetchEquipmentList, ohne das andere Gerät mitzunehmen", async () => {
+    await geraetLoeschen(f.equipment.verstaerker.id);
+    const liste = await fetchEquipmentList();
+    expect(liste.map((e) => e.id)).not.toContain(f.equipment.verstaerker.id);
+    expect(liste.map((e) => e.id)).toContain(f.equipment.mikrofon.id);
+  });
+
+  it("ist über fetchEquipmentDetail nicht mehr erreichbar", async () => {
+    await geraetLoeschen(f.equipment.mikrofon.id);
+    expect(await fetchEquipmentDetail(f.equipment.mikrofon.id)).toBeNull();
+  });
+
+  it("gibt seine Dateien nicht mehr über den Direktlink heraus", async () => {
+    const detail = await fetchEquipmentDetail(f.equipment.verstaerker.id);
+    const foto = detail!.attachments.find((a) => a.kind === "foto")!;
+
+    expect(await fetchServableEquipmentAttachment(foto.id)).not.toBeNull();
+    await geraetLoeschen(f.equipment.verstaerker.id);
+    // Der Anhang selbst ist NICHT markiert — nur sein Gerät. Ohne den Join
+    // wäre die Datei hier weiter abrufbar und der Papierkorb per URL
+    // umgehbar.
+    expect(await fetchServableEquipmentAttachment(foto.id)).toBeNull();
+  });
+});
+
+describe("gelöschter Equipment-Anhang", () => {
+  it("verschwindet aus den Anhängen und aus photoCount/invoiceCount, ohne das Gerät zu berühren", async () => {
+    const vorher = await fetchEquipmentDetail(f.equipment.verstaerker.id);
+    const foto = vorher!.attachments.find((a) => a.kind === "foto")!;
+
+    await db
+      .update(equipmentAttachments)
+      .set({ deletedAt: new Date() })
+      .where(eq(equipmentAttachments.id, foto.id));
+
+    const detail = await fetchEquipmentDetail(f.equipment.verstaerker.id);
+    expect(detail!.attachments.map((a) => a.id)).not.toContain(foto.id);
+
+    const liste = await fetchEquipmentList();
+    const verstaerker = liste.find((e) => e.id === f.equipment.verstaerker.id)!;
+    expect(verstaerker.photoCount).toBe(0);
+    expect(verstaerker.invoiceCount).toBe(1);
   });
 });
