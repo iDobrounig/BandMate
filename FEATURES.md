@@ -295,6 +295,13 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 - [ ] Akkord-Diagramme in der Lyrics-Ansicht (zurückgestellt — Erweiterungspunkt
   im Capo-Rechner-Entwurf vorbereitet, siehe
   [docs/superpowers/specs/2026-08-10-welle3-rest-design.md](docs/superpowers/specs/2026-08-10-welle3-rest-design.md))
+- [ ] **Equipment-Verwaltung** *(in Umsetzung, Entwurf abgestimmt 19.08.2026:
+  [docs/superpowers/specs/2026-08-19-equipment-design.md](docs/superpowers/specs/2026-08-19-equipment-design.md))*
+  Bereich für allgemeines Band-Equipment: Stammdaten (Kategorie, Anschaffungsdatum/-kosten,
+  Standort, Zustand, Notizen), Kostenbeteiligung einzelner Mitglieder mit frei eintragbaren
+  Beträgen + Vermerk, Foto-Upload (auch direkt per Smartphone-Kamera) und Rechnungs-Upload je
+  Gerät. Liste aller Geräte mit Detailansicht inkl. Beteiligungsübersicht. Ins bestehende
+  Papierkorb-System integriert.
 
 ### Welle 4 — Mandantenfähigkeit
 
