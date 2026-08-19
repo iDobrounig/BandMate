@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { fetchEquipmentList } from "@/lib/queries";
-import { EQUIPMENT_CATEGORY, EQUIPMENT_CATEGORY_ORDER, EQUIPMENT_STATUS } from "@/lib/constants";
+import {
+  EQUIPMENT_CATEGORY,
+  EQUIPMENT_CATEGORY_ORDER,
+  EQUIPMENT_STATUS,
+  EQUIPMENT_STATUS_ORDER,
+} from "@/lib/constants";
 import { formatDate } from "@/lib/format";
-import type { EquipmentCategory } from "@/lib/db/schema";
+import type { EquipmentCategory, EquipmentStatus } from "@/lib/db/schema";
 import { UndoBanner } from "@/components/undo-banner";
 
 export const metadata = { title: "Equipment" };
 
-type Search = { category?: string; q?: string; undo?: string };
+type Search = { category?: string; status?: string; q?: string; undo?: string };
 
 export default async function EquipmentPage({
   searchParams,
@@ -21,10 +26,15 @@ export default async function EquipmentPage({
     params.category && EQUIPMENT_CATEGORY_ORDER.includes(params.category as EquipmentCategory)
       ? (params.category as EquipmentCategory)
       : undefined;
+  const status =
+    params.status && EQUIPMENT_STATUS_ORDER.includes(params.status as EquipmentStatus)
+      ? (params.status as EquipmentStatus)
+      : undefined;
   const q = (params.q ?? "").toLowerCase().trim();
 
   const all = await fetchEquipmentList();
   let list = category ? all.filter((e) => e.category === category) : all;
+  if (status) list = list.filter((e) => e.status === status);
   if (q) list = list.filter((e) => e.name.toLowerCase().includes(q));
 
   return (
@@ -56,13 +66,19 @@ export default async function EquipmentPage({
             <option key={c} value={c}>{EQUIPMENT_CATEGORY[c].label}</option>
           ))}
         </select>
+        <select className="input w-full sm:max-w-48" name="status" defaultValue={status ?? ""}>
+          <option value="">Alle Zustände</option>
+          {EQUIPMENT_STATUS_ORDER.map((s) => (
+            <option key={s} value={s}>{EQUIPMENT_STATUS[s].label}</option>
+          ))}
+        </select>
         <button className="btn w-full sm:w-auto" type="submit">Filtern</button>
       </form>
 
       <div className="mt-6 space-y-2">
         {list.length === 0 && (
           <div className="card p-10 text-center text-mute">
-            {q || category ? "Nichts gefunden." : "Noch kein Equipment angelegt."}
+            {q || category || status ? "Nichts gefunden." : "Noch kein Equipment angelegt."}
           </div>
         )}
         {list.map((item) => {
