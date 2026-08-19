@@ -8,6 +8,7 @@ import {
   IconSetlists,
   IconCalendar,
   IconMembers,
+  IconEquipment,
 } from "@/components/icons";
 
 type NavItem = {
@@ -25,6 +26,7 @@ export function NavLinks() {
     { href: "/setlisten", label: "Setlisten", Icon: IconSetlists },
     { href: "/termine", label: "Termine", Icon: IconCalendar },
     { href: "/mitglieder", label: "Mitglieder", Icon: IconMembers },
+    { href: "/equipment", label: "Equipment", Icon: IconEquipment },
   ];
 
   return (

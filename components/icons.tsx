@@ -320,3 +320,14 @@ export function IconLayoutSplit({ className }: IconProps) {
     </Svg>
   );
 }
+
+export function IconEquipment({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <circle cx="12" cy="9" r="3" />
+      <line x1="8" y1="16" x2="16" y2="16" />
+      <line x1="8" y1="19" x2="16" y2="19" />
+    </Svg>
+  );
+}
