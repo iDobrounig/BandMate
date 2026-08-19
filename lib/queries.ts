@@ -11,17 +11,24 @@ import {
   eventSongs,
   setlists,
   setlistItems,
+  equipment,
+  equipmentContributions,
+  equipmentAttachments,
   type Song,
   type Setlist,
   type BandEvent,
   type AttendanceStatus,
   type EventKind,
+  type Equipment,
+  type EquipmentAttachment,
 } from "@/lib/db/schema";
 import {
   songAktiv,
   setlistAktiv,
   eventAktiv,
   anhangAktiv,
+  equipmentAktiv,
+  equipmentAttachmentAktiv,
 } from "@/lib/db/filters";
 import { attendancePercentage } from "@/lib/attendance";
 import { summarizeSetlist, compareTarget, type SetlistStructure } from "@/lib/setlist-structure";
@@ -479,4 +486,91 @@ export async function fetchSongDetail(songId: number) {
     allUsers,
     suggestedByName: suggestedBy?.name ?? null,
   };
+}
+
+export type EquipmentListItem = Equipment & {
+  contributionTotal: number;
+  photoCount: number;
+  invoiceCount: number;
+};
+
+/** Equipment-Liste mit Beteiligungssumme und Datei-Zählern. */
+export async function fetchEquipmentList(): Promise<EquipmentListItem[]> {
+  const rows = await db
+    .select({
+      item: equipment,
+      contributionTotal: sql<number>`coalesce((select sum(c.amount) from equipment_contributions c where c.equipment_id = equipment.id), 0)`,
+      photoCount: sql<number>`(select count(*) from equipment_attachments a where a.equipment_id = equipment.id and a.kind = 'foto' and a.deleted_at is null)`,
+      invoiceCount: sql<number>`(select count(*) from equipment_attachments a where a.equipment_id = equipment.id and a.kind = 'rechnung' and a.deleted_at is null)`,
+    })
+    .from(equipment)
+    .where(equipmentAktiv)
+    .orderBy(desc(equipment.createdAt));
+
+  return rows.map((r) => ({
+    ...r.item,
+    contributionTotal: r.contributionTotal,
+    photoCount: r.photoCount,
+    invoiceCount: r.invoiceCount,
+  }));
+}
+
+export type EquipmentDetail = {
+  equipment: Equipment;
+  contributions: { userId: number; amount: number; note: string | null; userName: string }[];
+  attachments: EquipmentAttachment[];
+  createdByName: string | null;
+};
+
+/** Equipment-Detail: Stammdaten, Beteiligungen mit Namen, aktive Anhänge. */
+export async function fetchEquipmentDetail(equipmentId: number): Promise<EquipmentDetail | null> {
+  const item = await db.query.equipment.findFirst({
+    where: and(eq(equipment.id, equipmentId), equipmentAktiv),
+  });
+  if (!item) return null;
+
+  const [contributions, attachmentRows, createdBy] = await Promise.all([
+    db
+      .select({
+        userId: equipmentContributions.userId,
+        amount: equipmentContributions.amount,
+        note: equipmentContributions.note,
+        userName: users.name,
+      })
+      .from(equipmentContributions)
+      .innerJoin(users, eq(equipmentContributions.userId, users.id))
+      .where(eq(equipmentContributions.equipmentId, equipmentId))
+      .orderBy(users.name),
+    db.query.equipmentAttachments.findMany({
+      where: (a, { eq, and, isNull }) => and(eq(a.equipmentId, equipmentId), isNull(a.deletedAt)),
+      orderBy: (a, { asc }) => [asc(a.kind), asc(a.createdAt)],
+    }),
+    item.createdById
+      ? db.query.users.findFirst({ where: eq(users.id, item.createdById), columns: { name: true } })
+      : Promise.resolve(undefined),
+  ]);
+
+  return {
+    equipment: item,
+    contributions,
+    attachments: attachmentRows,
+    createdByName: createdBy?.name ?? null,
+  };
+}
+
+/**
+ * Equipment-Anhang für `/api/equipment-files/[id]` — oder `null`, wenn er nicht
+ * (mehr) herausgegeben werden darf. Analog `fetchServableAttachment`: prüft
+ * sowohl den Anhang als auch das zugehörige Gerät auf Papierkorb-Status.
+ */
+export async function fetchServableEquipmentAttachment(
+  attachmentId: number
+): Promise<EquipmentAttachment | null> {
+  const [row] = await db
+    .select({ attachment: equipmentAttachments })
+    .from(equipmentAttachments)
+    .innerJoin(equipment, eq(equipmentAttachments.equipmentId, equipment.id))
+    .where(and(eq(equipmentAttachments.id, attachmentId), equipmentAttachmentAktiv, equipmentAktiv))
+    .limit(1);
+  return row?.attachment ?? null;
 }
