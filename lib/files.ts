@@ -2,12 +2,16 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { db, uploadsDir } from "@/lib/db";
-import { attachments } from "@/lib/db/schema";
+import { attachments, equipmentAttachments } from "@/lib/db/schema";
 import {
   AUDIO_MAX_BYTES,
   AUDIO_MIMES,
   SHEET_MAX_BYTES,
   SHEET_MIMES,
+  EQUIPMENT_PHOTO_MAX_BYTES,
+  EQUIPMENT_INVOICE_MAX_BYTES,
+  EQUIPMENT_PHOTO_MIMES,
+  EQUIPMENT_INVOICE_MIMES,
 } from "@/lib/constants";
 
 const EXT_WHITELIST = new Set([
@@ -73,6 +77,72 @@ export function attachmentPath(songId: number, storedName: string) {
 export function deleteStoredFile(songId: number, storedName: string) {
   try {
     fs.unlinkSync(attachmentPath(songId, storedName));
+  } catch {
+    // Datei fehlt schon — ignorieren
+  }
+}
+
+const EQUIPMENT_EXT_WHITELIST = new Set([
+  ".pdf", ".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif",
+]);
+
+/**
+ * Validiert und speichert einen Equipment-Upload unter
+ * data/uploads/equipment/<equipmentId>/, legt den Anhang-Datensatz an.
+ * Eigene Funktion statt Wiederverwendung von saveUpload — siehe Entwurf
+ * (Ansatz A: equipment_attachments bleibt von attachments getrennt).
+ */
+export async function saveEquipmentUpload(opts: {
+  file: File;
+  equipmentId: number;
+  kind: "foto" | "rechnung";
+  userId: number;
+}) {
+  const { file, equipmentId, kind, userId } = opts;
+  if (!file || file.size === 0) throw new Error("Keine Datei ausgewählt.");
+
+  const maxBytes = kind === "foto" ? EQUIPMENT_PHOTO_MAX_BYTES : EQUIPMENT_INVOICE_MAX_BYTES;
+  if (file.size > maxBytes) {
+    throw new Error(
+      `Datei ist zu groß (max. ${Math.round(maxBytes / 1024 / 1024)} MB).`
+    );
+  }
+  const allowed = kind === "foto" ? EQUIPMENT_PHOTO_MIMES : EQUIPMENT_INVOICE_MIMES;
+  if (!allowed.has(file.type)) {
+    throw new Error(
+      kind === "foto"
+        ? "Nur Bilder erlaubt (PNG, JPG, WebP, HEIC)."
+        : "Nur PDF oder Bilder erlaubt (PDF, PNG, JPG, WebP, HEIC)."
+    );
+  }
+  const ext = path.extname(file.name).toLowerCase();
+  if (!EQUIPMENT_EXT_WHITELIST.has(ext)) throw new Error("Dateiendung nicht erlaubt.");
+
+  const dir = path.join(uploadsDir, "equipment", String(equipmentId));
+  fs.mkdirSync(dir, { recursive: true });
+  const storedName = `${crypto.randomUUID()}${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  fs.writeFileSync(path.join(dir, storedName), buffer);
+
+  await db.insert(equipmentAttachments).values({
+    equipmentId,
+    kind,
+    storedName,
+    originalName: file.name,
+    mime: file.type,
+    size: file.size,
+    uploadedById: userId,
+  });
+}
+
+export function equipmentAttachmentPath(equipmentId: number, storedName: string) {
+  const safe = path.basename(storedName);
+  return path.join(uploadsDir, "equipment", String(equipmentId), safe);
+}
+
+export function deleteStoredEquipmentFile(equipmentId: number, storedName: string) {
+  try {
+    fs.unlinkSync(equipmentAttachmentPath(equipmentId, storedName));
   } catch {
     // Datei fehlt schon — ignorieren
   }
