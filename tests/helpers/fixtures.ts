@@ -15,6 +15,9 @@ import {
   notificationSettings,
   notificationLog,
   notificationRuns,
+  equipment,
+  equipmentContributions,
+  equipmentAttachments,
 } from "@/lib/db/schema";
 
 /** Datum relativ zu heute als ISO-Tag — hält Termin-Tests unabhängig vom Kalender. */
@@ -29,6 +32,9 @@ export async function leeren() {
   // notificationLog/-settings hängen per Cascade an users, notificationRuns
   // aber an nichts — deshalb hier alle drei ausdrücklich leeren, sonst
   // akkumulieren die Läufe über Tests hinweg.
+  await db.delete(equipmentAttachments);
+  await db.delete(equipmentContributions);
+  await db.delete(equipment);
   await db.delete(notificationLog);
   await db.delete(notificationRuns);
   await db.delete(notificationSettings);
@@ -158,10 +164,54 @@ export async function anlegen() {
 
   await db.insert(eventSongs).values({ eventId: kommendeProbe.id, songId: inProbe.id, position: 1 });
 
+  const [verstaerker] = await db
+    .insert(equipment)
+    .values({
+      name: "Marshall JCM800",
+      category: "amp",
+      status: "in_use",
+      acquisitionDate: isoTag(-200),
+      acquisitionCost: 900,
+      location: "Proberaum",
+      createdById: anna.id,
+    })
+    .returning();
+  const [mikrofon] = await db
+    .insert(equipment)
+    .values({ name: "Shure SM58", category: "mic", createdById: bert.id })
+    .returning();
+
+  await db.insert(equipmentContributions).values([
+    { equipmentId: verstaerker.id, userId: anna.id, amount: 500, note: "Vorschuss" },
+    { equipmentId: verstaerker.id, userId: bert.id, amount: 400 },
+  ]);
+
+  await db.insert(equipmentAttachments).values([
+    {
+      equipmentId: verstaerker.id,
+      kind: "foto",
+      storedName: "amp.jpg",
+      originalName: "amp-foto.jpg",
+      mime: "image/jpeg",
+      size: 1000,
+      uploadedById: anna.id,
+    },
+    {
+      equipmentId: verstaerker.id,
+      kind: "rechnung",
+      storedName: "amp.pdf",
+      originalName: "rechnung.pdf",
+      mime: "application/pdf",
+      size: 2000,
+      uploadedById: anna.id,
+    },
+  ]);
+
   return {
     users: { anna, bert, clara, dora },
     songs: { vorschlag, inProbe, repertoire, archiv },
     setlists: { setliste, leereSetliste },
     events: { kommenderGig, kommendeProbe, alteProbe },
+    equipment: { verstaerker, mikrofon },
   };
 }
