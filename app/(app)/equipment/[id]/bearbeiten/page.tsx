@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, or, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { fetchEquipmentDetail } from "@/lib/queries";
@@ -17,11 +17,26 @@ export default async function EquipmentBearbeitenPage({
   const { id } = await params;
   const data = await fetchEquipmentDetail(Number(id));
   if (!data) notFound();
-  const members = await db
-    .select({ id: users.id, name: users.name })
+
+  // Aktive Mitglieder ODER Mitglieder mit bestehender Beteiligung an diesem
+  // Gerät — auch wenn sie inzwischen ausgetreten sind. Sonst hat ihre Zeile
+  // im Formular keine passende <option>, der Browser setzt sie beim Rendern
+  // auf "" zurück, und updateEquipment verwirft die Beteiligung beim nächsten
+  // Speichern endgültig (siehe Review-Finding: Datenverlust).
+  const contributorIds = data.contributions.map((c) => c.userId);
+  const memberRows = await db
+    .select({ id: users.id, name: users.name, active: users.active })
     .from(users)
-    .where(eq(users.active, true))
+    .where(
+      contributorIds.length > 0
+        ? or(eq(users.active, true), inArray(users.id, contributorIds))
+        : eq(users.active, true)
+    )
     .orderBy(users.name);
+  const members = memberRows.map((m) => ({
+    id: m.id,
+    name: m.active ? m.name : `${m.name} (ausgetreten)`,
+  }));
 
   return (
     <div className="max-w-2xl">
