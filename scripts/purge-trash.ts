@@ -35,7 +35,8 @@ async function main() {
   console.log(
     `Papierkorb geleert (älter als ${TRASH_RETENTION_DAYS} Tage): ` +
       `${bericht.song} Songs, ${bericht.setlist} Setlisten, ` +
-      `${bericht.event} Termine, ${bericht.attachment} Dateien.`
+      `${bericht.event} Termine, ${bericht.attachment} Dateien, ` +
+      `${bericht.equipment} Geräte, ${bericht.equipmentAttachment} Geräte-Dateien.`
   );
 }
 
