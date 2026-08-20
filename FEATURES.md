@@ -429,6 +429,34 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   (Name/Anschaffungsdatum/Kosten), aktuell nur Filter. Strukturierte Verknüpfung zu Gigs
   („welches Equipment nehmen wir mit" statt nur Freitext im bestehenden
   „Backline/Technik"-Feld) — eigenes, größeres Feature, kein Nebenbei-Fix.
+- [ ] **Nav-Gruppierung „Band"** *(zurückgestellt, Stand 20.08.2026)*
+  Mitglieder und Equipment unter einem gemeinsamen Hauptpunkt „Band" mit Sub-Nav statt
+  zwei getrennten flachen Punkten. Bewusst nicht bei der Equipment-Einführung mitgemacht —
+  braucht eine neue Submenü-Komponente (aktiver Zustand für Eltern- und Kindpunkt, mobile
+  Darstellung), das hätte den Scope gesprengt. `components/nav-links.tsx` ist aktuell eine
+  simple flache Liste.
+- [ ] **Inline-„im Papierkorb"/„Rückgängig" nach Anhang-Löschen fehlt** *(entdeckt
+  20.08.2026 beim Equipment-Test, pre-existing auch bei Songs)*
+  Beim Löschen eines einzelnen Fotos/einer Rechnung (Equipment) bzw. Audio/Noten (Songs)
+  verschwindet die Datei sofort komplett aus der Liste, statt den dokumentierten
+  Zwischenzustand mit Rückgängig-Link zu zeigen. Ursache: `revalidatePath` löst ein
+  Router-Refresh aus, das den Listeneintrag unmountet, bevor der lokale
+  „im Papierkorb"-State rendern kann (`components/uploads.tsx`,
+  `components/equipment-attachments.tsx` — identisches Verhalten bei beiden, verifiziert
+  durch direkten Vergleich). Der Papierkorb selbst (`/papierkorb`, Wiederherstellen)
+  funktioniert einwandfrei — betrifft nur den Komfort-Hinweis direkt auf der Seite.
+- [ ] **Einnahmen-/Ausgaben-Übersicht („Kassa"/AE-Rechnung)** *(Idee, Stand 20.08.2026 —
+  noch nicht spezifiziert, eigener Brainstorming-Durchlauf vor Umsetzung nötig)*
+  Gig-Gagen und Equipment-Ausgaben zu einer laufenden Kassa-Übersicht mit Saldo
+  zusammenführen, perspektivisch unter einem neuen Nav-Punkt „Band" → „Kassa"/„AE" (siehe
+  Nav-Gruppierung oben). Bevorzugter Ansatz: **Hybrid** — keine neue generische
+  Buchungstabelle für alles (doppelte Dateneingabe, Gefahr dass Gage/Anschaffung und
+  Buchung auseinanderlaufen), sondern die Kassa-Seite live aus bestehenden Quellen
+  zusammensetzen (Gig-Gagen aus `events.fee`, Equipment-Ausgaben aus
+  `equipment.treasuryAmount`) plus eine schlanke neue Tabelle `treasuryEntries` nur für
+  Buchungen ohne bestehende Heimat (Raummiete, Versicherung, Merch-Verkäufe, Spenden).
+  Offene Fragen vor Umsetzung: Sichtbarkeit/Rollen (sieht das jedes Mitglied?),
+  Nav-Struktur.
 - [ ] **Öffentliches Self-Service-Signup für neue Bands** (Welle 4 macht Mandantenfähigkeit
   halb-offen: nur der Super-Admin legt neue Bands an. Ein Datenmodell dafür existiert bereits
   — `bands`, `invites` —, es fehlt aber die öffentliche Anmeldeseite, Email-Verifizierung für
