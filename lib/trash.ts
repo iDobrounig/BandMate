@@ -2,7 +2,7 @@ import { and, desc, eq, isNotNull, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { songs, setlists, events, attachments, users, equipment, equipmentAttachments } from "@/lib/db/schema";
 import { deleteStoredFile, deleteStoredEquipmentFile } from "@/lib/files";
-import { TRASH_RETENTION_DAYS } from "@/lib/constants";
+import { TRASH_RETENTION_DAYS, EQUIPMENT_CATEGORY } from "@/lib/constants";
 
 /**
  * Papierkorb — Abfragen und endgültiges Aufräumen.
@@ -91,7 +91,14 @@ export async function fetchTrash(): Promise<TrashEntry[]> {
       .leftJoin(users, eq(attachments.deletedById, users.id))
       .where(isNotNull(attachments.deletedAt)),
     db
-      .select({ id: equipment.id, name: equipment.name, deletedAt: equipment.deletedAt, byName: users.name })
+      .select({
+        id: equipment.id,
+        name: equipment.name,
+        category: equipment.category,
+        location: equipment.location,
+        deletedAt: equipment.deletedAt,
+        byName: users.name,
+      })
       .from(equipment)
       .leftJoin(users, eq(equipment.deletedById, users.id))
       .where(isNotNull(equipment.deletedAt)),
@@ -158,8 +165,10 @@ export async function fetchTrash(): Promise<TrashEntry[]> {
   }
 
   for (const r of equipmentRows) {
+    const kategorie = EQUIPMENT_CATEGORY[r.category].label;
     eintraege.push({
-      kind: "equipment", id: r.id, label: r.name, sublabel: null,
+      kind: "equipment", id: r.id, label: r.name,
+      sublabel: r.location ? `${kategorie} · ${r.location}` : kategorie,
       deletedAt: r.deletedAt!, deletedByName: r.byName, count: 1, restTage: restTage(r.deletedAt!),
     });
   }

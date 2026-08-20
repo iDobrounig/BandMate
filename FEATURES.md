@@ -422,6 +422,13 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 - [ ] Uploads streamen statt komplett in den RAM zu lesen (`lib/files.ts:52`)
 - [ ] Speicherplatz-Übersicht der Uploads
 - [ ] Health-Check / Monitoring (heute merkt niemand, wenn SMTP oder der Prozess ausfällt)
+- [ ] **Equipment: weitere Ideen** *(zurückgestellt, Stand 20.08.2026 — Grundfunktion steht,
+  das hier sind Ausbaustufen)*
+  Schneller Zustands-Wechsel direkt auf der Detailseite (z.B. „→ Verliehen"/„→ Defekt")
+  ohne Umweg über Bearbeiten, analog `SongStatusActions` bei Songs. Sortierung in der Liste
+  (Name/Anschaffungsdatum/Kosten), aktuell nur Filter. Strukturierte Verknüpfung zu Gigs
+  („welches Equipment nehmen wir mit" statt nur Freitext im bestehenden
+  „Backline/Technik"-Feld) — eigenes, größeres Feature, kein Nebenbei-Fix.
 - [ ] **Öffentliches Self-Service-Signup für neue Bands** (Welle 4 macht Mandantenfähigkeit
   halb-offen: nur der Super-Admin legt neue Bands an. Ein Datenmodell dafür existiert bereits
   — `bands`, `invites` —, es fehlt aber die öffentliche Anmeldeseite, Email-Verifizierung für

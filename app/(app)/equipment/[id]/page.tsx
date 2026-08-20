@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { fetchEquipmentDetail } from "@/lib/queries";
 import { EQUIPMENT_CATEGORY, EQUIPMENT_STATUS } from "@/lib/constants";
-import { formatDate, formatBytes } from "@/lib/format";
+import { formatDate, formatBytes, formatFee } from "@/lib/format";
 import { EquipmentUploadForm, DeleteEquipmentAttachmentButton } from "@/components/equipment-attachments";
 import { DeleteEquipmentButton } from "@/components/equipment-actions";
 import { IconEdit } from "@/components/icons";
@@ -24,7 +24,7 @@ export default async function EquipmentDetailPage({
   const photos = attachments.filter((a) => a.kind === "foto");
   const invoices = attachments.filter((a) => a.kind === "rechnung");
   const contributionTotal = contributions.reduce((acc, c) => acc + c.amount, 0);
-  const diff = (equipment.acquisitionCost ?? 0) - contributionTotal;
+  const diff = (equipment.acquisitionCost ?? 0) - contributionTotal - (equipment.treasuryAmount ?? 0);
 
   return (
     <div className="space-y-8">
@@ -42,10 +42,7 @@ export default async function EquipmentDetailPage({
                 {statusMeta.label}
               </span>
             </div>
-            <p className="mt-1 text-mute">
-              {equipment.location ?? "Kein Standort hinterlegt"}
-              {createdByName ? ` · angelegt von ${createdByName}` : ""}
-            </p>
+            {createdByName && <p className="mt-1 text-mute">angelegt von {createdByName}</p>}
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={`/equipment/${equipment.id}/bearbeiten`} className="btn">
@@ -58,16 +55,24 @@ export default async function EquipmentDetailPage({
         <div className="card mt-4 p-4 sm:px-5 sm:py-3">
           <div className="mono-display flex flex-wrap gap-x-8 gap-y-2 text-sm">
             <span>
+              <span className="text-faint">STANDORT </span>
+              {equipment.location ?? "–"}
+            </span>
+            <span>
               <span className="text-faint">ANGESCHAFFT </span>
               {formatDate(equipment.acquisitionDate)}
             </span>
             <span>
               <span className="text-faint">KOSTEN </span>
-              {equipment.acquisitionCost != null ? `${equipment.acquisitionCost.toFixed(2)} €` : "–"}
+              {equipment.acquisitionCost != null ? formatFee(equipment.acquisitionCost) : "–"}
             </span>
             <span>
               <span className="text-faint">BEITRÄGE </span>
-              {contributionTotal.toFixed(2)} €
+              {formatFee(contributionTotal)}
+            </span>
+            <span>
+              <span className="text-faint">BANDKASSE </span>
+              {equipment.treasuryAmount != null ? formatFee(equipment.treasuryAmount) : "–"}
             </span>
           </div>
         </div>
@@ -150,7 +155,7 @@ export default async function EquipmentDetailPage({
                   <li key={c.userId} className="text-sm">
                     <div className="flex items-center justify-between gap-2">
                       <span className="min-w-0 truncate font-medium">{c.userName}</span>
-                      <span className="mono-display shrink-0">{c.amount.toFixed(2)} €</span>
+                      <span className="mono-display shrink-0">{formatFee(c.amount)}</span>
                     </div>
                     {c.note && <p className="text-xs text-faint">{c.note}</p>}
                   </li>
@@ -160,12 +165,18 @@ export default async function EquipmentDetailPage({
             <div className="mono-display mt-4 border-t border-line-soft pt-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-faint">SUMME</span>
-                <span>{contributionTotal.toFixed(2)} €</span>
+                <span>{formatFee(contributionTotal)}</span>
               </div>
+              {equipment.treasuryAmount != null && equipment.treasuryAmount > 0 && (
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="text-faint">BANDKASSE</span>
+                  <span>{formatFee(equipment.treasuryAmount)}</span>
+                </div>
+              )}
               {equipment.acquisitionCost != null && Math.abs(diff) > 0.001 && (
                 <div className="mt-1 flex items-center justify-between text-amber-300">
                   <span className="text-faint">{diff > 0 ? "OFFEN" : "MEHR ALS KOSTEN"}</span>
-                  <span>{Math.abs(diff).toFixed(2)} €</span>
+                  <span>{formatFee(Math.abs(diff))}</span>
                 </div>
               )}
             </div>

@@ -78,6 +78,13 @@
       "when": 1787172091436,
       "tag": "0010_colorful_dagger",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1787212111567,
+      "tag": "0011_acoustic_star_brand",
+      "breakpoints": true
     }
   ]
 }

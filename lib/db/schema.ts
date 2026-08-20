@@ -73,6 +73,10 @@ export const equipment = sqliteTable("equipment", {
     .default("in_use"),
   acquisitionDate: text("acquisition_date"), // ISO-Datum YYYY-MM-DD, wie events.date
   acquisitionCost: real("acquisition_cost"), // Euro
+  // Anteil, den die Bandkasse direkt getragen hat (statt über eine Beteiligung
+  // eines Mitglieds) — deckt sowohl teil- als auch komplett aus der Kassa
+  // finanzierte Anschaffungen ab, ohne dass "offen" fälschlich > 0 bleibt.
+  treasuryAmount: real("treasury_amount"), // Euro
   location: text("location"),
   notes: text("notes"),
   createdById: integer("created_by_id").references(() => users.id),

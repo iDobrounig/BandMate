@@ -7,7 +7,7 @@ import {
   EQUIPMENT_STATUS,
   EQUIPMENT_STATUS_ORDER,
 } from "@/lib/constants";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatFee } from "@/lib/format";
 import type { EquipmentCategory, EquipmentStatus } from "@/lib/db/schema";
 import { UndoBanner } from "@/components/undo-banner";
 import {
@@ -17,6 +17,8 @@ import {
   IconLightbulb,
   IconCable,
   IconBox,
+  IconCamera,
+  IconSheet,
 } from "@/components/icons";
 
 const CATEGORY_ICON: Record<EquipmentCategory, (p: { className?: string }) => React.ReactNode> = {
@@ -52,7 +54,12 @@ export default async function EquipmentPage({
   const all = await fetchEquipmentList();
   let list = category ? all.filter((e) => e.category === category) : all;
   if (status) list = list.filter((e) => e.status === status);
-  if (q) list = list.filter((e) => e.name.toLowerCase().includes(q));
+  if (q) {
+    list = list.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) || (e.location ?? "").toLowerCase().includes(q)
+    );
+  }
 
   return (
     <div>
@@ -102,6 +109,10 @@ export default async function EquipmentPage({
           const categoryMeta = EQUIPMENT_CATEGORY[item.category];
           const statusMeta = EQUIPMENT_STATUS[item.status];
           const CategoryIcon = CATEGORY_ICON[item.category];
+          const diff =
+            item.acquisitionCost != null
+              ? item.acquisitionCost - item.contributionTotal - (item.treasuryAmount ?? 0)
+              : 0;
           return (
             <Link
               key={item.id}
@@ -123,14 +134,31 @@ export default async function EquipmentPage({
                   {item.acquisitionDate ? ` · angeschafft ${formatDate(item.acquisitionDate)}` : ""}
                 </p>
               </div>
+              <div className="flex shrink-0 gap-3 text-xs text-faint">
+                {item.photoCount > 0 && (
+                  <span className="inline-flex items-center gap-1" title="Fotos">
+                    <IconCamera className="size-3.5" /> {item.photoCount}
+                  </span>
+                )}
+                {item.invoiceCount > 0 && (
+                  <span className="inline-flex items-center gap-1" title="Rechnungen">
+                    <IconSheet className="size-3.5" /> {item.invoiceCount}
+                  </span>
+                )}
+              </div>
               <span className={`badge hidden shrink-0 sm:inline-flex ${statusMeta.badge}`}>
                 <span className={`size-1.5 rounded-full ${statusMeta.dot}`} />
                 {statusMeta.label}
               </span>
               <div className="mono-display hidden shrink-0 text-right text-xs text-mute sm:block">
-                {item.acquisitionCost != null && <p>{item.acquisitionCost.toFixed(2)} €</p>}
+                {item.acquisitionCost != null && <p>{formatFee(item.acquisitionCost)}</p>}
                 {item.contributionTotal > 0 && (
-                  <p className="text-faint">{item.contributionTotal.toFixed(2)} € beigetragen</p>
+                  <p className="text-faint">{formatFee(item.contributionTotal)} beigetragen</p>
+                )}
+                {item.acquisitionCost != null && Math.abs(diff) > 0.001 && (
+                  <p className="text-amber-300">
+                    {diff > 0 ? "offen" : "mehr als Kosten"}: {formatFee(Math.abs(diff))}
+                  </p>
                 )}
               </div>
             </Link>

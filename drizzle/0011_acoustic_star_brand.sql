@@ -1,0 +1,1 @@
+ALTER TABLE `equipment` ADD `treasury_amount` real;

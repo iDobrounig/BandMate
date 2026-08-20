@@ -5,6 +5,7 @@ import { createEquipment, updateEquipment } from "@/lib/actions/equipment";
 import type { FormState } from "@/lib/actions/auth";
 import { SubmitButton, FormMsg } from "@/components/form";
 import { IconClose } from "@/components/icons";
+import { formatFee } from "@/lib/format";
 import {
   EQUIPMENT_CATEGORY_ORDER,
   EQUIPMENT_CATEGORY,
@@ -41,6 +42,9 @@ export function EquipmentForm({
   const [cost, setCost] = useState(
     equipment?.acquisitionCost != null ? String(equipment.acquisitionCost) : ""
   );
+  const [treasury, setTreasury] = useState(
+    equipment?.treasuryAmount != null ? String(equipment.treasuryAmount) : ""
+  );
 
   const addRow = () => setRows((r) => [...r, { id: Date.now(), userId: "", amount: "", note: "" }]);
   const removeRow = (id: number) => setRows((r) => r.filter((row) => row.id !== id));
@@ -49,7 +53,8 @@ export function EquipmentForm({
 
   const sum = rows.reduce((acc, r) => acc + (Number(r.amount) || 0), 0);
   const costNum = Number(cost) || 0;
-  const diff = costNum - sum;
+  const treasuryNum = Number(treasury) || 0;
+  const diff = costNum - sum - treasuryNum;
 
   return (
     <form action={action} className="space-y-6">
@@ -106,6 +111,23 @@ export function EquipmentForm({
             onChange={(e) => setCost(e.target.value)}
             placeholder="0.00"
           />
+        </div>
+        <div>
+          <label className="label" htmlFor="ef-treasury">Anteil Bandkasse (€)</label>
+          <input
+            id="ef-treasury"
+            className="input mono-display"
+            name="treasuryAmount"
+            type="number"
+            step="0.01"
+            min="0"
+            value={treasury}
+            onChange={(e) => setTreasury(e.target.value)}
+            placeholder="0.00"
+          />
+          <p className="mt-1 text-xs text-faint">
+            Anteil, den die Band direkt aus der Kasse zahlt — nicht über eine Mitglieds-Beteiligung.
+          </p>
         </div>
         <div className="sm:col-span-2">
           <label className="label" htmlFor="ef-location">Standort/Lagerort</label>
@@ -174,13 +196,14 @@ export function EquipmentForm({
           + weitere Beteiligung
         </button>
         <p className="mono-display mt-2 text-sm text-mute">
-          Summe der Beteiligungen: {sum.toFixed(2)} €
+          Summe der Beteiligungen: {formatFee(sum)}
+          {treasuryNum > 0 && ` + ${formatFee(treasuryNum)} Bandkasse`}
         </p>
         {cost.trim() !== "" && Math.abs(diff) > 0.001 && (
           <p className="mt-1 text-xs text-amber-300">
             {diff > 0
-              ? `${diff.toFixed(2)} € der Anschaffungskosten sind noch keinem Mitglied zugeordnet.`
-              : `${Math.abs(diff).toFixed(2)} € mehr eingetragen als die Anschaffungskosten.`}
+              ? `${formatFee(diff)} der Anschaffungskosten sind weder einem Mitglied noch der Bandkasse zugeordnet.`
+              : `${formatFee(Math.abs(diff))} mehr eingetragen als die Anschaffungskosten.`}
           </p>
         )}
       </div>

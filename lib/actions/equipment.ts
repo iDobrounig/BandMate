@@ -16,6 +16,8 @@ function readEquipmentFields(formData: FormData) {
   const acquisitionDate = String(formData.get("acquisitionDate") ?? "").trim();
   const costRaw = String(formData.get("acquisitionCost") ?? "").trim();
   const acquisitionCost = costRaw ? Number(costRaw) : null;
+  const treasuryRaw = String(formData.get("treasuryAmount") ?? "").trim();
+  const treasuryAmount = treasuryRaw ? Number(treasuryRaw) : null;
   const location = String(formData.get("location") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
   return {
@@ -24,6 +26,7 @@ function readEquipmentFields(formData: FormData) {
     status: EQUIPMENT_STATUS_ORDER.includes(statusRaw) ? statusRaw : "in_use",
     acquisitionDate: acquisitionDate || null,
     acquisitionCost: acquisitionCost !== null && Number.isFinite(acquisitionCost) ? acquisitionCost : null,
+    treasuryAmount: treasuryAmount !== null && Number.isFinite(treasuryAmount) ? treasuryAmount : null,
     location: location || null,
     notes: notes || null,
   };
