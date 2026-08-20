@@ -124,8 +124,7 @@ export default async function EquipmentPage({
                 title={categoryMeta.label}
                 aria-label={categoryMeta.label}
               >
-                <CategoryIcon className="size-4 sm:hidden" />
-                <span className="hidden sm:inline">{categoryMeta.label}</span>
+                <CategoryIcon className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{item.name}</p>
