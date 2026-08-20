@@ -8,6 +8,21 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.20.0] — 2026-08-20
+
+### Hinzugefügt
+- **Equipment-Verwaltung**: Neuer Bereich `/equipment` für gemeinsam angeschafftes
+  Band-Equipment. Stammdaten (Kategorie, Zustand, Anschaffungsdatum/-kosten, Standort,
+  Notizen), frei eintragbare Kostenbeteiligungen einzelner Mitglieder inkl. Vermerk und
+  Live-Summenabgleich, dazu ein „Anteil Bandkasse"-Feld für ganz oder teilweise aus der
+  Kasse finanzierte Anschaffungen — die Offen-Berechnung bleibt dadurch auch bei
+  Kassa-Finanzierung korrekt. Foto-Upload (auch direkt per Smartphone-Kamera) und
+  Rechnungs-Upload je Gerät, eigene Datei-Ablage parallel zu den Song-Anhängen. Liste mit
+  Kategorie-/Status-Filter und Suche (auch über den Standort), Kategorie-Icons statt Text
+  für gleichmäßige Zeilenausrichtung unabhängig von der Namenslänge. Vollständig ins
+  bestehende Papierkorb-System integriert (löschen, wiederherstellen, endgültig
+  entfernen). Neuer Navigationspunkt „Equipment".
+
 ## [1.19.4] — 2026-08-13
 
 ### Geändert
