@@ -331,3 +331,33 @@ export function IconEquipment({ className }: IconProps) {
     </Svg>
   );
 }
+
+export function IconSpeaker({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M4 9v6h4l5 4V5L8 9H4Z" />
+      <path d="M17 8a5 5 0 0 1 0 8" />
+      <path d="M20 5a9 9 0 0 1 0 14" />
+    </Svg>
+  );
+}
+
+export function IconCable({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M9 2v6M15 2v6" />
+      <path d="M6 8h12v4a6 6 0 0 1-12 0V8Z" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+    </Svg>
+  );
+}
+
+export function IconBox({ className }: IconProps) {
+  return (
+    <Svg className={className}>
+      <path d="M21 8 12 3 3 8l9 5 9-5Z" />
+      <path d="M3 8v8l9 5 9-5V8" />
+      <line x1="12" y1="13" x2="12" y2="21" />
+    </Svg>
+  );
+}

@@ -10,6 +10,23 @@ import {
 import { formatDate } from "@/lib/format";
 import type { EquipmentCategory, EquipmentStatus } from "@/lib/db/schema";
 import { UndoBanner } from "@/components/undo-banner";
+import {
+  IconEquipment,
+  IconMic,
+  IconSpeaker,
+  IconLightbulb,
+  IconCable,
+  IconBox,
+} from "@/components/icons";
+
+const CATEGORY_ICON: Record<EquipmentCategory, (p: { className?: string }) => React.ReactNode> = {
+  amp: IconEquipment,
+  mic: IconMic,
+  pa_speaker: IconSpeaker,
+  light: IconLightbulb,
+  cable_accessory: IconCable,
+  other: IconBox,
+};
 
 export const metadata = { title: "Equipment" };
 
@@ -84,13 +101,21 @@ export default async function EquipmentPage({
         {list.map((item) => {
           const categoryMeta = EQUIPMENT_CATEGORY[item.category];
           const statusMeta = EQUIPMENT_STATUS[item.status];
+          const CategoryIcon = CATEGORY_ICON[item.category];
           return (
             <Link
               key={item.id}
               href={`/equipment/${item.id}`}
               className="card flex items-center gap-4 p-4 transition hover:border-accent/40"
             >
-              <span className={`badge shrink-0 ${categoryMeta.badge}`}>{categoryMeta.label}</span>
+              <span
+                className={`badge shrink-0 ${categoryMeta.badge}`}
+                title={categoryMeta.label}
+                aria-label={categoryMeta.label}
+              >
+                <CategoryIcon className="size-4 sm:hidden" />
+                <span className="hidden sm:inline">{categoryMeta.label}</span>
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{item.name}</p>
                 <p className="truncate text-sm text-mute">
