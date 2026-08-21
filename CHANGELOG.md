@@ -8,6 +8,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.21.1] — 2026-08-21
+
+### Geändert
+- **Mitglieder- und Papierkorb-Seite auf volle Breite**: Die Listen nutzen jetzt wie
+  Songs/Termine/Equipment die volle Inhaltsbreite statt der bisherigen `max-w-3xl`-Begrenzung.
+  Die Formulare auf der Mitglieder-Seite (Neues Mitglied, SMTP-Test) bleiben bewusst schmal.
+
 ## [1.21.0] — 2026-08-21
 
 ### Geändert
