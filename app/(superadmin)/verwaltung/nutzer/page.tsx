@@ -1,15 +1,16 @@
+import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { requireSuperAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users, bands, bandMembers } from "@/lib/db/schema";
-import { ToggleUserButton } from "@/components/superadmin-forms";
+import { ToggleUserButton, CreateUserGlobalForm } from "@/components/superadmin-forms";
 
 export const metadata = { title: "Nutzer" };
 
 export default async function VerwaltungNutzerPage() {
   const admin = await requireSuperAdmin();
 
-  const [alleUsers, mitgliedschaften] = await Promise.all([
+  const [alleUsers, mitgliedschaften, alleBands] = await Promise.all([
     db
       .select({
         id: users.id,
@@ -29,6 +30,7 @@ export default async function VerwaltungNutzerPage() {
       })
       .from(bandMembers)
       .innerJoin(bands, eq(bandMembers.bandId, bands.id)),
+    db.select({ id: bands.id, name: bands.name }).from(bands).where(eq(bands.active, true)).orderBy(asc(bands.name)),
   ]);
 
   const byUser = new Map<number, { bandName: string; role: string; active: boolean }[]>();
@@ -47,6 +49,11 @@ export default async function VerwaltungNutzerPage() {
         </p>
       </div>
 
+      <section className="card max-w-2xl p-5">
+        <h2 className="headline mb-4 text-lg">Neuer Nutzer</h2>
+        <CreateUserGlobalForm bands={alleBands} />
+      </section>
+
       <section className="space-y-3">
         {alleUsers.map((u) => {
           const memberships = byUser.get(u.id) ?? [];
@@ -54,7 +61,9 @@ export default async function VerwaltungNutzerPage() {
             <div key={u.id} className={`card flex flex-wrap items-center gap-3 p-4 ${u.active ? "" : "opacity-50"}`}>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">
-                  {u.name}
+                  <Link href={`/verwaltung/nutzer/${u.id}`} className="hover:text-accent-hi hover:underline">
+                    {u.name}
+                  </Link>
                   {u.isSuperAdmin && (
                     <span className="badge ml-2 border-accent/40 bg-accent/10 text-accent-hi">Super-Admin</span>
                   )}

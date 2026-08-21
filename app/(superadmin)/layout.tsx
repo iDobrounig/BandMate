@@ -25,7 +25,9 @@ export default async function SuperAdminLayout({
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm text-mute">
-            <span className="hidden sm:inline">{admin.name}</span>
+            <Link href="/verwaltung/konto" className="hidden rounded-lg px-3 py-1.5 hover:bg-raise hover:text-ink sm:inline">
+              {admin.name}
+            </Link>
             <LogoutForm
               ariaLabel="Abmelden"
               title="Abmelden"

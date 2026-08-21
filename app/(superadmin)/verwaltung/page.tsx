@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { asc, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { bands } from "@/lib/db/schema";
@@ -37,7 +38,9 @@ export default async function VerwaltungBandsPage() {
           <div key={band.id} className={`card flex flex-wrap items-center gap-3 p-4 ${band.active ? "" : "opacity-50"}`}>
             <div className="min-w-0 flex-1">
               <p className="font-semibold">
-                {band.name}
+                <Link href={`/verwaltung/bands/${band.id}`} className="hover:text-accent-hi hover:underline">
+                  {band.name}
+                </Link>
                 {!band.active && (
                   <span className="badge ml-2 border-line text-faint">deaktiviert</span>
                 )}
@@ -46,6 +49,7 @@ export default async function VerwaltungBandsPage() {
                 {band.memberCount} {band.memberCount === 1 ? "Mitglied" : "Mitglieder"}
               </p>
             </div>
+            <Link href={`/verwaltung/bands/${band.id}`} className="btn btn-sm">Bearbeiten</Link>
             <ToggleBandButton bandId={band.id} active={band.active} />
           </div>
         ))}

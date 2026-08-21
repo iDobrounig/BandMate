@@ -13,6 +13,37 @@ import type { FormState } from "@/lib/actions/auth";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Erzeugt einen Einladungs-Token für eine Band und gibt die teilbare URL zurück
+ * — oder eine Fehlermeldung, wenn die Person dort schon aktives Mitglied ist.
+ * Gemeinsamer Kern für Band-Admin (createInvite) und Super-Admin.
+ */
+export async function makeInvite(
+  bandId: number,
+  email: string,
+  role: BandRole,
+  invitedById: number
+): Promise<{ url: string } | { error: string }> {
+  const bereits = await db
+    .select({ userId: bandMembers.userId })
+    .from(bandMembers)
+    .innerJoin(users, eq(bandMembers.userId, users.id))
+    .where(and(eq(bandMembers.bandId, bandId), eq(users.email, email), eq(bandMembers.active, true)))
+    .limit(1);
+  if (bereits.length > 0) return { error: "Diese Person ist bereits in der Band." };
+
+  const token = crypto.randomUUID();
+  await db.insert(invites).values({
+    bandId,
+    email,
+    token,
+    role,
+    invitedById,
+    expiresAt: new Date(Date.now() + INVITE_TTL_MS),
+  });
+  return { url: `${process.env.APP_URL ?? ""}/einladung/${token}` };
+}
+
 /** Gültige, nicht verbrauchte, nicht abgelaufene Einladung zu diesem Token. */
 export async function fetchValidInvite(token: string) {
   const invite = await db.query.invites.findFirst({
@@ -48,28 +79,11 @@ export async function createInvite(
   const role: BandRole = formData.get("role") === "admin" ? "band_admin" : "member";
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Bitte eine gültige E-Mail angeben." };
 
-  // Ist die Person schon aktives Mitglied? Dann kein Link nötig.
-  const bereits = await db
-    .select({ userId: bandMembers.userId })
-    .from(bandMembers)
-    .innerJoin(users, eq(bandMembers.userId, users.id))
-    .where(and(eq(bandMembers.bandId, bandId), eq(users.email, email), eq(bandMembers.active, true)))
-    .limit(1);
-  if (bereits.length > 0) return { error: "Diese Person ist bereits in der Band." };
+  const res = await makeInvite(bandId, email, role, user.id);
+  if ("error" in res) return { error: res.error };
 
-  const token = crypto.randomUUID();
-  await db.insert(invites).values({
-    bandId,
-    email,
-    token,
-    role,
-    invitedById: user.id,
-    expiresAt: new Date(Date.now() + INVITE_TTL_MS),
-  });
-
-  const url = `${process.env.APP_URL ?? ""}/einladung/${token}`;
   revalidatePath("/mitglieder");
-  return { success: `Einladungslink für ${email} (7 Tage gültig): ${url}` };
+  return { success: `Einladungslink für ${email} (7 Tage gültig): ${res.url}` };
 }
 
 /** Fügt ein bestehendes Mitglied per gültigem Token der Band hinzu (Wiedereintritt inkl.). */
