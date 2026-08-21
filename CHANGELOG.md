@@ -8,6 +8,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [2.0.1] — 2026-08-21
+
+### Behoben
+- **Deploy-Absturz beim ersten Update auf 2.0.0**: `next build` sammelt die Page-Data mit
+  mehreren parallelen Worker-Prozessen, die alle die Datenbank-Migration gleichzeitig
+  ausführten und sich beim Anlegen der neuen Tabellen ins Gehege kamen
+  (`table 'band_members' already exists`). Die Migration läuft jetzt **nicht mehr während
+  `next build`**, sondern nur noch zur Laufzeit (ein einziger PM2-Prozess) — dort prozess-
+  seriell und damit gefahrlos. Zusätzlich ist der Datenmigrations-Backfill gegen
+  Nebenläufigkeit abgesichert (atomare Transaktion, `busy_timeout`).
+
 ## [2.0.0] — 2026-08-21
 
 **Mandantenfähigkeit (Welle 4): BandMate trägt jetzt mehrere Bands in einer Installation.**
