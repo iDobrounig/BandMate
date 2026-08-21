@@ -6,10 +6,11 @@ import { SubmitButton, FormMsg } from "@/components/form";
 
 const initial: FormState = {};
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, action] = useActionState(login, initial);
   return (
     <form action={action} className="space-y-4">
+      {next && <input type="hidden" name="next" value={next} />}
       <div>
         <label className="label" htmlFor="email">
           E-Mail

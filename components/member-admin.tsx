@@ -13,7 +13,7 @@ import { SubmitButton, FormMsg } from "@/components/form";
 import { INSTRUMENT_SUGGESTIONS } from "@/lib/constants";
 import { NotifyMatrix } from "@/components/notify-matrix";
 import type { SettingsMap } from "@/lib/notifications";
-import type { User } from "@/lib/db/schema";
+import type { BandMemberAdminRow } from "@/lib/queries";
 
 const initial: FormState = {};
 
@@ -60,7 +60,7 @@ export function NewMemberForm() {
       </div>
       <label className="flex items-center gap-2 text-sm text-mute">
         <input type="checkbox" name="role" value="admin" className="size-4 accent-(--color-accent)" />
-        Admin-Rechte geben
+        Band-Admin-Rechte geben
       </label>
       <FormMsg state={state} />
       <SubmitButton>Mitglied anlegen</SubmitButton>
@@ -93,7 +93,7 @@ function EditMemberForm({
   member,
   settings,
 }: {
-  member: User;
+  member: BandMemberAdminRow;
   settings: SettingsMap;
 }) {
   const [state, action] = useActionState(updateUser, initial);
@@ -157,7 +157,7 @@ export function MemberRow({
   isSelf,
   settings,
 }: {
-  member: User;
+  member: BandMemberAdminRow;
   isSelf: boolean;
   settings: SettingsMap;
 }) {
@@ -170,14 +170,14 @@ export function MemberRow({
         <div className="min-w-0 flex-1">
           <p className="font-semibold">
             {member.name}
-            {member.role === "admin" && (
+            {member.role === "band_admin" && (
               <span className="badge ml-2 border-accent/40 bg-accent/10 text-accent-hi">
-                Admin
+                Band-Admin
               </span>
             )}
             {!member.active && (
               <span className="badge ml-2 border-line text-faint">
-                deaktiviert
+                ausgetreten
               </span>
             )}
           </p>
@@ -216,31 +216,31 @@ export function MemberRow({
                   // Nur das Vergeben ist die zerstörende Richtung (voller Zugriff
                   // auf Mitgliederverwaltung) — Entziehen läuft ohne Rückfrage.
                   if (
-                    member.role !== "admin" &&
-                    !confirm(`${member.name} Admin-Rechte geben?`)
+                    member.role !== "band_admin" &&
+                    !confirm(`${member.name} Band-Admin-Rechte geben?`)
                   )
                     return;
-                  setUserRole(member.id, member.role === "admin" ? "member" : "admin");
+                  setUserRole(member.id, member.role === "band_admin" ? "member" : "band_admin");
                 }}
               >
-                {member.role === "admin" ? "Admin entz." : "Admin geben"}
+                {member.role === "band_admin" ? "Admin entz." : "Admin geben"}
               </button>
               <button
                 type="button"
-                // Nur das Deaktivieren ist die zerstörende Richtung
+                // Nur das Entfernen aus der Band ist die zerstörende Richtung
                 className={`btn btn-sm flex-1 sm:flex-none ${
                   member.active ? "btn-danger" : ""
                 }`}
                 onClick={() => {
                   if (
                     member.active &&
-                    !confirm(`${member.name} wirklich deaktivieren?`)
+                    !confirm(`${member.name} aus der Band entfernen?`)
                   )
                     return;
                   void toggleUserActive(member.id);
                 }}
               >
-                {member.active ? "Deaktivieren" : "Aktivieren"}
+                {member.active ? "Entfernen" : "Aufnehmen"}
               </button>
             </>
           )}

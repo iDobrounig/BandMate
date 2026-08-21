@@ -5,9 +5,14 @@ import { LoginForm } from "@/components/login-form";
 
 export const metadata = { title: "Anmelden" };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   const user = await currentUser();
-  if (user) redirect("/");
+  const { next } = await searchParams;
+  if (user) redirect(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
 
   return (
     <main className="flex flex-1 items-center justify-center p-6">
@@ -22,7 +27,7 @@ export default async function LoginPage() {
           </p>
         </div>
         <div className="card p-6">
-          <LoginForm />
+          <LoginForm next={next} />
         </div>
         <p className="mt-4 text-center text-xs text-faint">
           <Link href="/passwort-vergessen" className="underline">

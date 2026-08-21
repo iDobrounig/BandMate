@@ -32,7 +32,9 @@ export async function login(
   const session = await getSession();
   session.userId = user.id;
   await session.save();
-  redirect("/");
+  // Nur interne Pfade zulassen (kein Open-Redirect).
+  const next = String(formData.get("next") ?? "");
+  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
 }
 
 export async function logout() {

@@ -68,6 +68,34 @@ export async function fetchBandMembers(
     .orderBy(asc(users.name));
 }
 
+export type BandMemberAdminRow = {
+  id: number;
+  name: string;
+  email: string;
+  role: (typeof bandMembers.$inferSelect)["role"];
+  instrument: string | null;
+  active: boolean;
+  digestEnabled: boolean;
+};
+
+/** Mitgliederliste für die Band-Admin-Verwaltung (mit Rolle + Digest-Schalter). */
+export async function fetchBandMembersAdmin(bandId: number): Promise<BandMemberAdminRow[]> {
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: bandMembers.role,
+      instrument: bandMembers.instrument,
+      active: bandMembers.active,
+      digestEnabled: users.digestEnabled,
+    })
+    .from(bandMembers)
+    .innerJoin(users, eq(bandMembers.userId, users.id))
+    .where(eq(bandMembers.bandId, bandId))
+    .orderBy(asc(users.name));
+}
+
 export type SongListItem = Song & {
   upvotes: number;
   downvotes: number;

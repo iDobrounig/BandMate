@@ -1,11 +1,14 @@
-import { asc } from "drizzle-orm";
 import { requireBandContext } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
 import { fetchSettings } from "@/lib/notifications";
-import { fetchAttendanceStats, fetchBandMembers, type AttendanceStats } from "@/lib/queries";
+import {
+  fetchAttendanceStats,
+  fetchBandMembers,
+  fetchBandMembersAdmin,
+  type AttendanceStats,
+} from "@/lib/queries";
 import { ATTENDANCE_STATUS } from "@/lib/constants";
 import { NewMemberForm, MemberRow } from "@/components/member-admin";
+import { InviteForm } from "@/components/invite-forms";
 import { SmtpTestForm } from "@/components/smtp-test";
 
 export const metadata = { title: "Mitglieder" };
@@ -81,7 +84,7 @@ export default async function MitgliederPage() {
   }
 
   const admin = user;
-  const members = await db.select().from(users).orderBy(asc(users.name));
+  const members = await fetchBandMembersAdmin(bandId);
   // Je Mitglied die aufgelösten Einstellungen (Standardwerte eingesetzt)
   const settings = await Promise.all(members.map((m) => fetchSettings(m.id)));
 
@@ -95,6 +98,16 @@ export default async function MitgliederPage() {
       <section className="card mt-8 max-w-2xl p-5">
         <h2 className="headline mb-4 text-lg">Neues Mitglied</h2>
         <NewMemberForm />
+      </section>
+
+      <section className="card mt-6 max-w-2xl p-5">
+        <h2 className="headline mb-1 text-lg">Per Einladungslink aufnehmen</h2>
+        <p className="mb-4 text-sm text-mute">
+          Für Leute, die schon ein BandMate-Konto haben (aus einer anderen Band) — oder wenn
+          sie ihr Passwort selbst setzen sollen. Der Link ist 7 Tage gültig und einmal
+          verwendbar.
+        </p>
+        <InviteForm />
       </section>
 
       <section className="mt-8 space-y-3">
