@@ -43,9 +43,12 @@ Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 - [x] Jedes Mitglied bearbeitet das eigene Profil (Name, Instrument, Passwort, Mail-Opt-out) unter `/profil`
 - [x] E-Mail-Benachrichtigung bei neuem Vorschlag / Kommentar / Termin (wenn SMTP konfiguriert)
 - [x] **SMTP-Test-Funktion** auf `/mitglieder` (nur Admin) — Verbindung prüfen + echte Test-Mail — *seit 1.6.0*
-- [x] **Hilfe-Seite** `/hilfe` mit Screenshots, verlinkt im Header — *seit 1.8.0*
+- [x] **Hilfe-Seite** `/hilfe` mit Screenshots, verlinkt im Menü-Popup der Bottom-Nav — *seit 1.8.0*
 - [x] Dashboard: heiße Vorschläge, in Probe, nächste Termine mit RSVP-Status, letzte Kommentare
 - [x] Mobile-taugliches, dunkles „Backstage"-Design
+- [x] **Floating-Bottom-Nav**: obere Leiste entfällt, Navigation schwebt zentriert am
+  unteren Rand (mobil nur Icons, Desktop Icon + Label); Profil/Hilfe/Papierkorb/Logout
+  in einem Menü-Popup rechts; Band-Logo oben auf dem Dashboard
 - [x] **App-Icon/Favicon + PWA-Manifest** — „Zum Homescreen hinzufügen" wie eine echte App
 - [x] **Update-Banner nach Deploy**: erkennt über eine Build-Kennung (`/api/version`), wenn
   der Server aktualisiert wurde, und bietet einen wegklickbaren „Neu laden"-Hinweis — prüft
