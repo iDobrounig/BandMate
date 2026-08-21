@@ -14,6 +14,7 @@ beforeAll(async () => {
   const [probeMitRSVP] = await db
     .insert(events)
     .values({
+      bandId: f.bandId,
       title: "Alte Probe mit RSVP",
       kind: "rehearsal",
       date: isoTag(-5),
@@ -29,7 +30,7 @@ beforeAll(async () => {
 
 describe("fetchAttendanceStats", () => {
   it("zählt Zusagen aus vergangenen Proben", async () => {
-    const stats = await fetchAttendanceStats();
+    const stats = await fetchAttendanceStats(f.bandId);
     const anna = stats.find((s) => s.userId === f.users.anna.id)!;
     expect(anna.yes).toBe(1);
     expect(anna.no).toBe(0);
@@ -37,7 +38,7 @@ describe("fetchAttendanceStats", () => {
   });
 
   it("zählt Absagen und berechnet die Quote entsprechend", async () => {
-    const stats = await fetchAttendanceStats();
+    const stats = await fetchAttendanceStats(f.bandId);
     const bert = stats.find((s) => s.userId === f.users.bert.id)!;
     expect(bert.no).toBe(1);
     expect(bert.yes).toBe(0);
@@ -45,7 +46,7 @@ describe("fetchAttendanceStats", () => {
   });
 
   it("'Vielleicht' fließt nicht in die Quote ein", async () => {
-    const stats = await fetchAttendanceStats();
+    const stats = await fetchAttendanceStats(f.bandId);
     const clara = stats.find((s) => s.userId === f.users.clara.id)!;
     expect(clara.maybe).toBe(1);
     expect(clara.yes).toBe(0);
@@ -55,18 +56,18 @@ describe("fetchAttendanceStats", () => {
 
   it("zählt Zusagen aus künftigen Terminen (Gig) nicht mit", async () => {
     // Anna hat beim künftigen Gig 'yes' zugesagt — darf hier nicht auftauchen.
-    const stats = await fetchAttendanceStats();
+    const stats = await fetchAttendanceStats(f.bandId);
     const anna = stats.find((s) => s.userId === f.users.anna.id)!;
     expect(anna.yes).toBe(1); // nur aus der einen vergangenen Probe
   });
 
   it("lässt deaktivierte Mitglieder aus", async () => {
-    const stats = await fetchAttendanceStats();
+    const stats = await fetchAttendanceStats(f.bandId);
     expect(stats.find((s) => s.userId === f.users.dora.id)).toBeUndefined();
   });
 
   it("sortiert alphabetisch nach Name", async () => {
-    const stats = await fetchAttendanceStats();
+    const stats = await fetchAttendanceStats(f.bandId);
     const names = stats.map((s) => s.name);
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, "de")));
   });

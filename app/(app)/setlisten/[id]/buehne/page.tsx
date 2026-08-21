@@ -1,7 +1,7 @@
 import type { Viewport } from "next";
 import { notFound } from "next/navigation";
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { setlists, setlistItems, songs, attachments } from "@/lib/db/schema";
 import { songAktiv, setlistAktiv, anhangAktiv } from "@/lib/db/filters";
@@ -18,12 +18,12 @@ export default async function SetlistBuehnePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await requireUser();
+  const { bandId, instrument } = await requireBandContext();
   const { id } = await params;
   const setlistId = Number(id);
 
   const setlist = await db.query.setlists.findFirst({
-    where: and(eq(setlists.id, setlistId), setlistAktiv),
+    where: and(eq(setlists.id, setlistId), eq(setlists.bandId, bandId), setlistAktiv),
   });
   if (!setlist) notFound();
 
@@ -104,7 +104,7 @@ export default async function SetlistBuehnePage({
       setlistId={setlistId}
       setlistName={setlist.name}
       pages={pages}
-      currentInstrument={user.instrument}
+      currentInstrument={instrument}
     />
   );
 }

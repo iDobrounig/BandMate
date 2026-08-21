@@ -1,5 +1,8 @@
 import { db } from "@/lib/db";
 import {
+  bands,
+  bandMembers,
+  invites,
   users,
   songs,
   songLinks,
@@ -49,7 +52,10 @@ export async function leeren() {
   await db.delete(attachments);
   await db.delete(songLinks);
   await db.delete(songs);
+  await db.delete(invites);
+  await db.delete(bandMembers);
   await db.delete(users);
+  await db.delete(bands);
 }
 
 /**
@@ -61,17 +67,22 @@ export async function leeren() {
 export async function anlegen() {
   await leeren();
 
+  const [band] = await db
+    .insert(bands)
+    .values({ name: "Testband", calendarToken: "test-token-1" })
+    .returning();
+
   const [anna] = await db
     .insert(users)
-    .values({ name: "Anna Admin", email: "anna@test.at", passwordHash: "x", role: "admin", instrument: "Gitarre" })
+    .values({ name: "Anna Admin", email: "anna@test.at", passwordHash: "x" })
     .returning();
   const [bert] = await db
     .insert(users)
-    .values({ name: "Bert Bass", email: "bert@test.at", passwordHash: "x", instrument: "Bass" })
+    .values({ name: "Bert Bass", email: "bert@test.at", passwordHash: "x" })
     .returning();
   const [clara] = await db
     .insert(users)
-    .values({ name: "Clara Cello", email: "clara@test.at", passwordHash: "x", instrument: "Cello" })
+    .values({ name: "Clara Cello", email: "clara@test.at", passwordHash: "x" })
     .returning();
   // Ausgetretenes Mitglied — darf in Übersichten nicht mehr auftauchen.
   const [dora] = await db
@@ -79,9 +90,19 @@ export async function anlegen() {
     .values({ name: "Dora Draussen", email: "dora@test.at", passwordHash: "x", active: false })
     .returning();
 
+  // Rolle + Instrument leben pro Band in band_members. Dora ist bandlokal
+  // inaktiv (ausgetreten).
+  await db.insert(bandMembers).values([
+    { bandId: band.id, userId: anna.id, role: "band_admin", instrument: "Gitarre" },
+    { bandId: band.id, userId: bert.id, instrument: "Bass" },
+    { bandId: band.id, userId: clara.id, instrument: "Cello" },
+    { bandId: band.id, userId: dora.id, active: false },
+  ]);
+
   const [vorschlag] = await db
     .insert(songs)
     .values({
+      bandId: band.id,
       title: "Neuer Vorschlag",
       artist: "Testband",
       status: "suggestion",
@@ -91,15 +112,15 @@ export async function anlegen() {
     .returning();
   const [inProbe] = await db
     .insert(songs)
-    .values({ title: "In Probe", status: "rehearsing", tempoBpm: 120, durationSeconds: 180 })
+    .values({ bandId: band.id, title: "In Probe", status: "rehearsing", tempoBpm: 120, durationSeconds: 180 })
     .returning();
   const [repertoire] = await db
     .insert(songs)
-    .values({ title: "Sitzt Schon", status: "repertoire", songKey: "Am", durationSeconds: 240 })
+    .values({ bandId: band.id, title: "Sitzt Schon", status: "repertoire", songKey: "Am", durationSeconds: 240 })
     .returning();
   const [archiv] = await db
     .insert(songs)
-    .values({ title: "Altes Zeug", status: "archived" })
+    .values({ bandId: band.id, title: "Altes Zeug", status: "archived" })
     .returning();
 
   // Vorschlag: 2 dafür (Anna, Bert), 1 dagegen (Clara) -> Score +1
@@ -131,11 +152,11 @@ export async function anlegen() {
 
   const [setliste] = await db
     .insert(setlists)
-    .values({ name: "Sommerfest", eventDate: isoTag(20) })
+    .values({ bandId: band.id, name: "Sommerfest", eventDate: isoTag(20) })
     .returning();
   const [leereSetliste] = await db
     .insert(setlists)
-    .values({ name: "Noch leer" })
+    .values({ bandId: band.id, name: "Noch leer" })
     .returning();
 
   await db.insert(setlistItems).values([
@@ -145,15 +166,15 @@ export async function anlegen() {
 
   const [kommenderGig] = await db
     .insert(events)
-    .values({ title: "Sommerfest", kind: "gig", date: isoTag(20), startTime: "19:00", location: "Hauptplatz", setlistId: setliste.id, createdById: anna.id })
+    .values({ bandId: band.id, title: "Sommerfest", kind: "gig", date: isoTag(20), startTime: "19:00", location: "Hauptplatz", setlistId: setliste.id, createdById: anna.id })
     .returning();
   const [kommendeProbe] = await db
     .insert(events)
-    .values({ title: "Bandprobe", kind: "rehearsal", date: isoTag(3), startTime: "19:30", createdById: anna.id })
+    .values({ bandId: band.id, title: "Bandprobe", kind: "rehearsal", date: isoTag(3), startTime: "19:30", createdById: anna.id })
     .returning();
   const [alteProbe] = await db
     .insert(events)
-    .values({ title: "Alte Probe", kind: "rehearsal", date: isoTag(-30), createdById: anna.id })
+    .values({ bandId: band.id, title: "Alte Probe", kind: "rehearsal", date: isoTag(-30), createdById: anna.id })
     .returning();
 
   await db.insert(eventAttendance).values([
@@ -167,6 +188,7 @@ export async function anlegen() {
   const [verstaerker] = await db
     .insert(equipment)
     .values({
+      bandId: band.id,
       name: "Marshall JCM800",
       category: "amp",
       status: "in_use",
@@ -178,7 +200,7 @@ export async function anlegen() {
     .returning();
   const [mikrofon] = await db
     .insert(equipment)
-    .values({ name: "Shure SM58", category: "mic", createdById: bert.id })
+    .values({ bandId: band.id, name: "Shure SM58", category: "mic", createdById: bert.id })
     .returning();
 
   await db.insert(equipmentContributions).values([
@@ -208,10 +230,51 @@ export async function anlegen() {
   ]);
 
   return {
+    band,
+    bandId: band.id,
     users: { anna, bert, clara, dora },
     songs: { vorschlag, inProbe, repertoire, archiv },
     setlists: { setliste, leereSetliste },
     events: { kommenderGig, kommendeProbe, alteProbe },
     equipment: { verstaerker, mikrofon },
   };
+}
+
+/**
+ * Zweite Band mit eigenem Mitglied, Song, Setliste, Termin und Equipment —
+ * für die Scoping-Tests (Welle 4): jede Lesefunktion darf ausschließlich
+ * Inhalte der übergebenen Band liefern.
+ */
+export async function zweiteBandAnlegen() {
+  const [band] = await db
+    .insert(bands)
+    .values({ name: "Fremdband", calendarToken: "test-token-2" })
+    .returning();
+  const [egon] = await db
+    .insert(users)
+    .values({ name: "Egon Fremd", email: "egon@fremd.at", passwordHash: "x" })
+    .returning();
+  await db
+    .insert(bandMembers)
+    .values({ bandId: band.id, userId: egon.id, role: "band_admin", instrument: "Keyboard" });
+
+  const [song] = await db
+    .insert(songs)
+    .values({ bandId: band.id, title: "Fremder Song", status: "repertoire", durationSeconds: 210 })
+    .returning();
+  const [setliste] = await db
+    .insert(setlists)
+    .values({ bandId: band.id, name: "Fremdsetliste", eventDate: isoTag(15) })
+    .returning();
+  await db.insert(setlistItems).values({ setlistId: setliste.id, songId: song.id, position: 1 });
+  const [event] = await db
+    .insert(events)
+    .values({ bandId: band.id, title: "Fremdprobe", kind: "rehearsal", date: isoTag(5), createdById: egon.id })
+    .returning();
+  const [equip] = await db
+    .insert(equipment)
+    .values({ bandId: band.id, name: "Fremd-Amp", category: "amp", createdById: egon.id })
+    .returning();
+
+  return { band, bandId: band.id, users: { egon }, songs: { song }, setlists: { setliste }, events: { event }, equipment: { equip } };
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { fetchSongDetail, fetchSongReferences, fetchSongUsage } from "@/lib/queries";
 import { SONG_STATUS, PRACTICE_STATUS, EVENT_KIND } from "@/lib/constants";
 import { formatDuration, formatDateTime, formatDate, formatBytes } from "@/lib/format";
@@ -24,10 +24,10 @@ export default async function SongDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ upload_error?: string }>;
 }) {
-  const user = await requireUser();
+  const { user, bandId, role } = await requireBandContext();
   const { id } = await params;
   const { upload_error } = await searchParams;
-  const data = await fetchSongDetail(Number(id));
+  const data = await fetchSongDetail(Number(id), bandId);
   if (!data) notFound();
   const refs = await fetchSongReferences(Number(id));
   const usage = await fetchSongUsage(Number(id));
@@ -230,7 +230,7 @@ export default async function SongDetailPage({
                       <span className="text-xs text-faint">
                         {formatDateTime(comment.createdAt)}
                       </span>
-                      {(comment.userId === user.id || user.role === "admin") && (
+                      {(comment.userId === user.id || role === "band_admin") && (
                         <DeleteCommentButton commentId={comment.id} />
                       )}
                     </div>

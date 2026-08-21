@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   songs,
@@ -11,6 +11,7 @@ import {
   eventSongs,
   setlists,
   setlistItems,
+  bandMembers,
   equipment,
   equipmentContributions,
   equipmentAttachments,
@@ -33,6 +34,40 @@ import {
 import { attendancePercentage } from "@/lib/attendance";
 import { summarizeSetlist, compareTarget, type SetlistStructure } from "@/lib/setlist-structure";
 
+export type BandMemberRow = {
+  id: number;
+  name: string;
+  email: string;
+  instrument: string | null;
+  active: boolean;
+};
+
+/**
+ * Mitglieder einer Band (aus `band_members`). Standardmäßig nur aktive; mit
+ * `includeUserIds` kommen benannte inaktive/ausgetretene Mitglieder dazu (etwa
+ * für Formulare, in denen ihre bestehende Beteiligung erhalten bleiben muss).
+ */
+export async function fetchBandMembers(
+  bandId: number,
+  opts: { includeUserIds?: number[] } = {}
+): Promise<BandMemberRow[]> {
+  const extra = opts.includeUserIds?.length
+    ? or(eq(bandMembers.active, true), inArray(users.id, opts.includeUserIds))
+    : eq(bandMembers.active, true);
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      instrument: bandMembers.instrument,
+      active: bandMembers.active,
+    })
+    .from(bandMembers)
+    .innerJoin(users, eq(bandMembers.userId, users.id))
+    .where(and(eq(bandMembers.bandId, bandId), extra))
+    .orderBy(asc(users.name));
+}
+
 export type SongListItem = Song & {
   upvotes: number;
   downvotes: number;
@@ -46,7 +81,10 @@ export type SongListItem = Song & {
 };
 
 /** Songliste mit allen Zählern (Votes, Kommentare, Dateien, Übe-Status). */
-export async function fetchSongList(currentUserId: number): Promise<SongListItem[]> {
+export async function fetchSongList(
+  currentUserId: number,
+  bandId: number
+): Promise<SongListItem[]> {
   const today = new Date().toISOString().slice(0, 10);
   const rows = await db
     .select({
@@ -66,7 +104,7 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
     })
     .from(songs)
     .leftJoin(users, eq(songs.suggestedById, users.id))
-    .where(songAktiv)
+    .where(and(songAktiv, eq(songs.bandId, bandId)))
     .orderBy(desc(songs.createdAt));
 
   return rows.map((r) => ({
@@ -93,12 +131,15 @@ export async function fetchSongList(currentUserId: number): Promise<SongListItem
  * die Noten und Aufnahmen eines gelöschten Songs weiter per Direktlink
  * abrufbar und der Papierkorb per URL umgehbar.
  */
-export async function fetchServableAttachment(attachmentId: number) {
+export async function fetchServableAttachment(attachmentId: number, bandIds: number[]) {
+  if (bandIds.length === 0) return null;
   const [row] = await db
     .select({ attachment: attachments })
     .from(attachments)
     .innerJoin(songs, eq(attachments.songId, songs.id))
-    .where(and(eq(attachments.id, attachmentId), anhangAktiv, songAktiv))
+    .where(
+      and(eq(attachments.id, attachmentId), anhangAktiv, songAktiv, inArray(songs.bandId, bandIds))
+    )
     .limit(1);
   return row?.attachment ?? null;
 }
@@ -165,7 +206,7 @@ export type SetlistListItem = Setlist & {
 };
 
 /** Setlisten-Übersicht mit Anzahl Songs und Gesamtdauer. */
-export async function fetchSetlists(): Promise<SetlistListItem[]> {
+export async function fetchSetlists(bandId: number): Promise<SetlistListItem[]> {
   const rows = await db
     .select({
       setlist: setlists,
@@ -173,7 +214,7 @@ export async function fetchSetlists(): Promise<SetlistListItem[]> {
       totalSeconds: sql<number>`coalesce((select sum(s.duration_seconds) from setlist_items i join songs s on s.id = i.song_id where i.setlist_id = setlists.id and s.deleted_at is null), 0)`,
     })
     .from(setlists)
-    .where(setlistAktiv)
+    .where(and(setlistAktiv, eq(setlists.bandId, bandId)))
     .orderBy(desc(setlists.createdAt));
 
   return rows.map((r) => ({
@@ -206,9 +247,12 @@ export type SetlistPrintData = {
 };
 
 /** Daten für beide Druckansichten (voll & kompakt) einer Setliste. null, wenn unbekannt/gelöscht. */
-export async function getSetlistPrintData(setlistId: number): Promise<SetlistPrintData | null> {
+export async function getSetlistPrintData(
+  setlistId: number,
+  bandId: number
+): Promise<SetlistPrintData | null> {
   const setlist = await db.query.setlists.findFirst({
-    where: and(eq(setlists.id, setlistId), setlistAktiv),
+    where: and(eq(setlists.id, setlistId), setlistAktiv, eq(setlists.bandId, bandId)),
   });
   if (!setlist) return null;
 
@@ -277,6 +321,7 @@ export type EventListItem = BandEvent & {
 /** Termine mit Zu-/Absage-Zählern und eigenem Status. */
 export async function fetchEvents(
   currentUserId: number,
+  bandId: number,
   opts: { past?: boolean; limit?: number } = {}
 ): Promise<EventListItem[]> {
   const today = new Date().toISOString().slice(0, 10);
@@ -297,6 +342,7 @@ export async function fetchEvents(
     .where(
       and(
         eventAktiv,
+        eq(events.bandId, bandId),
         opts.past ? lt(events.date, today) : gte(events.date, today)
       )
     )
@@ -332,19 +378,20 @@ export type AttendanceStats = {
  * Anwesenheits-Statistik je aktivem Mitglied, nur vergangene Proben (keine
  * Gigs, siehe FEATURES.md). Quote über `attendancePercentage`.
  */
-export async function fetchAttendanceStats(): Promise<AttendanceStats[]> {
+export async function fetchAttendanceStats(bandId: number): Promise<AttendanceStats[]> {
   const today = new Date().toISOString().slice(0, 10);
   const rows = await db
     .select({
       userId: users.id,
       name: users.name,
-      instrument: users.instrument,
-      yes: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'yes' and e.kind = 'rehearsal' and e.deleted_at is null and e.date <= ${today})`,
-      no: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'no' and e.kind = 'rehearsal' and e.deleted_at is null and e.date <= ${today})`,
-      maybe: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'maybe' and e.kind = 'rehearsal' and e.deleted_at is null and e.date <= ${today})`,
+      instrument: bandMembers.instrument,
+      yes: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'yes' and e.kind = 'rehearsal' and e.deleted_at is null and e.band_id = ${bandId} and e.date <= ${today})`,
+      no: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'no' and e.kind = 'rehearsal' and e.deleted_at is null and e.band_id = ${bandId} and e.date <= ${today})`,
+      maybe: sql<number>`(select count(*) from event_attendance a join events e on e.id = a.event_id where a.user_id = users.id and a.status = 'maybe' and e.kind = 'rehearsal' and e.deleted_at is null and e.band_id = ${bandId} and e.date <= ${today})`,
     })
-    .from(users)
-    .where(eq(users.active, true))
+    .from(bandMembers)
+    .innerJoin(users, eq(bandMembers.userId, users.id))
+    .where(and(eq(bandMembers.bandId, bandId), eq(bandMembers.active, true)))
     .orderBy(asc(users.name));
 
   return rows.map((r) => ({
@@ -355,12 +402,13 @@ export async function fetchAttendanceStats(): Promise<AttendanceStats[]> {
 
 /** Aktive Termine einer Serie, für die Zusammenfassung auf der Serien-Bearbeiten-Seite. */
 export async function fetchSeriesInstances(
-  seriesId: string
+  seriesId: string,
+  bandId: number
 ): Promise<{ id: number; date: string }[]> {
   return db
     .select({ id: events.id, date: events.date })
     .from(events)
-    .where(and(eq(events.seriesId, seriesId), eventAktiv))
+    .where(and(eq(events.seriesId, seriesId), eq(events.bandId, bandId), eventAktiv))
     .orderBy(asc(events.date));
 }
 
@@ -376,7 +424,7 @@ export type ProgramEntry = {
  * Information, unabhängig vom eigenen Übe-Status (anders als `fetchTodo`s
  * `ungeuebteAgenda`).
  */
-export async function fetchUpcomingPrograms(): Promise<{
+export async function fetchUpcomingPrograms(bandId: number): Promise<{
   probe: ProgramEntry | null;
   gig: ProgramEntry | null;
 }> {
@@ -392,7 +440,7 @@ export async function fetchUpcomingPrograms(): Promise<{
         setlistId: events.setlistId,
       })
       .from(events)
-      .where(and(eventAktiv, eq(events.kind, kind), gte(events.date, today)))
+      .where(and(eventAktiv, eq(events.bandId, bandId), eq(events.kind, kind), gte(events.date, today)))
       .orderBy(asc(events.date), asc(events.startTime))
       .limit(1);
     if (!event) return null;
@@ -429,9 +477,9 @@ export async function fetchUpcomingPrograms(): Promise<{
 }
 
 /** Alles für die Song-Detailseite. */
-export async function fetchSongDetail(songId: number) {
+export async function fetchSongDetail(songId: number, bandId: number) {
   const song = await db.query.songs.findFirst({
-    where: and(eq(songs.id, songId), songAktiv),
+    where: and(eq(songs.id, songId), songAktiv, eq(songs.bandId, bandId)),
   });
   if (!song) return null;
 
@@ -464,9 +512,10 @@ export async function fetchSongDetail(songId: number) {
         .from(practiceStatus)
         .where(eq(practiceStatus.songId, songId)),
       db
-        .select({ id: users.id, name: users.name, instrument: users.instrument })
-        .from(users)
-        .where(eq(users.active, true))
+        .select({ id: users.id, name: users.name, instrument: bandMembers.instrument })
+        .from(bandMembers)
+        .innerJoin(users, eq(bandMembers.userId, users.id))
+        .where(and(eq(bandMembers.bandId, bandId), eq(bandMembers.active, true)))
         .orderBy(users.name),
       song.suggestedById
         ? db.query.users.findFirst({
@@ -495,7 +544,7 @@ export type EquipmentListItem = Equipment & {
 };
 
 /** Equipment-Liste mit Beteiligungssumme und Datei-Zählern. */
-export async function fetchEquipmentList(): Promise<EquipmentListItem[]> {
+export async function fetchEquipmentList(bandId: number): Promise<EquipmentListItem[]> {
   const rows = await db
     .select({
       item: equipment,
@@ -504,7 +553,7 @@ export async function fetchEquipmentList(): Promise<EquipmentListItem[]> {
       invoiceCount: sql<number>`(select count(*) from equipment_attachments a where a.equipment_id = equipment.id and a.kind = 'rechnung' and a.deleted_at is null)`,
     })
     .from(equipment)
-    .where(equipmentAktiv)
+    .where(and(equipmentAktiv, eq(equipment.bandId, bandId)))
     .orderBy(desc(equipment.createdAt));
 
   return rows.map((r) => ({
@@ -523,9 +572,12 @@ export type EquipmentDetail = {
 };
 
 /** Equipment-Detail: Stammdaten, Beteiligungen mit Namen, aktive Anhänge. */
-export async function fetchEquipmentDetail(equipmentId: number): Promise<EquipmentDetail | null> {
+export async function fetchEquipmentDetail(
+  equipmentId: number,
+  bandId: number
+): Promise<EquipmentDetail | null> {
   const item = await db.query.equipment.findFirst({
-    where: and(eq(equipment.id, equipmentId), equipmentAktiv),
+    where: and(eq(equipment.id, equipmentId), equipmentAktiv, eq(equipment.bandId, bandId)),
   });
   if (!item) return null;
 
@@ -565,8 +617,11 @@ export type UserContribution = {
   note: string | null;
 };
 
-/** Equipment-Beteiligungen eines einzelnen Users, für die eigene Profilseite. */
-export async function fetchUserContributions(userId: number): Promise<UserContribution[]> {
+/** Equipment-Beteiligungen eines Users in der aktiven Band, für die Profilseite. */
+export async function fetchUserContributions(
+  userId: number,
+  bandId: number
+): Promise<UserContribution[]> {
   return db
     .select({
       equipmentId: equipment.id,
@@ -576,7 +631,13 @@ export async function fetchUserContributions(userId: number): Promise<UserContri
     })
     .from(equipmentContributions)
     .innerJoin(equipment, eq(equipmentContributions.equipmentId, equipment.id))
-    .where(and(eq(equipmentContributions.userId, userId), equipmentAktiv))
+    .where(
+      and(
+        eq(equipmentContributions.userId, userId),
+        eq(equipment.bandId, bandId),
+        equipmentAktiv
+      )
+    )
     .orderBy(desc(equipment.createdAt));
 }
 
@@ -586,13 +647,22 @@ export async function fetchUserContributions(userId: number): Promise<UserContri
  * sowohl den Anhang als auch das zugehörige Gerät auf Papierkorb-Status.
  */
 export async function fetchServableEquipmentAttachment(
-  attachmentId: number
+  attachmentId: number,
+  bandIds: number[]
 ): Promise<EquipmentAttachment | null> {
+  if (bandIds.length === 0) return null;
   const [row] = await db
     .select({ attachment: equipmentAttachments })
     .from(equipmentAttachments)
     .innerJoin(equipment, eq(equipmentAttachments.equipmentId, equipment.id))
-    .where(and(eq(equipmentAttachments.id, attachmentId), equipmentAttachmentAktiv, equipmentAktiv))
+    .where(
+      and(
+        eq(equipmentAttachments.id, attachmentId),
+        equipmentAttachmentAktiv,
+        equipmentAktiv,
+        inArray(equipment.bandId, bandIds)
+      )
+    )
     .limit(1);
   return row?.attachment ?? null;
 }

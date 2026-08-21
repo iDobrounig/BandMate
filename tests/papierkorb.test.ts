@@ -31,7 +31,7 @@ async function songLoeschen(id: number) {
 describe("gelöschter Song", () => {
   it("verschwindet aus der Songliste, ohne die anderen mitzunehmen", async () => {
     await songLoeschen(f.songs.vorschlag.id);
-    const liste = await fetchSongList(f.users.anna.id);
+    const liste = await fetchSongList(f.users.anna.id, f.bandId);
     expect(liste).toHaveLength(3);
     expect(liste.map((s) => s.id)).not.toContain(f.songs.vorschlag.id);
     expect(liste.map((s) => s.id)).toContain(f.songs.inProbe.id);
@@ -39,18 +39,18 @@ describe("gelöschter Song", () => {
 
   it("ist über die Detailseite nicht mehr erreichbar", async () => {
     await songLoeschen(f.songs.inProbe.id);
-    expect(await fetchSongDetail(f.songs.inProbe.id)).toBeNull();
+    expect(await fetchSongDetail(f.songs.inProbe.id, f.bandId)).toBeNull();
   });
 
   it("zählt nicht mehr zur Setlisten-Länge und -Dauer", async () => {
-    const vorher = (await fetchSetlists()).find((s) => s.id === f.setlists.setliste.id)!;
+    const vorher = (await fetchSetlists(f.bandId)).find((s) => s.id === f.setlists.setliste.id)!;
     expect(vorher.songCount).toBe(2);
     expect(vorher.totalSeconds).toBe(420);
 
     // "Sitzt Schon" (240 s) liegt auf Position 1 der Setliste
     await songLoeschen(f.songs.repertoire.id);
 
-    const nachher = (await fetchSetlists()).find((s) => s.id === f.setlists.setliste.id)!;
+    const nachher = (await fetchSetlists(f.bandId)).find((s) => s.id === f.setlists.setliste.id)!;
     expect(nachher.songCount).toBe(1);
     expect(nachher.totalSeconds).toBe(180);
   });
@@ -62,11 +62,11 @@ describe("gelöschter Song", () => {
       .where(eq(attachments.songId, f.songs.inProbe.id))
       .limit(1);
 
-    expect(await fetchServableAttachment(datei.id)).not.toBeNull();
+    expect(await fetchServableAttachment(datei.id, [f.bandId])).not.toBeNull();
     await songLoeschen(f.songs.inProbe.id);
     // Der Anhang selbst ist NICHT markiert — nur sein Song. Ohne den Join wäre
     // die Datei hier weiter abrufbar und der Papierkorb per URL umgehbar.
-    expect(await fetchServableAttachment(datei.id)).toBeNull();
+    expect(await fetchServableAttachment(datei.id, [f.bandId])).toBeNull();
   });
 
   it("taucht mit seiner alten Position wieder auf, wenn er wiederhergestellt wird", async () => {
@@ -76,10 +76,10 @@ describe("gelöschter Song", () => {
       .set({ deletedAt: null, deletedById: null })
       .where(eq(songs.id, f.songs.repertoire.id));
 
-    const setliste = (await fetchSetlists()).find((s) => s.id === f.setlists.setliste.id)!;
+    const setliste = (await fetchSetlists(f.bandId)).find((s) => s.id === f.setlists.setliste.id)!;
     expect(setliste.songCount).toBe(2);
     expect(setliste.totalSeconds).toBe(420);
-    expect((await fetchSongDetail(f.songs.repertoire.id))?.song.title).toBe("Sitzt Schon");
+    expect((await fetchSongDetail(f.songs.repertoire.id, f.bandId))?.song.title).toBe("Sitzt Schon");
   });
 });
 
@@ -96,16 +96,16 @@ describe("gelöschter Anhang", () => {
       .set({ deletedAt: jetzt(), deletedById: f.users.anna.id })
       .where(eq(attachments.id, eineNote.id));
 
-    const liste = await fetchSongList(f.users.anna.id);
+    const liste = await fetchSongList(f.users.anna.id, f.bandId);
     const inProbe = liste.find((s) => s.id === f.songs.inProbe.id)!;
     expect(inProbe.sheetCount).toBe(1);
     expect(inProbe.audioCount).toBe(1); // die Audio-Datei bleibt unberührt
 
-    const detail = (await fetchSongDetail(f.songs.inProbe.id))!;
+    const detail = (await fetchSongDetail(f.songs.inProbe.id, f.bandId))!;
     expect(detail.files).toHaveLength(2);
     expect(detail.files.map((a) => a.id)).not.toContain(eineNote.id);
 
-    expect(await fetchServableAttachment(eineNote.id)).toBeNull();
+    expect(await fetchServableAttachment(eineNote.id, [f.bandId])).toBeNull();
   });
 });
 
@@ -116,7 +116,7 @@ describe("gelöschte Setliste", () => {
       .set({ deletedAt: jetzt(), deletedById: f.users.anna.id })
       .where(eq(setlists.id, f.setlists.setliste.id));
 
-    const listen = await fetchSetlists();
+    const listen = await fetchSetlists(f.bandId);
     expect(listen.map((s) => s.id)).not.toContain(f.setlists.setliste.id);
     expect(listen.map((s) => s.id)).toContain(f.setlists.leereSetliste.id);
   });
@@ -127,7 +127,7 @@ describe("gelöschte Setliste", () => {
       .set({ deletedAt: jetzt(), deletedById: f.users.anna.id })
       .where(eq(setlists.id, f.setlists.setliste.id));
 
-    const kommend = await fetchEvents(f.users.anna.id);
+    const kommend = await fetchEvents(f.users.anna.id, f.bandId);
     const gig = kommend.find((e) => e.id === f.events.kommenderGig.id);
     // Der Termin selbst darf NICHT verschwinden — das wäre der klassische
     // Fehler, den Filter ins WHERE statt in die JOIN-Bedingung zu schreiben.
@@ -145,8 +145,8 @@ describe("gelöschter Termin", () => {
         inArray(events.id, [f.events.kommenderGig.id, f.events.alteProbe.id])
       );
 
-    const kommend = await fetchEvents(f.users.anna.id);
-    const vergangen = await fetchEvents(f.users.anna.id, { past: true });
+    const kommend = await fetchEvents(f.users.anna.id, f.bandId);
+    const vergangen = await fetchEvents(f.users.anna.id, f.bandId, { past: true });
 
     expect(kommend.map((e) => e.id)).toEqual([f.events.kommendeProbe.id]);
     expect(vergangen).toHaveLength(0);

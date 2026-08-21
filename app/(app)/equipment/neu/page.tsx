@@ -1,18 +1,15 @@
-import { eq } from "drizzle-orm";
-import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { requireBandContext } from "@/lib/auth";
+import { fetchBandMembers } from "@/lib/queries";
 import { EquipmentForm } from "@/components/equipment-form";
 
 export const metadata = { title: "Equipment anlegen" };
 
 export default async function NeuesEquipmentPage() {
-  await requireUser();
-  const members = await db
-    .select({ id: users.id, name: users.name })
-    .from(users)
-    .where(eq(users.active, true))
-    .orderBy(users.name);
+  const { bandId } = await requireBandContext();
+  const members = (await fetchBandMembers(bandId)).map((m) => ({
+    id: m.id,
+    name: m.name,
+  }));
 
   return (
     <div className="max-w-2xl">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { getSetlistPrintData } from "@/lib/queries";
 import { formatDate, formatDuration } from "@/lib/format";
 import { PrintButton, PrintViewSwitcher } from "@/components/setlist-forms";
@@ -12,11 +12,11 @@ export default async function SetlistDruckPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const { id } = await params;
   const setlistId = Number(id);
 
-  const data = await getSetlistPrintData(setlistId);
+  const data = await getSetlistPrintData(setlistId, bandId);
   if (!data) notFound();
   const { setlist, items, structure, cmp, sectionSummaries } = data;
 

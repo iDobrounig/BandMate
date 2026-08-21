@@ -36,6 +36,7 @@ async function terminAn(tage: number, over = {}) {
   const [e] = await db
     .insert(events)
     .values({
+      bandId: f.bandId,
       title: "Bandprobe",
       kind: "rehearsal",
       date: inTagen(tage),
@@ -50,7 +51,7 @@ async function terminAn(tage: number, over = {}) {
 describe("offene Termine (nächste 14 Tage ohne Rückmeldung)", () => {
   it("listet einen Termin ohne meine Rückmeldung", async () => {
     const e = await terminAn(3);
-    const todo = await fetchTodo(f.users.anna.id, null);
+    const todo = await fetchTodo(f.users.anna.id, f.bandId, null);
     expect(todo.offeneTermine.map((t) => t.id)).toEqual([e.id]);
   });
 
@@ -61,18 +62,18 @@ describe("offene Termine (nächste 14 Tage ohne Rückmeldung)", () => {
       userId: f.users.anna.id,
       status: "no",
     });
-    expect((await fetchTodo(f.users.anna.id, null)).offeneTermine).toHaveLength(0);
+    expect((await fetchTodo(f.users.anna.id, f.bandId, null)).offeneTermine).toHaveLength(0);
   });
 
   it("ignoriert Termine außerhalb des 14-Tage-Fensters und vergangene", async () => {
     await terminAn(20);
     await terminAn(-2);
-    expect((await fetchTodo(f.users.anna.id, null)).offeneTermine).toHaveLength(0);
+    expect((await fetchTodo(f.users.anna.id, f.bandId, null)).offeneTermine).toHaveLength(0);
   });
 
   it("lässt gelöschte Termine aus", async () => {
     await terminAn(3, { deletedAt: new Date(), deletedById: f.users.anna.id });
-    expect((await fetchTodo(f.users.anna.id, null)).offeneTermine).toHaveLength(0);
+    expect((await fetchTodo(f.users.anna.id, f.bandId, null)).offeneTermine).toHaveLength(0);
   });
 });
 
@@ -81,7 +82,7 @@ describe("offene Vorschläge (ohne meine Stimme)", () => {
     // Fixtures: „Neuer Vorschlag" ist ein suggestion; bert/anna/clara haben dort
     // gestimmt. dora nicht — aber dora ist inaktiv. Prüfen aus Sicht clara: hat
     // gestimmt (dagegen), also NICHT offen. Aus Sicht … nehmen wir jemanden ohne Stimme.
-    const todoBert = await fetchTodo(f.users.bert.id, null);
+    const todoBert = await fetchTodo(f.users.bert.id, f.bandId, null);
     // Bert hat für den Vorschlag gestimmt -> nicht offen
     expect(todoBert.offeneVorschlaege.map((s) => s.id)).not.toContain(
       f.songs.vorschlag.id
@@ -91,14 +92,14 @@ describe("offene Vorschläge (ohne meine Stimme)", () => {
   it("zeigt einen frischen Vorschlag, für den niemand gestimmt hat", async () => {
     const [neu] = await db
       .insert(songs)
-      .values({ title: "Ganz neu", status: "suggestion" })
+      .values({ bandId: f.bandId, title: "Ganz neu", status: "suggestion" })
       .returning();
-    const todo = await fetchTodo(f.users.anna.id, null);
+    const todo = await fetchTodo(f.users.anna.id, f.bandId, null);
     expect(todo.offeneVorschlaege.map((s) => s.id)).toContain(neu.id);
   });
 
   it("zählt nur Vorschläge, nicht Repertoire/In-Probe", async () => {
-    const todo = await fetchTodo(f.users.anna.id, null);
+    const todo = await fetchTodo(f.users.anna.id, f.bandId, null);
     const ids = todo.offeneVorschlaege.map((s) => s.id);
     expect(ids).not.toContain(f.songs.inProbe.id);
     expect(ids).not.toContain(f.songs.repertoire.id);
@@ -113,7 +114,7 @@ describe("ungeübte Songs der nächsten Probe-Agenda", () => {
       songId: f.songs.repertoire.id,
       position: 1,
     });
-    const todo = await fetchTodo(f.users.anna.id, null);
+    const todo = await fetchTodo(f.users.anna.id, f.bandId, null);
     expect(todo.ungeuebteAgenda).toHaveLength(1);
     expect(todo.ungeuebteAgenda[0].songs.map((s) => s.id)).toEqual([
       f.songs.repertoire.id,
@@ -132,7 +133,7 @@ describe("ungeübte Songs der nächsten Probe-Agenda", () => {
       userId: f.users.anna.id,
       status: "ready",
     });
-    expect((await fetchTodo(f.users.anna.id, null)).ungeuebteAgenda).toHaveLength(0);
+    expect((await fetchTodo(f.users.anna.id, f.bandId, null)).ungeuebteAgenda).toHaveLength(0);
   });
 
   it("nimmt nur die zeitlich NÄCHSTE Agenda, nicht spätere", async () => {
@@ -142,7 +143,7 @@ describe("ungeübte Songs der nächsten Probe-Agenda", () => {
       { eventId: frueh.id, songId: f.songs.repertoire.id, position: 1 },
       { eventId: spaet.id, songId: f.songs.inProbe.id, position: 1 },
     ]);
-    const todo = await fetchTodo(f.users.anna.id, null);
+    const todo = await fetchTodo(f.users.anna.id, f.bandId, null);
     expect(todo.ungeuebteAgenda).toHaveLength(1);
     expect(todo.ungeuebteAgenda[0].eventId).toBe(frueh.id);
   });
@@ -153,24 +154,24 @@ describe("neue Kommentare seit letztem Besuch", () => {
     const gestern = new Date(Date.now() - 24 * 60 * 60 * 1000);
     // Fixtures haben 2 Kommentare (anna, clara) am „Neuer Vorschlag"
     // Aus Sicht anna: nur claras Kommentar zählt — wenn nach lastSeen.
-    const todo = await fetchTodo(f.users.anna.id, gestern);
+    const todo = await fetchTodo(f.users.anna.id, f.bandId, gestern);
     expect(todo.neueKommentare).toBe(1); // claras Kommentar, annas nicht
   });
 
   it("zählt nichts ohne lastSeenAt (erster Besuch)", async () => {
-    expect((await fetchTodo(f.users.anna.id, null)).neueKommentare).toBe(0);
+    expect((await fetchTodo(f.users.anna.id, f.bandId, null)).neueKommentare).toBe(0);
   });
 
   it("zählt nichts, wenn alle Kommentare älter als der letzte Besuch sind", async () => {
     const morgen = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    expect((await fetchTodo(f.users.anna.id, morgen)).neueKommentare).toBe(0);
+    expect((await fetchTodo(f.users.anna.id, f.bandId, morgen)).neueKommentare).toBe(0);
   });
 });
 
 describe("Gesamtzahl und touchLastSeen", () => {
   it("summiert alle Posten", async () => {
     await terminAn(3); // 1 offener Termin
-    const todo = await fetchTodo(f.users.anna.id, null);
+    const todo = await fetchTodo(f.users.anna.id, f.bandId, null);
     // 1 Termin + offene Vorschläge (Fixtures: „Neuer Vorschlag" hat anna schon
     // gestimmt -> 0) + Agenda(0) + Kommentare(0, kein lastSeen)
     expect(todo.gesamt).toBe(todo.offeneTermine.length + todo.offeneVorschlaege.length);

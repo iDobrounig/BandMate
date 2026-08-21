@@ -1,9 +1,9 @@
-import { asc, eq } from "drizzle-orm";
-import { requireUser } from "@/lib/auth";
+import { asc } from "drizzle-orm";
+import { requireBandContext } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { fetchSettings } from "@/lib/notifications";
-import { fetchAttendanceStats, type AttendanceStats } from "@/lib/queries";
+import { fetchAttendanceStats, fetchBandMembers, type AttendanceStats } from "@/lib/queries";
 import { ATTENDANCE_STATUS } from "@/lib/constants";
 import { NewMemberForm, MemberRow } from "@/components/member-admin";
 import { SmtpTestForm } from "@/components/smtp-test";
@@ -52,15 +52,11 @@ function AttendanceStatsCard({ stats }: { stats: AttendanceStats[] }) {
 }
 
 export default async function MitgliederPage() {
-  const user = await requireUser();
-  const stats = await fetchAttendanceStats();
+  const { user, bandId, role } = await requireBandContext();
+  const stats = await fetchAttendanceStats(bandId);
 
-  if (user.role !== "admin") {
-    const members = await db
-      .select({ id: users.id, name: users.name, instrument: users.instrument, email: users.email })
-      .from(users)
-      .where(eq(users.active, true))
-      .orderBy(asc(users.name));
+  if (role !== "band_admin") {
+    const members = await fetchBandMembers(bandId);
 
     return (
       <div>

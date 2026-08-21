@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { and, desc, eq } from "drizzle-orm";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { songs, comments, users } from "@/lib/db/schema";
 import { fetchSongList, fetchEvents, fetchSetlists, fetchUpcomingPrograms } from "@/lib/queries";
@@ -13,8 +13,8 @@ import { ReminderStatusLine } from "@/components/reminder-status";
 import { TodoBlock } from "@/components/todo-block";
 
 export default async function DashboardPage() {
-  const user = await requireUser();
-  const isAdmin = user.role === "admin";
+  const { user, bandId, role } = await requireBandContext();
+  const isAdmin = role === "band_admin";
 
   // lastSeenAt VOR dem Todo lesen und sofort fortschreiben — so nutzt „neu seit
   // letztem Besuch" den vorigen Wert, und rasche Reloads verlieren ihn nicht.
@@ -22,21 +22,21 @@ export default async function DashboardPage() {
 
   const [allSongs, recentComments, upcomingEvents, allSetlists, reminderStatus, todo, programs] =
     await Promise.all([
-      fetchSongList(user.id),
+      fetchSongList(user.id, bandId),
       db
         .select({ comment: comments, userName: users.name, songTitle: songs.title })
         .from(comments)
         .innerJoin(users, eq(comments.userId, users.id))
         .innerJoin(songs, eq(comments.songId, songs.id))
-        .where(songAktiv)
+        .where(and(songAktiv, eq(songs.bandId, bandId)))
         .orderBy(desc(comments.createdAt))
         .limit(6),
-      fetchEvents(user.id, { limit: 4 }),
-      fetchSetlists(),
+      fetchEvents(user.id, bandId, { limit: 4 }),
+      fetchSetlists(bandId),
       // Nur Admins sehen die Statuszeile — für alle anderen gar nicht erst laden.
       isAdmin ? fetchReminderStatus() : Promise.resolve(null),
-      fetchTodo(user.id, lastSeen),
-      fetchUpcomingPrograms(),
+      fetchTodo(user.id, bandId, lastSeen),
+      fetchUpcomingPrograms(bandId),
     ]);
 
   const suggestions = allSongs.filter((s) => s.status === "suggestion");

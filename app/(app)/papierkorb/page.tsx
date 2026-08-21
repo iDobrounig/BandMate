@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { fetchTrash, purgeExpired, TRASH_LABEL } from "@/lib/trash";
 import { TRASH_RETENTION_DAYS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/format";
@@ -9,13 +9,13 @@ import { IconTrash } from "@/components/icons";
 export const metadata = { title: "Papierkorb" };
 
 export default async function PapierkorbPage() {
-  const user = await requireUser();
+  const { bandId, role } = await requireBandContext();
 
   // Opportunistisch aufräumen: so bleibt der Papierkorb auch dann korrekt,
   // wenn der Cron-Job (npm run trash:purge) nicht eingerichtet ist.
   await purgeExpired();
 
-  const eintraege = await fetchTrash();
+  const eintraege = await fetchTrash(bandId);
 
   return (
     <div>
@@ -73,7 +73,7 @@ export default async function PapierkorbPage() {
                   id={eintrag.id}
                   label={eintrag.label}
                 />
-                {user.role === "admin" && (
+                {role === "band_admin" && (
                   <PurgeButton
                     kind={eintrag.kind}
                     id={eintrag.id}
@@ -87,7 +87,7 @@ export default async function PapierkorbPage() {
         </ul>
       )}
 
-      {user.role !== "admin" && eintraege.length > 0 && (
+      {role !== "band_admin" && eintraege.length > 0 && (
         <p className="mt-6 text-xs text-faint">
           Endgültig löschen kann nur ein Admin — das ist die einzige Aktion, die
           sich nicht mehr rückgängig machen lässt.

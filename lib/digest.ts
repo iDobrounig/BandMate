@@ -9,7 +9,8 @@ import {
   notificationRuns,
 } from "@/lib/db/schema";
 import { fetchSettings } from "@/lib/notifications";
-import { fetchTodo, type TodoData } from "@/lib/todo";
+import { fetchTodoForBands, type TodoData } from "@/lib/todo";
+import { fetchMemberships } from "@/lib/auth";
 import { createBatchMailer, isSmtpConfigured, type MailContent } from "@/lib/mail";
 import { formatDate } from "@/lib/format";
 
@@ -240,9 +241,13 @@ export async function runDigest(
           .filter(([, mode]) => mode === "gesammelt")
           .map(([kind]) => kind)
       );
+      // Aufgaben über alle Bands des Empfängers (Benachrichtigungen sind
+      // personenbezogen). fetchGathered bleibt vorerst bandübergreifend —
+      // Stage 6 macht die „gesammelt"-Posten ebenfalls band-bewusst.
+      const bandIds = (await fetchMemberships(person.id)).map((m) => m.bandId);
       const [gathered, todo] = await Promise.all([
         fetchGathered(person.id, gesammelt, seit),
-        fetchTodo(person.id, null), // Digest zählt keine „neuen Kommentare seit Besuch"
+        fetchTodoForBands(person.id, bandIds, null), // Digest zählt keine „neuen Kommentare seit Besuch"
       ]);
 
       const content = buildDigest(person.name.split(" ")[0], gathered, todo, appUrl);

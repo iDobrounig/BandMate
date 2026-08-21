@@ -16,9 +16,12 @@ const initial: FormState = {};
 
 export function ProfileForm({
   user,
+  instrument,
   settings,
 }: {
   user: User;
+  /** Instrument in der aktiven Band (aus band_members). */
+  instrument: string | null;
   settings: SettingsMap;
 }) {
   const [state, action] = useActionState(updateProfile, initial);
@@ -63,7 +66,7 @@ export function ProfileForm({
               className="input"
               id="instrument"
               name="instrument"
-              defaultValue={user.instrument ?? ""}
+              defaultValue={instrument ?? ""}
               list="instruments"
               placeholder="z.B. Gitarre"
             />

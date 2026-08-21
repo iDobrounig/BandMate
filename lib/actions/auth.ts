@@ -2,13 +2,13 @@
 
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, bandMembers } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { requireUser } from "@/lib/auth";
+import { requireUser, requireBandContext } from "@/lib/auth";
 import { sendPasswordResetMail } from "@/lib/mail";
 import { saveSettings, readSettingsForm } from "@/lib/notifications";
 
@@ -45,7 +45,7 @@ export async function updateProfile(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "")
     .trim()
@@ -61,10 +61,15 @@ export async function updateProfile(
     return { error: "Diese E-Mail-Adresse ist bereits vergeben." };
   }
 
+  // Name/E-Mail/Digest sind global; das Instrument gehört zur aktiven Band.
   await db
     .update(users)
-    .set({ name, email, instrument: instrument || null, digestEnabled })
+    .set({ name, email, digestEnabled })
     .where(eq(users.id, user.id));
+  await db
+    .update(bandMembers)
+    .set({ instrument: instrument || null })
+    .where(and(eq(bandMembers.bandId, bandId), eq(bandMembers.userId, user.id)));
   await saveSettings(user.id, readSettingsForm(formData));
 
   revalidatePath("/", "layout");

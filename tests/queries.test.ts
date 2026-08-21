@@ -20,7 +20,7 @@ beforeAll(async () => {
 
 describe("fetchSongList", () => {
   it("liefert alle Songs mit Vorschlagendem", async () => {
-    const liste = await fetchSongList(f.users.anna.id);
+    const liste = await fetchSongList(f.users.anna.id, f.bandId);
     expect(liste).toHaveLength(4);
     const vorschlag = liste.find((s) => s.id === f.songs.vorschlag.id)!;
     expect(vorschlag.suggestedByName).toBe("Bert Bass");
@@ -29,15 +29,15 @@ describe("fetchSongList", () => {
   });
 
   it("zählt Stimmen getrennt nach dafür und dagegen", async () => {
-    const liste = await fetchSongList(f.users.anna.id);
+    const liste = await fetchSongList(f.users.anna.id, f.bandId);
     const vorschlag = liste.find((s) => s.id === f.songs.vorschlag.id)!;
     expect(vorschlag.upvotes).toBe(2);
     expect(vorschlag.downvotes).toBe(1);
   });
 
   it("liefert die eigene Stimme je nach Betrachter", async () => {
-    const alsAnna = await fetchSongList(f.users.anna.id);
-    const alsClara = await fetchSongList(f.users.clara.id);
+    const alsAnna = await fetchSongList(f.users.anna.id, f.bandId);
+    const alsClara = await fetchSongList(f.users.clara.id, f.bandId);
     const id = f.songs.vorschlag.id;
     expect(alsAnna.find((s) => s.id === id)!.myVote).toBe(1);
     expect(alsClara.find((s) => s.id === id)!.myVote).toBe(-1);
@@ -46,7 +46,7 @@ describe("fetchSongList", () => {
   });
 
   it("zählt Kommentare, Audios, Noten und Übe-Status getrennt", async () => {
-    const liste = await fetchSongList(f.users.anna.id);
+    const liste = await fetchSongList(f.users.anna.id, f.bandId);
     const vorschlag = liste.find((s) => s.id === f.songs.vorschlag.id)!;
     const inProbe = liste.find((s) => s.id === f.songs.inProbe.id)!;
 
@@ -65,17 +65,17 @@ describe("fetchSongList", () => {
 
 describe("fetchSongDetail", () => {
   it("liefert null für einen unbekannten Song", async () => {
-    expect(await fetchSongDetail(999_999)).toBeNull();
+    expect(await fetchSongDetail(999_999, f.bandId)).toBeNull();
   });
 
   it("sammelt Links, Dateien, Kommentare, Stimmen und Übe-Status", async () => {
-    const detail = (await fetchSongDetail(f.songs.inProbe.id))!;
+    const detail = (await fetchSongDetail(f.songs.inProbe.id, f.bandId))!;
     expect(detail.song.title).toBe("In Probe");
     expect(detail.files).toHaveLength(3);
     expect(detail.practice).toHaveLength(3);
     expect(detail.comments).toHaveLength(0);
 
-    const vorschlag = (await fetchSongDetail(f.songs.vorschlag.id))!;
+    const vorschlag = (await fetchSongDetail(f.songs.vorschlag.id, f.bandId))!;
     expect(vorschlag.links).toHaveLength(1);
     expect(vorschlag.votes).toHaveLength(3);
     expect(vorschlag.comments.map((c) => c.userName)).toEqual(["Anna Admin", "Clara Cello"]);
@@ -83,7 +83,7 @@ describe("fetchSongDetail", () => {
   });
 
   it("blendet deaktivierte Mitglieder aus der Band-Übersicht aus", async () => {
-    const detail = (await fetchSongDetail(f.songs.inProbe.id))!;
+    const detail = (await fetchSongDetail(f.songs.inProbe.id, f.bandId))!;
     const namen = detail.allUsers.map((u) => u.name);
     expect(namen).toContain("Anna Admin");
     expect(namen).not.toContain("Dora Draussen");
@@ -93,14 +93,14 @@ describe("fetchSongDetail", () => {
 
 describe("fetchSetlists", () => {
   it("zählt Songs und summiert die Dauer je Setliste", async () => {
-    const listen = await fetchSetlists();
+    const listen = await fetchSetlists(f.bandId);
     const sommerfest = listen.find((s) => s.id === f.setlists.setliste.id)!;
     expect(sommerfest.songCount).toBe(2);
     expect(sommerfest.totalSeconds).toBe(240 + 180);
   });
 
   it("liefert für eine leere Setliste 0 statt null", async () => {
-    const listen = await fetchSetlists();
+    const listen = await fetchSetlists(f.bandId);
     const leer = listen.find((s) => s.id === f.setlists.leereSetliste.id)!;
     expect(leer.songCount).toBe(0);
     expect(leer.totalSeconds).toBe(0);
@@ -109,15 +109,15 @@ describe("fetchSetlists", () => {
 
 describe("fetchEvents", () => {
   it("trennt kommende von vergangenen Terminen", async () => {
-    const kommend = await fetchEvents(f.users.anna.id);
-    const vergangen = await fetchEvents(f.users.anna.id, { past: true });
+    const kommend = await fetchEvents(f.users.anna.id, f.bandId);
+    const vergangen = await fetchEvents(f.users.anna.id, f.bandId, { past: true });
 
     expect(kommend.map((e) => e.title)).toEqual(["Bandprobe", "Sommerfest"]); // nach Datum
     expect(vergangen.map((e) => e.title)).toEqual(["Alte Probe"]);
   });
 
   it("zählt Zu-, Ab- und Vielleicht-Sagen getrennt", async () => {
-    const kommend = await fetchEvents(f.users.anna.id);
+    const kommend = await fetchEvents(f.users.anna.id, f.bandId);
     const gig = kommend.find((e) => e.id === f.events.kommenderGig.id)!;
     expect(gig.yesCount).toBe(2);
     expect(gig.maybeCount).toBe(1);
@@ -125,21 +125,21 @@ describe("fetchEvents", () => {
   });
 
   it("liefert den eigenen Status je nach Betrachter", async () => {
-    const alsClara = await fetchEvents(f.users.clara.id);
-    const alsDora = await fetchEvents(f.users.dora.id);
+    const alsClara = await fetchEvents(f.users.clara.id, f.bandId);
+    const alsDora = await fetchEvents(f.users.dora.id, f.bandId);
     const id = f.events.kommenderGig.id;
     expect(alsClara.find((e) => e.id === id)!.myStatus).toBe("maybe");
     expect(alsDora.find((e) => e.id === id)!.myStatus).toBeNull();
   });
 
   it("hängt den Setlisten-Namen an, ohne Termine ohne Setliste zu verlieren", async () => {
-    const kommend = await fetchEvents(f.users.anna.id);
+    const kommend = await fetchEvents(f.users.anna.id, f.bandId);
     expect(kommend.find((e) => e.id === f.events.kommenderGig.id)!.setlistName).toBe("Sommerfest");
     expect(kommend.find((e) => e.id === f.events.kommendeProbe.id)!.setlistName).toBeNull();
   });
 
   it("beachtet das Limit", async () => {
-    const kommend = await fetchEvents(f.users.anna.id, { limit: 1 });
+    const kommend = await fetchEvents(f.users.anna.id, f.bandId, { limit: 1 });
     expect(kommend).toHaveLength(1);
     expect(kommend[0].date).toBe(isoTag(3)); // das näheste zuerst
   });
@@ -147,14 +147,14 @@ describe("fetchEvents", () => {
 
 describe("getSetlistPrintData", () => {
   it("liefert null für eine unbekannte Setliste", async () => {
-    expect(await getSetlistPrintData(999_999)).toBeNull();
+    expect(await getSetlistPrintData(999_999, f.bandId)).toBeNull();
   });
 
   it("liefert null für eine in den Papierkorb gelegte Setliste", async () => {
-    const [sl] = await db.insert(setlists).values({ name: "Gelöschter Testabend" }).returning();
+    const [sl] = await db.insert(setlists).values({ bandId: f.bandId, name: "Gelöschter Testabend" }).returning();
     await db.update(setlists).set({ deletedAt: new Date() }).where(eq(setlists.id, sl.id));
 
-    expect(await getSetlistPrintData(sl.id)).toBeNull();
+    expect(await getSetlistPrintData(sl.id, f.bandId)).toBeNull();
 
     await db.delete(setlists).where(eq(setlists.id, sl.id));
   });
@@ -167,13 +167,14 @@ describe("getSetlistPrintData", () => {
     beforeAll(async () => {
       const [sl] = await db
         .insert(setlists)
-        .values({ name: "Testabend", targetSeconds: 500 })
+        .values({ bandId: f.bandId, name: "Testabend", targetSeconds: 500 })
         .returning();
       setlistId = sl.id;
 
       const [songA] = await db
         .insert(songs)
         .values({
+          bandId: f.bandId,
           title: "Opener",
           artist: "Testband",
           status: "repertoire",
@@ -186,7 +187,7 @@ describe("getSetlistPrintData", () => {
       songAId = songA.id;
       const [songB] = await db
         .insert(songs)
-        .values({ title: "Rausschmeißer", status: "repertoire", songKey: "D", durationSeconds: 220 })
+        .values({ bandId: f.bandId, title: "Rausschmeißer", status: "repertoire", songKey: "D", durationSeconds: 220 })
         .returning();
       songBId = songB.id;
 
@@ -206,7 +207,7 @@ describe("getSetlistPrintData", () => {
     });
 
     it("fasst Sets, Pausen und Zielzeit-Abgleich zusammen", async () => {
-      const data = await getSetlistPrintData(setlistId);
+      const data = await getSetlistPrintData(setlistId, f.bandId);
       expect(data).not.toBeNull();
       expect(data!.setlist.name).toBe("Testabend");
       expect(data!.items.map((i) => i.kind)).toEqual([
@@ -248,7 +249,7 @@ describe("getSetlistPrintData", () => {
     it("blendet einen in den Papierkorb gelegten Song aus, behält Sets und Pausen", async () => {
       await db.update(songs).set({ deletedAt: new Date() }).where(eq(songs.id, songAId));
 
-      const data = await getSetlistPrintData(setlistId);
+      const data = await getSetlistPrintData(setlistId, f.bandId);
       expect(data).not.toBeNull();
       expect(data!.items.map((i) => i.kind)).toEqual(["section", "break", "section", "song"]);
 

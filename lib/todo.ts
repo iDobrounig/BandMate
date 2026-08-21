@@ -45,6 +45,7 @@ function inTagen(n: number): string {
 
 export async function fetchTodo(
   userId: number,
+  bandId: number,
   lastSeenAt: Date | null
 ): Promise<TodoData> {
   const bis14 = inTagen(14);
@@ -61,6 +62,7 @@ export async function fetchTodo(
     .where(
       and(
         isNull(events.deletedAt),
+        eq(events.bandId, bandId),
         gte(events.date, heute()),
         lte(events.date, bis14),
         sql`not exists (select 1 from event_attendance a where a.event_id = events.id and a.user_id = ${userId})`
@@ -75,6 +77,7 @@ export async function fetchTodo(
     .where(
       and(
         isNull(songs.deletedAt),
+        eq(songs.bandId, bandId),
         eq(songs.status, "suggestion"),
         sql`not exists (select 1 from votes v where v.song_id = songs.id and v.user_id = ${userId})`
       )
@@ -89,6 +92,7 @@ export async function fetchTodo(
     .where(
       and(
         isNull(events.deletedAt),
+        eq(events.bandId, bandId),
         gte(events.date, heute()),
         sql`exists (select 1 from event_songs es where es.event_id = events.id)`
       )
@@ -130,6 +134,7 @@ export async function fetchTodo(
       .where(
         and(
           isNull(songs.deletedAt),
+          eq(songs.bandId, bandId),
           ne(comments.userId, userId),
           gt(comments.createdAt, lastSeenAt)
         )
@@ -150,6 +155,37 @@ export async function fetchTodo(
     neueKommentare,
     gesamt,
   };
+}
+
+/**
+ * Aufgabenliste über mehrere Bands hinweg zusammengefasst — für den Digest, der
+ * pro Person (nicht pro Band) verschickt wird. Listen werden aneinandergehängt,
+ * Zähler summiert.
+ */
+export async function fetchTodoForBands(
+  userId: number,
+  bandIds: number[],
+  lastSeenAt: Date | null
+): Promise<TodoData> {
+  const parts = await Promise.all(
+    bandIds.map((bandId) => fetchTodo(userId, bandId, lastSeenAt))
+  );
+  return parts.reduce<TodoData>(
+    (acc, t) => ({
+      offeneTermine: [...acc.offeneTermine, ...t.offeneTermine],
+      offeneVorschlaege: [...acc.offeneVorschlaege, ...t.offeneVorschlaege],
+      ungeuebteAgenda: [...acc.ungeuebteAgenda, ...t.ungeuebteAgenda],
+      neueKommentare: acc.neueKommentare + t.neueKommentare,
+      gesamt: acc.gesamt + t.gesamt,
+    }),
+    {
+      offeneTermine: [],
+      offeneVorschlaege: [],
+      ungeuebteAgenda: [],
+      neueKommentare: 0,
+      gesamt: 0,
+    }
+  );
 }
 
 /**

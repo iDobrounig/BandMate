@@ -34,12 +34,12 @@ const langeHer = () =>
 
 describe("Papierkorb-Liste", () => {
   it("ist leer, solange nichts gelöscht wurde", async () => {
-    expect(await fetchTrash()).toHaveLength(0);
+    expect(await fetchTrash(f.bandId)).toHaveLength(0);
   });
 
   it("nennt Bezeichnung, Löschenden und Restlaufzeit", async () => {
     await loeschen(f.songs.vorschlag.id);
-    const [eintrag] = await fetchTrash();
+    const [eintrag] = await fetchTrash(f.bandId);
     expect(eintrag.kind).toBe("song");
     expect(eintrag.label).toBe("Neuer Vorschlag");
     expect(eintrag.deletedByName).toBe("Anna Admin");
@@ -50,7 +50,7 @@ describe("Papierkorb-Liste", () => {
   it("sortiert das zuletzt Gelöschte nach oben", async () => {
     await loeschen(f.songs.vorschlag.id, new Date(Date.now() - 60_000));
     await loeschen(f.songs.archiv.id, new Date());
-    const liste = await fetchTrash();
+    const liste = await fetchTrash(f.bandId);
     expect(liste.map((e) => e.label)).toEqual(["Altes Zeug", "Neuer Vorschlag"]);
   });
 });
@@ -61,6 +61,7 @@ describe("Terminserien im Papierkorb", () => {
       .insert(events)
       .values(
         [4, 11, 18].map((tag) => ({
+          bandId: f.bandId,
           title: "Wochenprobe",
           kind: "rehearsal" as const,
           date: isoTag(tag),
@@ -80,7 +81,7 @@ describe("Terminserien im Papierkorb", () => {
       .set({ deletedAt: wann, deletedById: f.users.anna.id })
       .where(eq(events.seriesId, "serie-1"));
 
-    const liste = await fetchTrash();
+    const liste = await fetchTrash(f.bandId);
     expect(liste).toHaveLength(1);
     expect(liste[0].label).toBe("Serie: Wochenprobe");
     expect(liste[0].count).toBe(3);
@@ -95,7 +96,7 @@ describe("Terminserien im Papierkorb", () => {
       .set({ deletedAt: new Date(), deletedById: f.users.anna.id })
       .where(eq(events.id, serie[1].id));
 
-    const liste = await fetchTrash();
+    const liste = await fetchTrash(f.bandId);
     expect(liste).toHaveLength(1);
     expect(liste[0].label).toBe("Wochenprobe"); // ohne "Serie:"
     expect(liste[0].count).toBe(1);
@@ -121,14 +122,14 @@ describe("Terminserien im Papierkorb", () => {
       .set({ deletedAt: spaeter, deletedById: f.users.anna.id })
       .where(eq(events.id, serie[2].id));
 
-    const liste = await fetchTrash();
+    const liste = await fetchTrash(f.bandId);
     expect(liste).toHaveLength(2);
     // Neuester Eintrag zuerst: der einzeln gelöschte dritte Termin
     expect(liste.map((e) => e.count)).toEqual([1, 2]);
 
     // Wiederherstellen holt nur die eigene Gruppe zurück
     expect(await restore("event", serie[0].id)).toBe(2);
-    const rest = await fetchTrash();
+    const rest = await fetchTrash(f.bandId);
     expect(rest).toHaveLength(1);
     expect(rest[0].count).toBe(1);
   });
@@ -141,7 +142,7 @@ describe("Terminserien im Papierkorb", () => {
       .where(eq(events.seriesId, "serie-1"));
 
     expect(await restore("event", serie[0].id)).toBe(3);
-    const kommend = await fetchEvents(f.users.anna.id);
+    const kommend = await fetchEvents(f.users.anna.id, f.bandId);
     expect(kommend.filter((e) => e.title === "Wochenprobe")).toHaveLength(3);
   });
 });
@@ -149,13 +150,13 @@ describe("Terminserien im Papierkorb", () => {
 describe("Equipment im Papierkorb", () => {
   it("erscheint im Papierkorb und lässt sich wiederherstellen", async () => {
     await loeschenEquipment(f.equipment.verstaerker.id);
-    const liste = await fetchTrash();
+    const liste = await fetchTrash(f.bandId);
     const eintrag = liste.find((e) => e.kind === "equipment")!;
     expect(eintrag.label).toBe("Marshall JCM800");
 
     const n = await restore("equipment", f.equipment.verstaerker.id);
     expect(n).toBe(1);
-    expect((await fetchTrash()).some((e) => e.kind === "equipment")).toBe(false);
+    expect((await fetchTrash(f.bandId)).some((e) => e.kind === "equipment")).toBe(false);
   });
 
   it("löscht beim endgültigen Entfernen auch die zugehörigen Dateien", async () => {
@@ -182,7 +183,7 @@ describe("Equipment-Anhänge im Papierkorb", () => {
       .set({ deletedAt: new Date(), deletedById: f.users.anna.id })
       .where(eq(equipmentAttachments.id, datei.id));
 
-    const liste = await fetchTrash();
+    const liste = await fetchTrash(f.bandId);
     const eintrag = liste.find((e) => e.kind === "equipmentAttachment")!;
     expect(eintrag.sublabel).toContain("Marshall JCM800");
 
@@ -195,9 +196,9 @@ describe("wiederherstellen", () => {
   it("bringt den Song zurück in die Liste", async () => {
     await loeschen(f.songs.vorschlag.id);
     expect(await restore("song", f.songs.vorschlag.id)).toBe(1);
-    const liste = await fetchSongList(f.users.anna.id);
+    const liste = await fetchSongList(f.users.anna.id, f.bandId);
     expect(liste.map((s) => s.id)).toContain(f.songs.vorschlag.id);
-    expect(await fetchTrash()).toHaveLength(0);
+    expect(await fetchTrash(f.bandId)).toHaveLength(0);
   });
 
   it("tut nichts bei einem gar nicht gelöschten Eintrag", async () => {
@@ -243,7 +244,7 @@ describe("automatisches Aufräumen", () => {
     const bericht = await purgeExpired();
     expect(bericht.song).toBe(1);
 
-    const liste = await fetchTrash();
+    const liste = await fetchTrash(f.bandId);
     expect(liste.map((e) => e.label)).toEqual(["Altes Zeug"]);
   });
 
@@ -265,6 +266,7 @@ describe("automatisches Aufräumen", () => {
   it("räumt eine abgelaufene Serie in einem Rutsch weg", async () => {
     await db.insert(events).values(
       [4, 11].map((tag) => ({
+        bandId: f.bandId,
         title: "Alte Serie",
         kind: "rehearsal" as const,
         date: isoTag(tag),
@@ -286,7 +288,7 @@ describe("automatisches Aufräumen", () => {
     const bericht = await purgeExpired();
     expect(bericht.equipment).toBe(1);
 
-    const liste = await fetchTrash();
+    const liste = await fetchTrash(f.bandId);
     expect(liste.some((e) => e.kind === "equipment")).toBe(false);
   });
 });

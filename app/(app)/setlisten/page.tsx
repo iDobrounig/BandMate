@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { fetchSetlists } from "@/lib/queries";
 import { formatDate, formatDuration } from "@/lib/format";
 import { UndoBanner } from "@/components/undo-banner";
@@ -20,9 +20,9 @@ export default async function SetlistenPage({
 }: {
   searchParams: Promise<Search>;
 }) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
 
-  const [lists, params] = await Promise.all([fetchSetlists(), searchParams]);
+  const [lists, params] = await Promise.all([fetchSetlists(bandId), searchParams]);
 
   const q = (params.q ?? "").trim();
   const sort: Sort =

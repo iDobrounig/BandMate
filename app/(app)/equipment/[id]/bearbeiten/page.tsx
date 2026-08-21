@@ -1,9 +1,6 @@
-import { eq, or, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
-import { fetchEquipmentDetail } from "@/lib/queries";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { requireBandContext } from "@/lib/auth";
+import { fetchEquipmentDetail, fetchBandMembers } from "@/lib/queries";
 import { EquipmentForm } from "@/components/equipment-form";
 
 export const metadata = { title: "Equipment bearbeiten" };
@@ -13,9 +10,9 @@ export default async function EquipmentBearbeitenPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const { id } = await params;
-  const data = await fetchEquipmentDetail(Number(id));
+  const data = await fetchEquipmentDetail(Number(id), bandId);
   if (!data) notFound();
 
   // Aktive Mitglieder ODER Mitglieder mit bestehender Beteiligung an diesem
@@ -24,15 +21,7 @@ export default async function EquipmentBearbeitenPage({
   // auf "" zurück, und updateEquipment verwirft die Beteiligung beim nächsten
   // Speichern endgültig (siehe Review-Finding: Datenverlust).
   const contributorIds = data.contributions.map((c) => c.userId);
-  const memberRows = await db
-    .select({ id: users.id, name: users.name, active: users.active })
-    .from(users)
-    .where(
-      contributorIds.length > 0
-        ? or(eq(users.active, true), inArray(users.id, contributorIds))
-        : eq(users.active, true)
-    )
-    .orderBy(users.name);
+  const memberRows = await fetchBandMembers(bandId, { includeUserIds: contributorIds });
   const members = memberRows.map((m) => ({
     id: m.id,
     name: m.active ? m.name : `${m.name} (ausgetreten)`,

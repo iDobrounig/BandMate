@@ -11,7 +11,7 @@ beforeAll(async () => {
 
 describe("fetchUpcomingPrograms", () => {
   it("liefert die nächste Probe mit ihrer Agenda", async () => {
-    const { probe } = await fetchUpcomingPrograms();
+    const { probe } = await fetchUpcomingPrograms(f.bandId);
     expect(probe).not.toBeNull();
     expect(probe!.event.id).toBe(f.events.kommendeProbe.id);
     expect(probe!.agendaSongs.map((s) => s.title)).toEqual(["In Probe"]);
@@ -19,7 +19,7 @@ describe("fetchUpcomingPrograms", () => {
   });
 
   it("liefert den nächsten Gig mit verknüpfter Setliste, wenn keine Agenda existiert", async () => {
-    const { gig } = await fetchUpcomingPrograms();
+    const { gig } = await fetchUpcomingPrograms(f.bandId);
     expect(gig).not.toBeNull();
     expect(gig!.event.id).toBe(f.events.kommenderGig.id);
     expect(gig!.agendaSongs).toEqual([]);
@@ -28,7 +28,7 @@ describe("fetchUpcomingPrograms", () => {
 
   it("liefert null, wenn keine Termine dieser Art anstehen", async () => {
     await leeren();
-    const { probe, gig } = await fetchUpcomingPrograms();
+    const { probe, gig } = await fetchUpcomingPrograms(f.bandId);
     expect(probe).toBeNull();
     expect(gig).toBeNull();
   });

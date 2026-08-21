@@ -56,6 +56,43 @@ export function parseUndo(
   return { kind: kindRaw as TrashKind, id };
 }
 
+/**
+ * Gehört ein Papierkorb-Eintrag zur angegebenen Band? Sicherheitsnetz für
+ * Wiederherstellen/endgültig-Löschen: ohne diese Prüfung könnte ein Band-Admin
+ * über eine geratene ID ein Element einer fremden Band anfassen.
+ */
+export async function trashBelongsToBand(
+  kind: TrashKind,
+  id: number,
+  bandId: number
+): Promise<boolean> {
+  if (kind === "song")
+    return !!(await db.query.songs.findFirst({ where: and(eq(songs.id, id), eq(songs.bandId, bandId)) }));
+  if (kind === "setlist")
+    return !!(await db.query.setlists.findFirst({ where: and(eq(setlists.id, id), eq(setlists.bandId, bandId)) }));
+  if (kind === "event")
+    return !!(await db.query.events.findFirst({ where: and(eq(events.id, id), eq(events.bandId, bandId)) }));
+  if (kind === "equipment")
+    return !!(await db.query.equipment.findFirst({ where: and(eq(equipment.id, id), eq(equipment.bandId, bandId)) }));
+  if (kind === "attachment") {
+    const [row] = await db
+      .select({ id: attachments.id })
+      .from(attachments)
+      .innerJoin(songs, eq(attachments.songId, songs.id))
+      .where(and(eq(attachments.id, id), eq(songs.bandId, bandId)))
+      .limit(1);
+    return !!row;
+  }
+  // equipmentAttachment
+  const [row] = await db
+    .select({ id: equipmentAttachments.id })
+    .from(equipmentAttachments)
+    .innerJoin(equipment, eq(equipmentAttachments.equipmentId, equipment.id))
+    .where(and(eq(equipmentAttachments.id, id), eq(equipment.bandId, bandId)))
+    .limit(1);
+  return !!row;
+}
+
 export function ablaufDatum(): Date {
   return new Date(Date.now() - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000);
 }
@@ -65,31 +102,31 @@ function restTage(deletedAt: Date): number {
   return Math.max(0, Math.ceil(TRASH_RETENTION_DAYS - vergangen));
 }
 
-/** Alle Einträge im Papierkorb, neueste zuerst. */
-export async function fetchTrash(): Promise<TrashEntry[]> {
+/** Alle Einträge im Papierkorb der Band, neueste zuerst. */
+export async function fetchTrash(bandId: number): Promise<TrashEntry[]> {
   const [songRows, setlistRows, eventRows, attachmentRows, equipmentRows, equipmentAttachmentRows] = await Promise.all([
     db
       .select({ id: songs.id, title: songs.title, artist: songs.artist, deletedAt: songs.deletedAt, byName: users.name })
       .from(songs)
       .leftJoin(users, eq(songs.deletedById, users.id))
-      .where(isNotNull(songs.deletedAt)),
+      .where(and(isNotNull(songs.deletedAt), eq(songs.bandId, bandId))),
     db
       .select({ id: setlists.id, name: setlists.name, eventDate: setlists.eventDate, deletedAt: setlists.deletedAt, byName: users.name })
       .from(setlists)
       .leftJoin(users, eq(setlists.deletedById, users.id))
-      .where(isNotNull(setlists.deletedAt)),
+      .where(and(isNotNull(setlists.deletedAt), eq(setlists.bandId, bandId))),
     db
       .select({ id: events.id, title: events.title, date: events.date, seriesId: events.seriesId, deletedAt: events.deletedAt, byName: users.name })
       .from(events)
       .leftJoin(users, eq(events.deletedById, users.id))
-      .where(isNotNull(events.deletedAt))
+      .where(and(isNotNull(events.deletedAt), eq(events.bandId, bandId)))
       .orderBy(events.date),
     db
       .select({ id: attachments.id, name: attachments.originalName, songTitle: songs.title, deletedAt: attachments.deletedAt, byName: users.name })
       .from(attachments)
       .innerJoin(songs, eq(attachments.songId, songs.id))
       .leftJoin(users, eq(attachments.deletedById, users.id))
-      .where(isNotNull(attachments.deletedAt)),
+      .where(and(isNotNull(attachments.deletedAt), eq(songs.bandId, bandId))),
     db
       .select({
         id: equipment.id,
@@ -101,7 +138,7 @@ export async function fetchTrash(): Promise<TrashEntry[]> {
       })
       .from(equipment)
       .leftJoin(users, eq(equipment.deletedById, users.id))
-      .where(isNotNull(equipment.deletedAt)),
+      .where(and(isNotNull(equipment.deletedAt), eq(equipment.bandId, bandId))),
     db
       .select({
         id: equipmentAttachments.id,
@@ -113,7 +150,7 @@ export async function fetchTrash(): Promise<TrashEntry[]> {
       .from(equipmentAttachments)
       .innerJoin(equipment, eq(equipmentAttachments.equipmentId, equipment.id))
       .leftJoin(users, eq(equipmentAttachments.deletedById, users.id))
-      .where(isNotNull(equipmentAttachments.deletedAt)),
+      .where(and(isNotNull(equipmentAttachments.deletedAt), eq(equipment.bandId, bandId))),
   ]);
 
   const eintraege: TrashEntry[] = [];

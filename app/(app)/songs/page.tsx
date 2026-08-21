@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { fetchSongList } from "@/lib/queries";
 import { SONG_STATUS, STATUS_ORDER } from "@/lib/constants";
 import { formatDuration } from "@/lib/format";
@@ -32,7 +32,7 @@ export default async function SongsPage({
 }: {
   searchParams: Promise<Search>;
 }) {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const params = await searchParams;
   const activeTab: Tab =
     params.status === "all" ||
@@ -48,7 +48,7 @@ export default async function SongsPage({
         ? "votes"
         : "title");
 
-  const all = await fetchSongList(user.id);
+  const all = await fetchSongList(user.id, bandId);
   const counts: Record<string, number> = {
     all: all.length,
     ...Object.fromEntries(

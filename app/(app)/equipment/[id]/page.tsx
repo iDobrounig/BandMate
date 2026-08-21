@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { fetchEquipmentDetail } from "@/lib/queries";
 import { EQUIPMENT_CATEGORY, EQUIPMENT_STATUS } from "@/lib/constants";
 import { formatDate, formatBytes, formatFee } from "@/lib/format";
@@ -13,9 +13,9 @@ export default async function EquipmentDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const { id } = await params;
-  const data = await fetchEquipmentDetail(Number(id));
+  const data = await fetchEquipmentDetail(Number(id), bandId);
   if (!data) notFound();
 
   const { equipment, contributions, attachments, createdByName } = data;

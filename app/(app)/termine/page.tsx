@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { fetchEvents, type EventListItem } from "@/lib/queries";
 import { EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
@@ -17,14 +17,14 @@ export default async function TerminePage({
 }: {
   searchParams: Promise<Search>;
 }) {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const params = await searchParams;
   const showPast = params.vergangene === "1";
   const q = (params.q ?? "").toLowerCase().trim();
 
   const [allUpcoming, allPast] = await Promise.all([
-    fetchEvents(user.id),
-    showPast ? fetchEvents(user.id, { past: true, limit: 20 }) : Promise.resolve([]),
+    fetchEvents(user.id, bandId),
+    showPast ? fetchEvents(user.id, bandId, { past: true, limit: 20 }) : Promise.resolve([]),
   ]);
 
   const matches = (e: EventListItem) =>

@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser, requireBandAdmin } from "@/lib/auth";
-import { restore, purge, purgeExpired, type TrashKind } from "@/lib/trash";
+import { requireBandContext, requireBandAdmin } from "@/lib/auth";
+import { restore, purge, purgeExpired, trashBelongsToBand, type TrashKind } from "@/lib/trash";
 
 /** Holt einen Eintrag zurück. Darf jedes Mitglied — siehe Entwurf E3. */
 export async function restoreItem(kind: TrashKind, id: number) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
+  if (!(await trashBelongsToBand(kind, id, bandId))) return;
   await restore(kind, id);
   revalidatePath("/", "layout");
 }
@@ -16,14 +17,15 @@ export async function restoreItem(kind: TrashKind, id: number) {
  * sich durch nichts mehr rückgängig machen lässt (Entwurf E3).
  */
 export async function purgeItem(kind: TrashKind, id: number) {
-  await requireBandAdmin();
+  const { bandId } = await requireBandAdmin();
+  if (!(await trashBelongsToBand(kind, id, bandId))) return;
   await purge(kind, id);
   revalidatePath("/", "layout");
 }
 
 /** Leert alles Abgelaufene — vom Papierkorb-Aufruf und vom Cron-Script genutzt. */
 export async function purgeExpiredItems() {
-  await requireUser();
+  await requireBandContext();
   const bericht = await purgeExpired();
   return bericht;
 }

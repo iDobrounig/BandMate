@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
-import { currentUser } from "@/lib/auth";
+import { currentUser, fetchMemberships } from "@/lib/auth";
 import { fetchServableAttachment } from "@/lib/queries";
 import { attachmentPath } from "@/lib/files";
 
@@ -14,7 +14,8 @@ export async function GET(
   if (!user) return new Response("Nicht angemeldet", { status: 401 });
 
   const { id } = await ctx.params;
-  const attachment = await fetchServableAttachment(Number(id));
+  const bandIds = (await fetchMemberships(user.id)).map((m) => m.bandId);
+  const attachment = await fetchServableAttachment(Number(id), bandIds);
   if (!attachment) return new Response("Nicht gefunden", { status: 404 });
 
   const filePath = attachmentPath(attachment.songId, attachment.storedName);

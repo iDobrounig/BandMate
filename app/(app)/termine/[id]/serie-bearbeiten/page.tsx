@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { events } from "@/lib/db/schema";
 import { eventAktiv } from "@/lib/db/filters";
@@ -15,16 +15,16 @@ export default async function SerieBearbeitenPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const { id } = await params;
   const eventId = Number(id);
 
   const event = await db.query.events.findFirst({
-    where: and(eq(events.id, eventId), eventAktiv),
+    where: and(eq(events.id, eventId), eq(events.bandId, bandId), eventAktiv),
   });
   if (!event || !event.seriesId) notFound();
 
-  const instances = await fetchSeriesInstances(event.seriesId);
+  const instances = await fetchSeriesInstances(event.seriesId, bandId);
   const today = new Date().toISOString().slice(0, 10);
   const futureCount = instances.filter((i) => i.date >= today).length;
   const pastCount = instances.length - futureCount;

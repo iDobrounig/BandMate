@@ -47,7 +47,7 @@ describe("fetchSongUsage", () => {
 
 describe("fetchSongList — lastEventAt", () => {
   it("berücksichtigt nur vergangene Termine für die Sortierung", async () => {
-    const liste = await fetchSongList(f.users.anna.id);
+    const liste = await fetchSongList(f.users.anna.id, f.bandId);
     expect(liste.find((s) => s.id === f.songs.repertoire.id)!.lastEventAt).toBe(
       isoTag(-10)
     );

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { fetchSettings } from "@/lib/notifications";
 import { fetchUserContributions, fetchAttendanceStats } from "@/lib/queries";
 import { formatFee, formatDate } from "@/lib/format";
@@ -9,11 +9,11 @@ import { ProfileForm, PasswordForm } from "@/components/profile-forms";
 export const metadata = { title: "Profil" };
 
 export default async function ProfilPage() {
-  const user = await requireUser();
+  const { user, bandId, role, instrument } = await requireBandContext();
   const [settings, contributions, attendanceStats] = await Promise.all([
     fetchSettings(user.id),
-    fetchUserContributions(user.id),
-    fetchAttendanceStats(),
+    fetchUserContributions(user.id, bandId),
+    fetchAttendanceStats(bandId),
   ]);
   const contributionTotal = contributions.reduce((acc, c) => acc + c.amount, 0);
   const ownAttendance = attendanceStats.find((s) => s.userId === user.id);
@@ -23,12 +23,12 @@ export default async function ProfilPage() {
       <h1 className="headline text-3xl">Mein Profil</h1>
       <p className="mt-1 text-sm text-mute">
         Angemeldet als {user.email}
-        {user.role === "admin" ? " · Admin" : ""}
+        {role === "band_admin" ? " · Band-Admin" : ""}
       </p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-6">
-          <ProfileForm user={user} settings={settings} />
+          <ProfileForm user={user} instrument={instrument} settings={settings} />
           <section className="card p-5">
             <h2 className="headline mb-4 text-lg">Passwort</h2>
             <PasswordForm />

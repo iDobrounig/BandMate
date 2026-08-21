@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { fetchEquipmentList } from "@/lib/queries";
 import {
   EQUIPMENT_CATEGORY,
@@ -39,7 +39,7 @@ export default async function EquipmentPage({
 }: {
   searchParams: Promise<Search>;
 }) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const params = await searchParams;
   const category =
     params.category && EQUIPMENT_CATEGORY_ORDER.includes(params.category as EquipmentCategory)
@@ -51,7 +51,7 @@ export default async function EquipmentPage({
       : undefined;
   const q = (params.q ?? "").toLowerCase().trim();
 
-  const all = await fetchEquipmentList();
+  const all = await fetchEquipmentList(bandId);
   let list = category ? all.filter((e) => e.category === category) : all;
   if (status) list = list.filter((e) => e.status === status);
   if (q) {

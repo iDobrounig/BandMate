@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq, ne, sql } from "drizzle-orm";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   events,
@@ -9,8 +9,8 @@ import {
   eventSongs,
   songs,
   setlists,
-  users,
 } from "@/lib/db/schema";
+import { fetchBandMembers } from "@/lib/queries";
 import { songAktiv, setlistAktiv, eventAktiv } from "@/lib/db/filters";
 import { EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate, formatFee } from "@/lib/format";
@@ -24,12 +24,12 @@ export default async function TerminDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const { id } = await params;
   const eventId = Number(id);
 
   const event = await db.query.events.findFirst({
-    where: and(eq(events.id, eventId), eventAktiv),
+    where: and(eq(events.id, eventId), eq(events.bandId, bandId), eventAktiv),
   });
   if (!event) notFound();
 
@@ -43,14 +43,10 @@ export default async function TerminDetailPage({
         })
         .from(eventAttendance)
         .where(eq(eventAttendance.eventId, eventId)),
-      db
-        .select({ id: users.id, name: users.name, instrument: users.instrument })
-        .from(users)
-        .where(eq(users.active, true))
-        .orderBy(asc(users.name)),
+      fetchBandMembers(bandId),
       event.setlistId
         ? db.query.setlists.findFirst({
-            where: and(eq(setlists.id, event.setlistId), setlistAktiv),
+            where: and(eq(setlists.id, event.setlistId), eq(setlists.bandId, bandId), setlistAktiv),
           })
         : Promise.resolve(undefined),
       db
@@ -70,7 +66,7 @@ export default async function TerminDetailPage({
       db
         .select({ id: songs.id, title: songs.title, artist: songs.artist })
         .from(songs)
-        .where(and(ne(songs.status, "archived"), songAktiv))
+        .where(and(ne(songs.status, "archived"), eq(songs.bandId, bandId), songAktiv))
         .orderBy(asc(songs.title)),
     ]);
 
