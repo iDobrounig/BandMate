@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { NavLinks } from "@/components/nav-links";
+import { AppMenu } from "@/components/app-menu";
 import { VersionWatcher } from "@/components/version-watcher";
-import { LogoutForm } from "@/components/logout-form";
-import { IconUser, IconLogout, IconHelp, IconTrash } from "@/components/icons";
 
 export default async function AppLayout({
   children,
@@ -14,80 +12,20 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="print-hidden sticky top-0 z-40 border-b border-line-soft bg-bg/95">
-        <div className="mx-auto flex max-w-6xl flex-col gap-y-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-x-6 sm:gap-y-0">
-          <div className="flex items-center justify-between w-full sm:w-auto">
-            <Link href="/" className="headline text-xl leading-none text-accent">
-              BandMate
-            </Link>
-            <div className="flex items-center gap-1 sm:hidden">
-              <Link
-                href="/hilfe"
-                aria-label="Hilfe"
-                title="Hilfe"
-                className="rounded-lg p-2 text-mute transition hover:bg-raise hover:text-ink"
-              >
-                <IconHelp className="size-5" />
-              </Link>
-              <Link
-                href="/profil"
-                aria-label={`Profil von ${user.name}`}
-                title={user.name}
-                className="rounded-lg p-2 text-mute transition hover:bg-raise hover:text-ink"
-              >
-                <IconUser className="size-5" />
-              </Link>
-              <LogoutForm
-                ariaLabel="Abmelden"
-                title="Abmelden"
-                className="rounded-lg p-2 text-faint transition hover:bg-raise hover:text-ink cursor-pointer"
-              >
-                <IconLogout className="size-5" />
-              </LogoutForm>
-            </div>
-          </div>
-          <div className="w-full min-w-0 sm:flex-1">
-            <NavLinks />
-          </div>
-          <div className="hidden ml-auto items-center gap-2 sm:flex">
-            <Link
-              href="/hilfe"
-              aria-label="Hilfe"
-              title="Hilfe"
-              className="rounded-lg p-2 text-mute transition hover:bg-raise hover:text-ink"
-            >
-              <IconHelp className="size-5" />
-            </Link>
-            <Link
-              href="/profil"
-              className="rounded-lg px-3 py-1.5 text-sm font-semibold text-mute transition hover:bg-raise hover:text-ink"
-            >
-              {user.name}
-            </Link>
-            <LogoutForm
-              title="Abmelden"
-              className="rounded-lg px-2 py-1.5 text-sm text-faint transition hover:text-ink cursor-pointer"
-            >
-              Abmelden
-            </LogoutForm>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-28">
         <VersionWatcher />
         {children}
       </main>
-      <footer className="print-hidden border-t border-line-soft py-4 text-center text-xs text-faint">
-        <span>BandMate — internes Band-Dashboard</span>
-        <span className="mx-2">·</span>
-        <Link
-          href="/papierkorb"
-          className="inline-flex items-center gap-1 transition hover:text-mute"
-        >
-          <IconTrash className="size-3.5" />
-          Papierkorb
-        </Link>
-      </footer>
+
+      <div className="print-hidden pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="pointer-events-auto flex max-w-full items-center gap-1 rounded-2xl border border-line bg-panel p-1.5 shadow-xl">
+          <div className="flex min-w-0 items-center overflow-x-auto">
+            <NavLinks />
+          </div>
+          <div className="h-8 w-px shrink-0 bg-line-soft" aria-hidden />
+          <AppMenu userName={user.name} />
+        </div>
+      </div>
     </div>
   );
 }
