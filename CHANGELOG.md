@@ -8,6 +8,20 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.21.0] — 2026-08-21
+
+### Geändert
+- **Navigation als schwebende Bottom-Leiste**: Die obere Leiste entfällt komplett; die
+  Navigation schwebt jetzt zentriert am unteren Bildschirmrand — am Handy in Daumenreichweite,
+  nur mit Icons, am Desktop mit Icon + Beschriftung. Der bisherige Footer-Link „Papierkorb"
+  ist mit umgezogen.
+
+### Hinzugefügt
+- **Menü-Popup** rechts in der Bottom-Leiste: bündelt Profil, Hilfe, Papierkorb und Logout
+  hinter einem Button (öffnet nach oben, schließt per Escape oder Klick daneben).
+- **Band-Logo auf dem Dashboard**: ersetzt den bisherigen „BandMate"-Schriftzug der oberen
+  Leiste durch Icon + Schriftzug oben auf der Startseite.
+
 ## [1.20.0] — 2026-08-20
 
 ### Hinzugefügt
