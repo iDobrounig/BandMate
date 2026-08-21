@@ -8,6 +8,63 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [2.0.0] — 2026-08-21
+
+**Mandantenfähigkeit (Welle 4): BandMate trägt jetzt mehrere Bands in einer Installation.**
+Jede Band hat eigene Songs, Setlisten, Termine, Equipment und Mitglieder — strikt
+voneinander getrennt. Ein Super-Admin verwaltet Bands und Konten global, ohne Zugriff auf
+Bandinhalte.
+
+### Wichtig für den Betrieb (bitte vor dem Update lesen)
+
+- **Automatische Datenmigration beim ersten Start:** Direkt nach der (additiven) Schema-
+  Migration legt ein einmaliger Backfill die Band **„Meine Band"** an, ordnet ihr alle
+  bestehenden Songs/Setlisten/Termine/Equipment zu und macht aus jedem bestehenden User eine
+  Bandmitgliedschaft (bisheriger Admin → Band-Admin, Instrument und Aktiv-Status bleiben
+  erhalten). Kein manuelles Zutun; idempotent (läuft nur, solange keine Band existiert).
+  `./deploy.sh` zieht davor wie immer ein Pre-Deploy-Backup.
+- **Neuer manueller Schritt:** Für die Mehrband-Verwaltung einmalig ein Super-Admin-Konto
+  anlegen — `npm run superadmin` (eigenes Konto, nie Bandmitglied). Optional über
+  `SUPERADMIN_NAME/EMAIL/PASSWORD` steuerbar.
+- **Neue optionale Env-Variable `DEFAULT_BAND_NAME`** — benennt die aus dem Altbestand
+  angelegte Band (Default „Meine Band"; später unter `/verwaltung` umbenennbar).
+
+### Hinzugefügt
+
+- **Super-Admin-Bereich `/verwaltung`** (eigenes Layout, keine Bandinhalte): Bands anlegen,
+  umbenennen, aktiv/inaktiv; Band-Detailseite mit Mitgliederverwaltung (Rollen, aufnehmen/
+  entfernen, per E-Mail oder Einladungslink); globale Nutzerliste + Nutzer-Detail (Konto
+  bearbeiten, Passwort zurücksetzen, global sperren, Bandzugehörigkeiten verwalten und
+  zuweisen); Nutzer direkt anlegen; eigenes Super-Admin-Konto (Name/E-Mail/Passwort).
+- **Mehrfach-Bandmitgliedschaft** mit Band-Wechsel über das Profilmenü (AppMenu →
+  „Band wechseln"), Auswahlseite `/band-waehlen`, Hinweisseite `/keine-band`.
+- **Einladungslinks** (`/einladung/[token]`, 7 Tage gültig, einmal verwendbar): bestehende
+  Konten treten mit einem Klick bei, neue setzen Name + Passwort selbst. Band-Admins und
+  Super-Admins erzeugen die Links.
+- **`npm run superadmin`** — legt ein Super-Admin-Konto an bzw. erhebt ein bestehendes.
+
+### Geändert
+
+- **Rolle und Instrument leben jetzt pro Band** (in `band_members`) statt global am Konto —
+  ein User kann in verschiedenen Bands unterschiedliche Rollen/Instrumente haben. Band-Admin
+  „Mitglied entfernen" wirkt bandlokal; das globale Sperren eines Kontos macht nur der
+  Super-Admin.
+- **ICS-Kalender-Feed pro Band**: Der Abo-Token gehört jetzt zu genau einer Band und gibt
+  nur deren Termine frei (vorher ein installationsweiter Token — behebt ein Datenleck).
+  Bestehende Kalender-Abos müssen einmalig mit der neuen URL (aus der Termine-Seite) neu
+  abonniert werden.
+- **Benachrichtigungen band-bewusst**: Sofort-Mails, Erinnerungen und Wochen-Digest gehen
+  nur an Mitglieder der jeweiligen Band. Die persönlichen Benachrichtigungs-Einstellungen
+  bleiben kontobezogen (gelten über alle Bands).
+
+### Datenmodell
+
+- Neue Tabellen `bands`, `band_members`, `invites`; `band_id` auf `songs`/`setlists`/
+  `events`/`equipment`; `users.is_super_admin`. `users.role`/`users.instrument` sind seit
+  diesem Release deprecated (nur noch Backfill-Quelle) und werden in einer späteren
+  Cleanup-Migration entfernt. Entwurf:
+  [docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md](docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md).
+
 ## [1.22.0] — 2026-08-21
 
 ### Geändert
