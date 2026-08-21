@@ -63,9 +63,16 @@ export default async function DashboardPage() {
     <div className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mono-display text-xs uppercase tracking-[0.3em] text-accent">
-            ● BandMate
-          </p>
+          <div className="mb-1 flex items-center gap-2">
+            <img
+              src="/icon-192.png"
+              alt=""
+              className="size-7 rounded-lg"
+            />
+            <span className="headline text-lg leading-none text-accent">
+              BandMate
+            </span>
+          </div>
           <h1 className="headline mt-1 text-4xl">Servus, {firstName}!</h1>
           <p className="mt-2 text-sm text-mute">
             {suggestions.length} offene Vorschläge · {rehearsing.length} in Probe ·{" "}
