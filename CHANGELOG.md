@@ -8,6 +8,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.21.2] — 2026-08-21
+
+### Geändert
+- **Sichtbarer Schatten an der Floating-Navigationsleiste**: Der bisherige `shadow-xl`
+  war auf dem dunklen Hintergrund praktisch unsichtbar (schwarzer Schatten). Die Bar
+  bekommt jetzt einen dezenten hellen Glow, der sie klarer vom Hintergrund abhebt.
+
 ## [1.21.1] — 2026-08-21
 
 ### Geändert
