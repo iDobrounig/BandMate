@@ -8,6 +8,19 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [1.22.0] — 2026-08-21
+
+### Geändert
+- **Profilseite neu strukturiert**: Layout jetzt wie bei Equipment (Grid mit schmaler
+  Seitenspalte rechts). Stammdaten und Benachrichtigungen sind getrennte Cards, die
+  Formulare nutzen die volle verfügbare Breite statt der bisherigen `max-w-2xl`-Begrenzung.
+
+### Hinzugefügt
+- **„Meine Beteiligungen" auf der Profilseite**: Liste der eigenen Equipment-Kostenbeteiligungen
+  mit Summe, jeder Eintrag verlinkt zum jeweiligen Gerät.
+- **„Über dich" auf der Profilseite**: zeigt Beitrittsdatum und die eigene Anwesenheitsquote
+  bei Proben.
+
 ## [1.21.2] — 2026-08-21
 
 ### Geändert
