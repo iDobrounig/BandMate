@@ -18,7 +18,7 @@ export default async function AppLayout({
       </main>
 
       <div className="print-hidden pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="pointer-events-auto flex max-w-full items-center gap-1 rounded-2xl border border-line bg-panel p-1.5 shadow-xl">
+        <div className="pointer-events-auto flex max-w-full items-center gap-1 rounded-2xl border border-line bg-panel p-1.5 shadow-[0_0_14px_rgb(255_255_255/0.1)]">
           <div className="flex min-w-0 items-center overflow-x-auto">
             <NavLinks />
           </div>
