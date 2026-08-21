@@ -60,6 +60,16 @@ Voting, Setlisten, Termine. Feature-Stand & Roadmap: `FEATURES.md`. Setup/Deploy
   erneut — die frisch erzeugte Migration wird also ohne Zutun auf die echte DB angewandt.
   Vor Schema-Arbeit deshalb entweder den Dev-Server stoppen oder
   `./scripts/backup.sh` laufen lassen.
+- **Migration NICHT während `next build` laufen lassen.** `next build` sammelt die Page-Data
+  mit mehreren parallelen Worker-Prozessen, die alle `lib/db` laden. Liefen sie alle
+  `migrate()`, kollidieren sie auf einer noch unmigrierten DB beim `CREATE TABLE`
+  (`table … already exists`) und der Build bricht ab (v2.0.0-Deploy ist genau daran
+  gescheitert). Deshalb überspringt `createDb()` migrate()+Backfill, wenn
+  `NEXT_PHASE === "phase-production-build"` — zur Build-Zeit wird nichts abgefragt. Migriert
+  wird nur zur Laufzeit (ein einziger PM2-Fork) bzw. im Dev-Server, also prozess-seriell.
+  Beim Hinzufügen von Bootstrap-Logik (weitere Backfills o.ä.) diesen Guard beibehalten und
+  Nebenläufigkeit bedenken (IMMEDIATE-Transaktion + `busy_timeout`, siehe
+  `ensureTenancyBackfill`).
 
 ## Verifikation
 
