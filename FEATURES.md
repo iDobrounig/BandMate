@@ -38,16 +38,16 @@ Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 ### Mitglieder & System
 - [x] Login (Session-Cookie), alle Seiten geschützt, Datei-Downloads nur mit Login
 - [x] **Passwort vergessen / zurücksetzen** per E-Mail-Link (1 h gültig, einmal verwendbar) — *seit 1.9.0*
-- [x] Admin legt Mitglieder an, setzt Passwörter, vergibt Rollen, deaktiviert Accounts
-- [x] **Admin bearbeitet Profile** (Name, E-Mail, Instrument) inline
+- [x] Admin legt Mitglieder an, setzt Passwörter, vergibt Rollen, entfernt Mitglieder — über eigene Seiten `/mitglieder/neu` (inkl. Einladungslink) und `/mitglieder/[id]/bearbeiten`
+- [x] **Admin bearbeitet Mitglieder** (Name, E-Mail, Instrument, Benachrichtigungen) auf eigener Seite im Profil-Stil
 - [x] Jedes Mitglied bearbeitet das eigene Profil (Name, Instrument, Passwort, Mail-Opt-out) unter `/profil`
 - [x] E-Mail-Benachrichtigung bei neuem Vorschlag / Kommentar / Termin (wenn SMTP konfiguriert)
-- [x] **SMTP-Test-Funktion** auf `/mitglieder` (nur Admin) — Verbindung prüfen + echte Test-Mail — *seit 1.6.0*
+- [x] **SMTP-Test-Funktion** unter `/einstellungen` (nur Admin) — Verbindung prüfen + echte Test-Mail — *seit 1.6.0, verschoben in den Einstellungs-Bereich*
 - [x] **Hilfe-Seite** `/hilfe` mit Screenshots, verlinkt im Menü-Popup der Bottom-Nav — *seit 1.8.0*
 - [x] Dashboard: heiße Vorschläge, in Probe, nächste Termine mit RSVP-Status, letzte Kommentare
 - [x] Mobile-taugliches, dunkles „Backstage"-Design
 - [x] **Floating-Bottom-Nav**: obere Leiste entfällt, Navigation schwebt zentriert am
-  unteren Rand (mobil nur Icons, Desktop Icon + Label); Profil/Hilfe/Papierkorb/Logout
+  unteren Rand (mobil nur Icons, Desktop Icon + Label); Profil/Hilfe/Einstellungen (Admin)/Papierkorb/Logout
   in einem Menü-Popup rechts; Band-Logo oben auf dem Dashboard
 - [x] **App-Icon/Favicon + PWA-Manifest** — „Zum Homescreen hinzufügen" wie eine echte App
 - [x] **Update-Banner nach Deploy**: erkennt über eine Build-Kennung (`/api/version`), wenn
@@ -245,6 +245,17 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
   eine Quote (Zusagen ⁄ (Zusagen+Absagen) — „Vielleicht" und offene Rückmeldungen
   zählen nicht mit, „–" ohne jede Rückmeldung). `fetchAttendanceStats` in
   `lib/queries.ts`, reine Prozent-Funktion in `lib/attendance.ts`.
+- [x] **Mitglieder-Seite aufgeräumt** — *erledigt 21.08.2026.* `/mitglieder` folgt jetzt
+  demselben Muster wie Songs/Equipment statt alles in eine Seite zu stopfen: die Liste
+  ist ein `grid gap-8 lg:grid-cols-[1fr_360px]` (links schlanke Karten mit „Bearbeiten"-Link,
+  rechts die Anwesenheits-Statistik als Sticky-Card). Anlegen läuft über `/mitglieder/neu`
+  (Direktanlage *und* Einladungslink an einem Ort), Bearbeiten über
+  `/mitglieder/[id]/bearbeiten` — ein Admin-Panel im Profil-Stil mit Stammdaten +
+  Benachrichtigungs-Matrix, Passwort setzen sowie Rolle geben/entziehen und „aus Band
+  entfernen" (die zerstörenden Aktionen sind aus der Liste in die Detailseite gewandert).
+  Der SMTP-Test ist raus in einen neuen Admin-Bereich `/einstellungen` (Zahnrad im
+  Menü-Popup, nur Admins), offen für weitere Einstellungen. Neue `bandId`-gescopte Query
+  `fetchBandMemberAdmin`; die frühere Inline-`MemberRow` weicht `MemberEditPanel`.
 - [x] **Browser-Audio-Aufnahme** (MediaRecorder) — *erledigt 11.08.2026. Entwurf:
   [docs/superpowers/specs/2026-08-11-browser-audio-aufnahme-design.md](docs/superpowers/specs/2026-08-11-browser-audio-aufnahme-design.md)*
   Proberaum-Mitschnitt direkt am Song statt Datei-Transfer vom Handy: Overlay

@@ -2,17 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { IconUser, IconHelp, IconTrash, IconLogout, IconRepeat } from "@/components/icons";
+import {
+  IconUser,
+  IconHelp,
+  IconTrash,
+  IconLogout,
+  IconRepeat,
+  IconSettings,
+} from "@/components/icons";
 import { LogoutForm } from "@/components/logout-form";
 
 export function AppMenu({
   userName,
   bandName,
   canSwitchBand,
+  isAdmin,
 }: {
   userName: string;
   bandName: string;
   canSwitchBand: boolean;
+  isAdmin: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -89,6 +98,17 @@ export function AppMenu({
             <IconHelp className="size-4" />
             Hilfe
           </Link>
+          {isAdmin && (
+            <Link
+              role="menuitem"
+              href="/einstellungen"
+              onClick={() => setOpen(false)}
+              className={itemClass}
+            >
+              <IconSettings className="size-4" />
+              Einstellungen
+            </Link>
+          )}
           <Link
             role="menuitem"
             href="/papierkorb"

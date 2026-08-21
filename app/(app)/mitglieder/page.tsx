@@ -1,5 +1,5 @@
+import Link from "next/link";
 import { requireBandContext } from "@/lib/auth";
-import { fetchSettings } from "@/lib/notifications";
 import {
   fetchAttendanceStats,
   fetchBandMembers,
@@ -7,15 +7,12 @@ import {
   type AttendanceStats,
 } from "@/lib/queries";
 import { ATTENDANCE_STATUS } from "@/lib/constants";
-import { NewMemberForm, MemberRow } from "@/components/member-admin";
-import { InviteForm } from "@/components/invite-forms";
-import { SmtpTestForm } from "@/components/smtp-test";
 
 export const metadata = { title: "Mitglieder" };
 
 function AttendanceStatsCard({ stats }: { stats: AttendanceStats[] }) {
   return (
-    <section className="card mt-8 p-5">
+    <section className="card p-5 lg:sticky lg:top-8">
       <h2 className="headline text-lg">Anwesenheits-Statistik</h2>
       <p className="mt-1 text-sm text-mute">Nur vergangene Proben, ohne Gigs.</p>
       <div className="mt-4 overflow-x-auto">
@@ -55,78 +52,80 @@ function AttendanceStatsCard({ stats }: { stats: AttendanceStats[] }) {
 }
 
 export default async function MitgliederPage() {
-  const { user, bandId, role } = await requireBandContext();
+  const { bandId, role } = await requireBandContext();
+  const isAdmin = role === "band_admin";
   const stats = await fetchAttendanceStats(bandId);
 
-  if (role !== "band_admin") {
-    const members = await fetchBandMembers(bandId);
-
-    return (
-      <div>
-        <h1 className="headline text-3xl">Mitglieder</h1>
-        <p className="mt-1 text-sm text-mute">Wer spielt was — und wie erreicht man wen.</p>
-        <section className="mt-8 space-y-3">
-          {members.map((member) => (
-            <div key={member.id} className="card p-4">
-              <p className="font-semibold">{member.name}</p>
-              <p className="truncate text-sm text-mute">
-                {member.instrument && `${member.instrument} · `}
-                <a className="text-accent-hi hover:underline" href={`mailto:${member.email}`}>
-                  {member.email}
-                </a>
-              </p>
-            </div>
-          ))}
-        </section>
-        <AttendanceStatsCard stats={stats} />
-      </div>
-    );
-  }
-
-  const admin = user;
-  const members = await fetchBandMembersAdmin(bandId);
-  // Je Mitglied die aufgelösten Einstellungen (Standardwerte eingesetzt)
-  const settings = await Promise.all(members.map((m) => fetchSettings(m.id)));
+  const members = isAdmin
+    ? await fetchBandMembersAdmin(bandId)
+    : await fetchBandMembers(bandId);
 
   return (
     <div>
-      <h1 className="headline text-3xl">Mitglieder</h1>
-      <p className="mt-1 text-sm text-mute">
-        Neue Bandmitglieder anlegen, Passwörter setzen, Rollen verwalten.
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="headline text-3xl">Mitglieder</h1>
+          <p className="mt-1 text-sm text-mute">
+            {isAdmin
+              ? "Mitglieder anlegen, Rollen verwalten und Passwörter setzen."
+              : "Wer spielt was — und wie erreicht man wen."}
+          </p>
+        </div>
+        {isAdmin && (
+          <Link href="/mitglieder/neu" className="btn btn-primary">
+            + Mitglied anlegen
+          </Link>
+        )}
+      </div>
 
-      <section className="card mt-8 max-w-2xl p-5">
-        <h2 className="headline mb-4 text-lg">Neues Mitglied</h2>
-        <NewMemberForm />
-      </section>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
+        <section className="min-w-0 space-y-3">
+          {members.map((member) => {
+            const isMemberAdmin = "role" in member && member.role === "band_admin";
+            const inactive = "active" in member && !member.active;
+            return (
+              <div key={member.id} className={`card p-4 ${inactive ? "opacity-50" : ""}`}>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">
+                      {member.name}
+                      {isMemberAdmin && (
+                        <span className="badge ml-2 border-accent/40 bg-accent/10 text-accent-hi">
+                          Band-Admin
+                        </span>
+                      )}
+                      {inactive && (
+                        <span className="badge ml-2 border-line text-faint">ausgetreten</span>
+                      )}
+                    </p>
+                    <p className="truncate text-sm text-mute">
+                      {member.instrument && `${member.instrument} · `}
+                      <a
+                        className="text-accent-hi hover:underline"
+                        href={`mailto:${member.email}`}
+                      >
+                        {member.email}
+                      </a>
+                    </p>
+                  </div>
+                  {isAdmin && (
+                    <Link
+                      href={`/mitglieder/${member.id}/bearbeiten`}
+                      className="btn btn-sm w-full sm:w-auto"
+                    >
+                      Bearbeiten
+                    </Link>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </section>
 
-      <section className="card mt-6 max-w-2xl p-5">
-        <h2 className="headline mb-1 text-lg">Per Einladungslink aufnehmen</h2>
-        <p className="mb-4 text-sm text-mute">
-          Für Leute, die schon ein BandMate-Konto haben (aus einer anderen Band) — oder wenn
-          sie ihr Passwort selbst setzen sollen. Der Link ist 7 Tage gültig und einmal
-          verwendbar.
-        </p>
-        <InviteForm />
-      </section>
-
-      <section className="mt-8 space-y-3">
-        {members.map((member, i) => (
-          <MemberRow
-            key={member.id}
-            member={member}
-            isSelf={member.id === admin.id}
-            settings={settings[i]}
-          />
-        ))}
-      </section>
-
-      <AttendanceStatsCard stats={stats} />
-
-      <section className="card mt-8 max-w-2xl p-5">
-        <h2 className="headline mb-4 text-lg">SMTP-Verbindung testen</h2>
-        <SmtpTestForm adminEmail={admin.email} />
-      </section>
+        <div className="min-w-0">
+          <AttendanceStatsCard stats={stats} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -96,6 +96,32 @@ export async function fetchBandMembersAdmin(bandId: number): Promise<BandMemberA
     .orderBy(asc(users.name));
 }
 
+/**
+ * Ein einzelnes Mitglied für die Bearbeiten-Seite — `bandId`-gescoped, damit
+ * kein Fremd-Nutzer über eine geratene ID editierbar ist. `null`, wenn die
+ * Person nicht (mehr) zu dieser Band gehört.
+ */
+export async function fetchBandMemberAdmin(
+  bandId: number,
+  userId: number
+): Promise<BandMemberAdminRow | null> {
+  const [row] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: bandMembers.role,
+      instrument: bandMembers.instrument,
+      active: bandMembers.active,
+      digestEnabled: users.digestEnabled,
+    })
+    .from(bandMembers)
+    .innerJoin(users, eq(bandMembers.userId, users.id))
+    .where(and(eq(bandMembers.bandId, bandId), eq(users.id, userId)))
+    .limit(1);
+  return row ?? null;
+}
+
 export type SongListItem = Song & {
   upvotes: number;
   downvotes: number;

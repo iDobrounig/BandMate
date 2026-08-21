@@ -28,6 +28,7 @@ export default async function AppLayout({
             userName={ctx.user.name}
             bandName={ctx.bandName}
             canSwitchBand={memberships.length > 1}
+            isAdmin={ctx.role === "band_admin"}
           />
         </div>
       </div>

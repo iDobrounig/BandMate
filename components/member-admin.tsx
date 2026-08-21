@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import {
   createUser,
   updateUser,
@@ -68,10 +69,66 @@ export function NewMemberForm() {
   );
 }
 
+/** Stammdaten + Benachrichtigungen eines Mitglieds bearbeiten. */
+function MemberDataForm({
+  member,
+  settings,
+}: {
+  member: BandMemberAdminRow;
+  settings: SettingsMap;
+}) {
+  const [state, action] = useActionState(updateUser, initial);
+  return (
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="userId" value={member.id} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="label" htmlFor="me-name">Name</label>
+          <input id="me-name" className="input" name="name" defaultValue={member.name} required />
+        </div>
+        <div>
+          <label className="label" htmlFor="me-email">E-Mail</label>
+          <input
+            id="me-email"
+            className="input"
+            name="email"
+            type="email"
+            defaultValue={member.email}
+            required
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="me-instrument">Instrument</label>
+          <input
+            id="me-instrument"
+            className="input"
+            name="instrument"
+            defaultValue={member.instrument ?? ""}
+            list="instruments-edit"
+            placeholder="z.B. Bass"
+          />
+          <datalist id="instruments-edit">
+            {INSTRUMENT_SUGGESTIONS.map((i) => (
+              <option key={i} value={i} />
+            ))}
+          </datalist>
+        </div>
+      </div>
+      <div className="border-t border-line-soft pt-4">
+        <h3 className="label">Benachrichtigungen</h3>
+        <NotifyMatrix settings={settings} digestEnabled={member.digestEnabled} />
+      </div>
+      <FormMsg state={state} />
+      <SubmitButton>Speichern</SubmitButton>
+    </form>
+  );
+}
+
+/** Passwort eines Mitglieds neu setzen. */
 function ResetPasswordForm({ userId }: { userId: number }) {
   const [state, action] = useActionState(setUserPassword, initial);
   return (
-    <form action={action} className="mt-3 flex flex-wrap items-center gap-2">
+    <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="userId" value={userId} />
       <input
         className="input max-w-48"
@@ -81,7 +138,7 @@ function ResetPasswordForm({ userId }: { userId: number }) {
         placeholder="Neues Passwort"
         required
       />
-      <SubmitButton className="btn btn-sm" pendingText="Setze …">
+      <SubmitButton className="btn" pendingText="Setze …">
         Passwort setzen
       </SubmitButton>
       <FormMsg state={state} />
@@ -89,165 +146,75 @@ function ResetPasswordForm({ userId }: { userId: number }) {
   );
 }
 
-function EditMemberForm({
+/**
+ * Vollständiges Admin-Panel für ein Mitglied (Bearbeiten-Seite). Bündelt
+ * Stammdaten, Passwort, Rolle und Bandzugehörigkeit. Für das eigene Konto
+ * (`isSelf`) entfallen Rollen- und Entfernen-Aktionen.
+ */
+export function MemberEditPanel({
   member,
   settings,
-}: {
-  member: BandMemberAdminRow;
-  settings: SettingsMap;
-}) {
-  const [state, action] = useActionState(updateUser, initial);
-  return (
-    <form action={action} className="mt-3 space-y-3 rounded-lg border border-line-soft p-3">
-      <input type="hidden" name="userId" value={member.id} />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div>
-          <label className="label" htmlFor={`me-${member.id}-name`}>Name</label>
-          <input
-            id={`me-${member.id}-name`}
-            className="input"
-            name="name"
-            defaultValue={member.name}
-            required
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor={`me-${member.id}-email`}>E-Mail</label>
-          <input
-            id={`me-${member.id}-email`}
-            className="input"
-            name="email"
-            type="email"
-            defaultValue={member.email}
-            required
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor={`me-${member.id}-instrument`}>Instrument</label>
-          <input
-            id={`me-${member.id}-instrument`}
-            className="input"
-            name="instrument"
-            defaultValue={member.instrument ?? ""}
-            list={`instruments-edit-${member.id}`}
-          />
-          <datalist id={`instruments-edit-${member.id}`}>
-            {INSTRUMENT_SUGGESTIONS.map((i) => (
-              <option key={i} value={i} />
-            ))}
-          </datalist>
-        </div>
-      </div>
-      <div className="border-t border-line-soft pt-3">
-        <h3 className="label">Benachrichtigungen</h3>
-        <NotifyMatrix
-          settings={settings}
-          digestEnabled={member.digestEnabled}
-          idPrefix={`m${member.id}-`}
-        />
-      </div>
-      <FormMsg state={state} />
-      <SubmitButton className="btn btn-sm">Speichern</SubmitButton>
-    </form>
-  );
-}
-
-export function MemberRow({
-  member,
   isSelf,
-  settings,
 }: {
   member: BandMemberAdminRow;
-  isSelf: boolean;
   settings: SettingsMap;
+  isSelf: boolean;
 }) {
-  const [showReset, setShowReset] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
+  const router = useRouter();
+  const isAdmin = member.role === "band_admin";
 
   return (
-    <div className={`card p-4 ${member.active ? "" : "opacity-50"}`}>
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold">
-            {member.name}
-            {member.role === "band_admin" && (
-              <span className="badge ml-2 border-accent/40 bg-accent/10 text-accent-hi">
-                Band-Admin
-              </span>
-            )}
-            {!member.active && (
-              <span className="badge ml-2 border-line text-faint">
-                ausgetreten
-              </span>
-            )}
+    <div className="space-y-6">
+      <section className="card p-5">
+        <h2 className="headline mb-4 text-lg">Stammdaten</h2>
+        <MemberDataForm member={member} settings={settings} />
+      </section>
+
+      <section className="card p-5">
+        <h2 className="headline mb-1 text-lg">Passwort setzen</h2>
+        <p className="mb-4 text-sm text-mute">
+          Setzt ein neues Passwort für {member.name}. Die Person wird nicht
+          automatisch benachrichtigt — teile es ihr selbst mit.
+        </p>
+        <ResetPasswordForm userId={member.id} />
+      </section>
+
+      {!isSelf && (
+        <section className="card p-5">
+          <h2 className="headline mb-1 text-lg">Rolle &amp; Bandzugehörigkeit</h2>
+          <p className="mb-4 text-sm text-mute">
+            {isAdmin
+              ? "Band-Admins können Mitglieder verwalten und Einstellungen ändern."
+              : "Gib Band-Admin-Rechte oder entferne die Person aus der Band."}
           </p>
-          <p className="truncate text-sm text-mute">
-            {member.email}
-            {member.instrument ? ` · ${member.instrument}` : ""}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-          <button
-            type="button"
-            className="btn btn-sm flex-1 sm:flex-none"
-            onClick={() => {
-              setShowEdit((v) => !v);
-              setShowReset(false);
-            }}
-          >
-            Bearbeiten
-          </button>
-          {!isSelf && (
-            <>
-              <button
-                type="button"
-                className="btn btn-sm flex-1 sm:flex-none"
-                onClick={() => {
-                  setShowReset((v) => !v);
-                  setShowEdit(false);
-                }}
-              >
-                Passwort
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm flex-1 sm:flex-none"
-                onClick={() => {
-                  // Nur das Vergeben ist die zerstörende Richtung (voller Zugriff
-                  // auf Mitgliederverwaltung) — Entziehen läuft ohne Rückfrage.
-                  if (
-                    member.role !== "band_admin" &&
-                    !confirm(`${member.name} Band-Admin-Rechte geben?`)
-                  )
-                    return;
-                  setUserRole(member.id, member.role === "band_admin" ? "member" : "band_admin");
-                }}
-              >
-                {member.role === "band_admin" ? "Admin entz." : "Admin geben"}
-              </button>
-              <button
-                type="button"
-                // Nur das Entfernen aus der Band ist die zerstörende Richtung
-                className={`btn btn-sm flex-1 sm:flex-none ${
-                  member.active ? "btn-danger" : ""
-                }`}
-                onClick={() => {
-                  if (
-                    member.active &&
-                    !confirm(`${member.name} aus der Band entfernen?`)
-                  )
-                    return;
-                  void toggleUserActive(member.id);
-                }}
-              >
-                {member.active ? "Entfernen" : "Aufnehmen"}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-      {showEdit && <EditMemberForm member={member} settings={settings} />}
-      {showReset && !isSelf && <ResetPasswordForm userId={member.id} />}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                // Nur das Vergeben ist die zerstörende Richtung (voller Zugriff
+                // auf Mitgliederverwaltung) — Entziehen läuft ohne Rückfrage.
+                if (!isAdmin && !confirm(`${member.name} Band-Admin-Rechte geben?`)) return;
+                void setUserRole(member.id, isAdmin ? "member" : "band_admin");
+              }}
+            >
+              {isAdmin ? "Admin-Rechte entziehen" : "Band-Admin-Rechte geben"}
+            </button>
+            <button
+              type="button"
+              // Nur das Entfernen aus der Band ist die zerstörende Richtung.
+              className={`btn ${member.active ? "btn-danger" : ""}`}
+              onClick={async () => {
+                if (member.active && !confirm(`${member.name} aus der Band entfernen?`)) return;
+                await toggleUserActive(member.id);
+                if (member.active) router.push("/mitglieder");
+              }}
+            >
+              {member.active ? "Aus Band entfernen" : "Wieder aufnehmen"}
+            </button>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
