@@ -32,6 +32,7 @@ export async function requireSuperAdmin(): Promise<User> {
 export type BandMembershipRow = {
   bandId: number;
   bandName: string;
+  calendarToken: string;
   role: BandRole;
   instrument: string | null;
 };
@@ -42,6 +43,7 @@ export async function fetchMemberships(userId: number): Promise<BandMembershipRo
     .select({
       bandId: bandMembers.bandId,
       bandName: bands.name,
+      calendarToken: bands.calendarToken,
       role: bandMembers.role,
       instrument: bandMembers.instrument,
     })
@@ -61,6 +63,7 @@ export type BandContext = {
   user: User;
   bandId: number;
   bandName: string;
+  calendarToken: string;
   role: BandRole;
   instrument: string | null;
 };
@@ -100,6 +103,7 @@ export async function requireBandContext(): Promise<BandContext> {
     user,
     bandId: chosen.bandId,
     bandName: chosen.bandName,
+    calendarToken: chosen.calendarToken,
     role: chosen.role,
     instrument: chosen.instrument,
   };

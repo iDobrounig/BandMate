@@ -1,23 +1,14 @@
-import crypto from "node:crypto";
-import { sessionOptions } from "@/lib/session";
 import { formatFee } from "@/lib/format";
 import type { BandEvent } from "@/lib/db/schema";
 
 /**
- * Geheimer Token für den Kalender-Feed (Kalender-Apps können sich nicht
- * einloggen). Vom SESSION_SECRET abgeleitet — ändert sich das Secret,
- * ändert sich auch die Feed-URL.
+ * Feed-Pfad für eine Band. Der Token ist pro Band ein gespeicherter
+ * Zufallswert (bands.calendarToken) — Kalender-Apps können sich nicht
+ * einloggen, der geheime Link ist die Zugangskontrolle, und er gibt
+ * ausschließlich die Termine DIESER Band frei.
  */
-export function calendarToken(): string {
-  return crypto
-    .createHash("sha256")
-    .update(`${sessionOptions.password}:bandraum-ics-feed`)
-    .digest("hex")
-    .slice(0, 32);
-}
-
-export function calendarFeedPath(): string {
-  return `/api/kalender/${calendarToken()}`;
+export function calendarFeedPath(token: string): string {
+  return `/api/kalender/${token}`;
 }
 
 function escapeIcs(text: string): string {

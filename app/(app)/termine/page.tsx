@@ -17,7 +17,7 @@ export default async function TerminePage({
 }: {
   searchParams: Promise<Search>;
 }) {
-  const { user, bandId } = await requireBandContext();
+  const { user, bandId, calendarToken } = await requireBandContext();
   const params = await searchParams;
   const showPast = params.vergangene === "1";
   const q = (params.q ?? "").toLowerCase().trim();
@@ -59,7 +59,7 @@ export default async function TerminePage({
         </div>
         <div className="flex items-center gap-2">
           <CalendarSubscribe
-            feedPath={calendarFeedPath()}
+            feedPath={calendarFeedPath(calendarToken)}
             appUrl={process.env.APP_URL ?? null}
           />
           <Link href="/termine/neu" className="btn btn-primary">
