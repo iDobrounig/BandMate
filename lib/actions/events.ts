@@ -9,9 +9,11 @@ import {
   events,
   eventAttendance,
   eventSongs,
+  songs,
+  setlists,
   type AttendanceStatus,
 } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { eventAktiv } from "@/lib/db/filters";
 import { notifyBand } from "@/lib/mail";
 import { describeEventChanges } from "@/lib/event-notify";
@@ -19,6 +21,22 @@ import { formatDate } from "@/lib/format";
 import type { FormState } from "@/lib/actions/auth";
 
 const MAX_SERIES_INSTANCES = 30;
+
+/** Gehört ein Termin zur Band? */
+async function eventInBand(eventId: number, bandId: number) {
+  return db.query.events.findFirst({
+    where: and(eq(events.id, eventId), eq(events.bandId, bandId)),
+  });
+}
+
+/** Setliste-ID nur übernehmen, wenn sie zur Band gehört — sonst null. */
+async function sanitizeSetlistId(setlistId: number | null, bandId: number) {
+  if (setlistId == null) return null;
+  const sl = await db.query.setlists.findFirst({
+    where: and(eq(setlists.id, setlistId), eq(setlists.bandId, bandId)),
+  });
+  return sl ? setlistId : null;
+}
 
 function readEventFields(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
@@ -60,11 +78,12 @@ export async function createEvent(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const fields = readEventFields(formData);
   if (!fields.title) return { error: "Der Termin braucht einen Titel." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fields.date))
     return { error: "Bitte ein Datum angeben." };
+  fields.setlistId = await sanitizeSetlistId(fields.setlistId, bandId);
 
   const repeatWeekly = formData.get("repeatWeekly") === "on";
   const repeatUntil = String(formData.get("repeatUntil") ?? "").trim();
@@ -92,6 +111,7 @@ export async function createEvent(
     .values(
       dates.map((date) => ({
         ...fields,
+        bandId,
         date,
         seriesId,
         createdById: user.id,
@@ -107,6 +127,7 @@ export async function createEvent(
         : `${formatDate(dates[0])}${fields.startTime ? `, ${fields.startTime} Uhr` : ""}`;
     notifyBand({
       kind: "event_new",
+      bandId,
       subject: `Neuer Termin: ${fields.title} (${kindLabel})`,
       heading: "Neuer Termin",
       intro: `${user.name} hat einen neuen Termin angelegt:`,
@@ -130,17 +151,19 @@ export async function updateEvent(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const eventId = Number(formData.get("eventId"));
   const fields = readEventFields(formData);
   if (!fields.title) return { error: "Der Termin braucht einen Titel." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fields.date))
     return { error: "Bitte ein Datum angeben." };
+  fields.setlistId = await sanitizeSetlistId(fields.setlistId, bandId);
 
   // Alten Stand VOR dem Speichern lesen, damit die Mail „alt → neu" nennen kann.
-  const alt = await db.query.events.findFirst({ where: eq(events.id, eventId) });
+  const alt = await eventInBand(eventId, bandId);
+  if (!alt) return { error: "Termin nicht gefunden." };
 
-  await db.update(events).set(fields).where(eq(events.id, eventId));
+  await db.update(events).set(fields).where(and(eq(events.id, eventId), eq(events.bandId, bandId)));
 
   const sendMail = formData.get("sendMail") === "on";
   if (sendMail && alt) {
@@ -150,6 +173,7 @@ export async function updateEvent(
       const kindLabel = fields.kind === "gig" ? "Gig" : "Probe";
       notifyBand({
         kind: "event_changed",
+        bandId,
         subject: `Termin geändert: ${fields.title} (${kindLabel})`,
         heading: "Termin geändert",
         intro: `${user.name} hat „${fields.title}" geändert:`,
@@ -177,13 +201,13 @@ export async function updateEventSeries(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const eventId = Number(formData.get("eventId"));
   const startTime = String(formData.get("startTime") ?? "").trim() || null;
   const location = String(formData.get("location") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
-  const event = await db.query.events.findFirst({ where: eq(events.id, eventId) });
+  const event = await eventInBand(eventId, bandId);
   if (!event) return { error: "Termin nicht gefunden." };
   if (!event.seriesId) return { error: "Dieser Termin gehört zu keiner Serie." };
 
@@ -191,7 +215,14 @@ export async function updateEventSeries(
   await db
     .update(events)
     .set({ startTime, location, notes })
-    .where(and(eq(events.seriesId, event.seriesId), gte(events.date, today), eventAktiv));
+    .where(
+      and(
+        eq(events.seriesId, event.seriesId),
+        eq(events.bandId, bandId),
+        gte(events.date, today),
+        eventAktiv
+      )
+    );
 
   const sendMail = formData.get("sendMail") === "on";
   if (sendMail) {
@@ -204,6 +235,7 @@ export async function updateEventSeries(
       const kindLabel = event.kind === "gig" ? "Gig" : "Probe";
       notifyBand({
         kind: "event_changed",
+        bandId,
         subject: `Serientermin geändert: ${event.title} (${kindLabel})`,
         heading: "Serientermin geändert",
         intro: `${user.name} hat alle kommenden Termine der Serie „${event.title}" geändert:`,
@@ -222,16 +254,19 @@ export async function updateEventSeries(
 }
 
 export async function deleteEvent(eventId: number, scope: "single" | "series") {
-  const user = await requireUser();
-  const event = await db.query.events.findFirst({ where: eq(events.id, eventId) });
+  const { user, bandId } = await requireBandContext();
+  const event = await eventInBand(eventId, bandId);
   if (!event) return;
   // Identischer Zeitstempel für die ganze Serie — daran erkennt der Papierkorb,
   // was gesammelt weggeworfen wurde, und zeigt einen Eintrag statt zwölf.
   const geloescht = { deletedAt: new Date(), deletedById: user.id };
   if (scope === "series" && event.seriesId) {
-    await db.update(events).set(geloescht).where(eq(events.seriesId, event.seriesId));
+    await db
+      .update(events)
+      .set(geloescht)
+      .where(and(eq(events.seriesId, event.seriesId), eq(events.bandId, bandId)));
   } else {
-    await db.update(events).set(geloescht).where(eq(events.id, eventId));
+    await db.update(events).set(geloescht).where(and(eq(events.id, eventId), eq(events.bandId, bandId)));
   }
   revalidatePath("/", "layout");
   redirect(`/termine?undo=event:${eventId}`);
@@ -239,7 +274,13 @@ export async function deleteEvent(eventId: number, scope: "single" | "series") {
 
 /** Song auf die Probe-Agenda eines Termins setzen. */
 export async function addSongToEvent(eventId: number, songId: number) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
+  // Sowohl Termin als auch Song müssen zur Band gehören.
+  if (!(await eventInBand(eventId, bandId))) return;
+  const song = await db.query.songs.findFirst({
+    where: and(eq(songs.id, songId), eq(songs.bandId, bandId)),
+  });
+  if (!song) return;
   const [row] = await db
     .select({ maxPos: max(eventSongs.position) })
     .from(eventSongs)
@@ -253,11 +294,12 @@ export async function addSongToEvent(eventId: number, songId: number) {
 }
 
 export async function removeEventSong(eventSongId: number) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const row = await db.query.eventSongs.findFirst({
     where: eq(eventSongs.id, eventSongId),
   });
   if (!row) return;
+  if (!(await eventInBand(row.eventId, bandId))) return;
   await db.delete(eventSongs).where(eq(eventSongs.id, eventSongId));
   revalidatePath(`/termine/${row.eventId}`);
 }
@@ -267,7 +309,8 @@ export async function setAttendance(
   status: AttendanceStatus,
   comment?: string
 ) {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
+  if (!(await eventInBand(eventId, bandId))) return;
   await db
     .insert(eventAttendance)
     .values({ eventId, userId: user.id, status, comment: comment?.trim() || null })

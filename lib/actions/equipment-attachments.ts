@@ -1,10 +1,10 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { equipmentAttachments } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth";
+import { equipmentAttachments, equipment } from "@/lib/db/schema";
+import { requireBandContext } from "@/lib/auth";
 import { saveEquipmentUpload } from "@/lib/files";
 import type { FormState } from "@/lib/actions/auth";
 
@@ -12,7 +12,7 @@ export async function uploadEquipmentAttachment(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const equipmentId = Number(formData.get("equipmentId"));
   const kind = formData.get("kind") === "rechnung" ? "rechnung" : "foto";
   const file = formData.get("file");
@@ -20,6 +20,11 @@ export async function uploadEquipmentAttachment(
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Bitte eine Datei auswählen." };
   }
+
+  const geraet = await db.query.equipment.findFirst({
+    where: and(eq(equipment.id, equipmentId), eq(equipment.bandId, bandId)),
+  });
+  if (!geraet) return { error: "Gerät nicht gefunden." };
 
   try {
     await saveEquipmentUpload({ file, equipmentId, kind, userId: user.id });
@@ -36,14 +41,17 @@ export async function uploadEquipmentAttachment(
  * gelöscht wird — das „Rückgängig" auf der Equipment-Seite hängt daran.
  */
 export async function deleteEquipmentAttachment(attachmentId: number) {
-  const user = await requireUser();
-  const attachment = await db.query.equipmentAttachments.findFirst({
-    where: eq(equipmentAttachments.id, attachmentId),
-  });
-  if (!attachment) return;
+  const { user, bandId } = await requireBandContext();
+  const [row] = await db
+    .select({ id: equipmentAttachments.id, equipmentId: equipmentAttachments.equipmentId })
+    .from(equipmentAttachments)
+    .innerJoin(equipment, eq(equipmentAttachments.equipmentId, equipment.id))
+    .where(and(eq(equipmentAttachments.id, attachmentId), eq(equipment.bandId, bandId)))
+    .limit(1);
+  if (!row) return;
   await db
     .update(equipmentAttachments)
     .set({ deletedAt: new Date(), deletedById: user.id })
     .where(eq(equipmentAttachments.id, attachmentId));
-  revalidatePath(`/equipment/${attachment.equipmentId}`);
+  revalidatePath(`/equipment/${row.equipmentId}`);
 }

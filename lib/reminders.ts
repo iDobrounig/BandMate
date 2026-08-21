@@ -75,9 +75,16 @@ export async function planReminders(
   appUrl: string,
   heute = new Date()
 ): Promise<PlannedSend[]> {
-  const empfaenger = await fetchRecipients("reminder");
-  if (empfaenger.length === 0) return [];
-  const empfById = new Map(empfaenger.map((e) => [e.id, e]));
+  // Empfänger sind pro Band verschieden — je Band einmal auflösen und cachen.
+  const empfCache = new Map<number, Awaited<ReturnType<typeof fetchRecipients>>>();
+  const empfaengerFuer = async (bandId: number) => {
+    let e = empfCache.get(bandId);
+    if (!e) {
+      e = await fetchRecipients("reminder", bandId);
+      empfCache.set(bandId, e);
+    }
+    return e;
+  };
 
   const geplant: PlannedSend[] = [];
 
@@ -87,6 +94,8 @@ export async function planReminders(
     where: (e, { and, eq, isNull }) => and(eq(e.date, in2Tagen), isNull(e.deletedAt)),
   });
   for (const event of termineRsvp) {
+    if (event.bandId == null) continue;
+    const empfaenger = await empfaengerFuer(event.bandId);
     const geantwortet = await db
       .select({ userId: eventAttendance.userId })
       .from(eventAttendance)
@@ -119,6 +128,8 @@ export async function planReminders(
     where: (e, { and, eq, isNull }) => and(eq(e.date, morgen), isNull(e.deletedAt)),
   });
   for (const event of termineSoon) {
+    if (event.bandId == null) continue;
+    const empfById = new Map((await empfaengerFuer(event.bandId)).map((e) => [e.id, e]));
     const zusagen = await db
       .select({ userId: eventAttendance.userId })
       .from(eventAttendance)
@@ -133,7 +144,7 @@ export async function planReminders(
 
     for (const { userId } of zusagen) {
       const person = empfById.get(userId);
-      if (!person) continue; // nicht aktiv oder reminder=nie
+      if (!person) continue; // nicht aktiv, kein Bandmitglied oder reminder=nie
       geplant.push({
         userId: person.id,
         email: person.email,

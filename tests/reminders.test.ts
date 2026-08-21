@@ -26,6 +26,7 @@ async function terminAn(tage: number, over = {}) {
   const [e] = await db
     .insert(events)
     .values({
+      bandId: f.bandId,
       title: "Bandprobe",
       kind: "rehearsal",
       date: tagePlus(tage),

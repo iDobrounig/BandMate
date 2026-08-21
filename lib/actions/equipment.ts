@@ -1,13 +1,28 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { equipment, equipmentContributions, type EquipmentCategory, type EquipmentStatus } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth";
+import { equipment, equipmentContributions, bandMembers, type EquipmentCategory, type EquipmentStatus } from "@/lib/db/schema";
+import { requireBandContext } from "@/lib/auth";
 import { EQUIPMENT_CATEGORY_ORDER, EQUIPMENT_STATUS_ORDER } from "@/lib/constants";
 import type { FormState } from "@/lib/actions/auth";
+
+/** Beteiligungen auf tatsächliche Mitglieder DIESER Band beschränken (inkl.
+ *  ausgetretener — sie können bestehende Beteiligungen behalten). */
+async function filterBandContributions(
+  contributions: { userId: number; amount: number; note: string | null }[],
+  bandId: number
+) {
+  if (contributions.length === 0) return [];
+  const members = await db
+    .select({ userId: bandMembers.userId })
+    .from(bandMembers)
+    .where(eq(bandMembers.bandId, bandId));
+  const ids = new Set(members.map((m) => m.userId));
+  return contributions.filter((c) => ids.has(c.userId));
+}
 
 function readEquipmentFields(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -56,16 +71,16 @@ export async function createEquipment(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const fields = readEquipmentFields(formData);
   if (!fields.name) return { error: "Der Name darf nicht leer sein." };
 
   const [item] = await db
     .insert(equipment)
-    .values({ ...fields, createdById: user.id })
+    .values({ ...fields, bandId, createdById: user.id })
     .returning();
 
-  const contributions = readContributions(formData);
+  const contributions = await filterBandContributions(readContributions(formData), bandId);
   if (contributions.length > 0) {
     await db
       .insert(equipmentContributions)
@@ -80,19 +95,25 @@ export async function updateEquipment(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const equipmentId = Number(formData.get("equipmentId"));
   const fields = readEquipmentFields(formData);
   if (!fields.name) return { error: "Der Name darf nicht leer sein." };
 
+  // Fremdes Gerät? Dann nicht anfassen.
+  const vorhanden = await db.query.equipment.findFirst({
+    where: and(eq(equipment.id, equipmentId), eq(equipment.bandId, bandId)),
+  });
+  if (!vorhanden) return { error: "Gerät nicht gefunden." };
+
   await db
     .update(equipment)
     .set({ ...fields, updatedAt: new Date() })
-    .where(eq(equipment.id, equipmentId));
+    .where(and(eq(equipment.id, equipmentId), eq(equipment.bandId, bandId)));
 
   // Beteiligungen komplett ersetzen, wie Songs es mit Links macht.
   await db.delete(equipmentContributions).where(eq(equipmentContributions.equipmentId, equipmentId));
-  const contributions = readContributions(formData);
+  const contributions = await filterBandContributions(readContributions(formData), bandId);
   if (contributions.length > 0) {
     await db
       .insert(equipmentContributions)
@@ -108,11 +129,11 @@ export async function updateEquipment(
  * bleiben erhalten — siehe lib/trash.ts.
  */
 export async function deleteEquipment(equipmentId: number) {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   await db
     .update(equipment)
     .set({ deletedAt: new Date(), deletedById: user.id })
-    .where(eq(equipment.id, equipmentId));
+    .where(and(eq(equipment.id, equipmentId), eq(equipment.bandId, bandId)));
   revalidatePath("/", "layout");
   redirect(`/equipment?undo=equipment:${equipmentId}`);
 }

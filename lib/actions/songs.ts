@@ -1,11 +1,11 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { songs, songLinks, type SongStatus } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth";
+import { requireBandContext } from "@/lib/auth";
 import { detectLinkKind } from "@/lib/links";
 import { parseDuration } from "@/lib/format";
 import { saveUpload } from "@/lib/files";
@@ -55,14 +55,14 @@ export type DuplicateMatch = {
 
 /** Für die Dubletten-Warnung beim Songvorschlag: bis zu 5 ähnliche, aktive Songs. */
 export async function checkDuplicateTitle(title: string): Promise<DuplicateMatch[]> {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const input = title.trim();
   if (input.length < 2) return [];
 
   const candidates = await db
     .select({ id: songs.id, title: songs.title, artist: songs.artist, status: songs.status })
     .from(songs)
-    .where(songAktiv);
+    .where(and(songAktiv, eq(songs.bandId, bandId)));
 
   const inputLower = input.toLowerCase();
   return candidates
@@ -79,13 +79,13 @@ export async function createSong(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const fields = readSongFields(formData);
   if (!fields.title) return { error: "Der Titel darf nicht leer sein." };
 
   const [song] = await db
     .insert(songs)
-    .values({ ...fields, suggestedById: user.id })
+    .values({ ...fields, bandId, suggestedById: user.id })
     .returning();
 
   const links = readLinks(formData);
@@ -120,6 +120,7 @@ export async function createSong(
 
   notifyBand({
     kind: "suggestion",
+    bandId,
     subject: `Neuer Songvorschlag: ${fields.title}`,
     heading: "Neuer Songvorschlag",
     intro: `${user.name} hat einen neuen Song vorgeschlagen:`,
@@ -139,7 +140,7 @@ export async function updateSong(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const songId = Number(formData.get("songId"));
   const fields = readSongFields(formData);
   if (!fields.title) return { error: "Der Titel darf nicht leer sein." };
@@ -147,7 +148,7 @@ export async function updateSong(
   await db
     .update(songs)
     .set({ ...fields, updatedAt: new Date() })
-    .where(eq(songs.id, songId));
+    .where(and(eq(songs.id, songId), eq(songs.bandId, bandId)));
 
   // Links komplett ersetzen
   await db.delete(songLinks).where(eq(songLinks.songId, songId));
@@ -161,11 +162,11 @@ export async function updateSong(
 }
 
 export async function setSongStatus(songId: number, status: SongStatus) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   await db
     .update(songs)
     .set({ status, updatedAt: new Date() })
-    .where(eq(songs.id, songId));
+    .where(and(eq(songs.id, songId), eq(songs.bandId, bandId)));
   revalidatePath("/", "layout");
 }
 
@@ -175,7 +176,7 @@ export async function saveTransposedLyrics(
   lyricsChords: string,
   songKey: string | null
 ) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   await db
     .update(songs)
     .set({
@@ -183,7 +184,7 @@ export async function saveTransposedLyrics(
       songKey: songKey?.trim() || null,
       updatedAt: new Date(),
     })
-    .where(eq(songs.id, songId));
+    .where(and(eq(songs.id, songId), eq(songs.bandId, bandId)));
   revalidatePath(`/songs/${songId}`);
 }
 
@@ -192,11 +193,11 @@ export async function saveTransposedLyrics(
  * endgültig gelöscht wird — siehe lib/trash.ts.
  */
 export async function deleteSong(songId: number) {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   await db
     .update(songs)
     .set({ deletedAt: new Date(), deletedById: user.id })
-    .where(eq(songs.id, songId));
+    .where(and(eq(songs.id, songId), eq(songs.bandId, bandId)));
   revalidatePath("/", "layout");
   redirect(`/songs?undo=song:${songId}`);
 }

@@ -2,6 +2,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   users,
+  bandMembers,
   notificationSettings,
   notificationRuns,
   type NotificationKind,
@@ -102,12 +103,22 @@ export type Recipient = { id: number; name: string; email: string };
  */
 export async function fetchRecipients(
   kind: NotificationKind,
+  bandId: number,
   opts: { excludeUserId?: number } = {}
 ): Promise<Recipient[]> {
+  // Aktive Mitglieder DIESER Band (und global aktives Konto). Die
+  // Benachrichtigungs-Vorlieben selbst sind personenbezogen (kein bandId).
   const aktive = await db
     .select({ id: users.id, name: users.name, email: users.email })
-    .from(users)
-    .where(eq(users.active, true));
+    .from(bandMembers)
+    .innerJoin(users, eq(bandMembers.userId, users.id))
+    .where(
+      and(
+        eq(bandMembers.bandId, bandId),
+        eq(bandMembers.active, true),
+        eq(users.active, true)
+      )
+    );
 
   const kandidaten = aktive.filter((u) => u.id !== opts.excludeUserId);
   if (kandidaten.length === 0) return [];

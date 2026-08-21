@@ -61,25 +61,25 @@ describe("Standardwerte", () => {
 
 describe("Empfänger für Sofortmails", () => {
   it("nimmt standardmäßig alle aktiven Mitglieder außer dem Auslöser", async () => {
-    const e = await fetchRecipients("suggestion", { excludeUserId: f.users.bert.id });
+    const e = await fetchRecipients("suggestion", f.bandId, { excludeUserId: f.users.bert.id });
     expect(namen(e)).toEqual(["Anna Admin", "Clara Cello"]);
   });
 
   it("lässt deaktivierte Mitglieder immer weg", async () => {
-    const e = await fetchRecipients("suggestion");
+    const e = await fetchRecipients("suggestion", f.bandId);
     expect(namen(e)).not.toContain("Dora Draussen");
     expect(e).toHaveLength(3);
   });
 
   it("überspringt, wer „nie\" eingestellt hat", async () => {
     await saveSettings(f.users.clara.id, { suggestion: "nie" });
-    const e = await fetchRecipients("suggestion");
+    const e = await fetchRecipients("suggestion", f.bandId);
     expect(namen(e)).toEqual(["Anna Admin", "Bert Bass"]);
   });
 
   it("überspringt auch „gesammelt\" — das kommt erst im Digest", async () => {
     await saveSettings(f.users.clara.id, { suggestion: "gesammelt" });
-    const e = await fetchRecipients("suggestion");
+    const e = await fetchRecipients("suggestion", f.bandId);
     expect(namen(e)).not.toContain("Clara Cello");
   });
 
@@ -87,16 +87,16 @@ describe("Empfänger für Sofortmails", () => {
     await saveSettings(f.users.clara.id, { suggestion: "nie" });
     // Nur Vorschläge abgestellt — Termine kommen weiterhin an. Genau das ging
     // mit dem alten einen Schalter nicht.
-    expect(namen(await fetchRecipients("suggestion"))).not.toContain("Clara Cello");
-    expect(namen(await fetchRecipients("event_new"))).toContain("Clara Cello");
-    expect(namen(await fetchRecipients("reminder"))).toContain("Clara Cello");
+    expect(namen(await fetchRecipients("suggestion", f.bandId))).not.toContain("Clara Cello");
+    expect(namen(await fetchRecipients("event_new", f.bandId))).toContain("Clara Cello");
+    expect(namen(await fetchRecipients("reminder", f.bandId))).toContain("Clara Cello");
   });
 
   it("liefert niemanden, wenn alle abgestellt haben", async () => {
     for (const u of [f.users.anna, f.users.bert, f.users.clara]) {
       await saveSettings(u.id, { comment: "nie" });
     }
-    expect(await fetchRecipients("comment")).toHaveLength(0);
+    expect(await fetchRecipients("comment", f.bandId)).toHaveLength(0);
   });
 });
 
@@ -128,14 +128,14 @@ describe("Migration der alten Einstellung", () => {
     const s = await fetchSettings(f.users.clara.id);
     expect(Object.values(s).every((m) => m === "nie")).toBe(true);
     for (const kind of ["suggestion", "comment", "event_new", "event_changed", "reminder"] as const) {
-      expect(namen(await fetchRecipients(kind))).not.toContain("Clara Cello");
+      expect(namen(await fetchRecipients(kind, f.bandId))).not.toContain("Clara Cello");
     }
   });
 
   it("lässt alle anderen unverändert alles bekommen", async () => {
     const uebrig = await db.select().from(users).where(eq(users.active, true));
     expect(uebrig.length).toBeGreaterThan(0);
-    expect(namen(await fetchRecipients("suggestion"))).toEqual([
+    expect(namen(await fetchRecipients("suggestion", f.bandId))).toEqual([
       "Anna Admin",
       "Bert Bass",
       "Clara Cello",

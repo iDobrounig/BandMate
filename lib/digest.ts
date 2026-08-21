@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull, ne, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   users,
@@ -58,6 +58,7 @@ export type GatheredContent = {
  */
 async function fetchGathered(
   userId: number,
+  bandIds: number[],
   gesammelt: Set<string>,
   seit: Date
 ): Promise<GatheredContent> {
@@ -66,6 +67,8 @@ async function fetchGathered(
     neueTermine: [],
     neueKommentare: 0,
   };
+  // Nur Inhalte aus den Bands des Empfängers.
+  if (bandIds.length === 0) return out;
 
   if (gesammelt.has("suggestion")) {
     out.neueVorschlaege = await db
@@ -74,6 +77,7 @@ async function fetchGathered(
       .where(
         and(
           isNull(songs.deletedAt),
+          inArray(songs.bandId, bandIds),
           eq(songs.status, "suggestion"),
           gt(songs.createdAt, seit)
         )
@@ -85,7 +89,7 @@ async function fetchGathered(
     out.neueTermine = await db
       .select({ id: events.id, title: events.title, date: events.date })
       .from(events)
-      .where(and(isNull(events.deletedAt), gt(events.createdAt, seit)))
+      .where(and(isNull(events.deletedAt), inArray(events.bandId, bandIds), gt(events.createdAt, seit)))
       .orderBy(events.date);
   }
 
@@ -97,6 +101,7 @@ async function fetchGathered(
       .where(
         and(
           isNull(songs.deletedAt),
+          inArray(songs.bandId, bandIds),
           ne(comments.userId, userId),
           gt(comments.createdAt, seit)
         )
@@ -241,12 +246,11 @@ export async function runDigest(
           .filter(([, mode]) => mode === "gesammelt")
           .map(([kind]) => kind)
       );
-      // Aufgaben über alle Bands des Empfängers (Benachrichtigungen sind
-      // personenbezogen). fetchGathered bleibt vorerst bandübergreifend —
-      // Stage 6 macht die „gesammelt"-Posten ebenfalls band-bewusst.
+      // Alles über die Bands des Empfängers zusammengefasst — Benachrichtigungen
+      // sind personenbezogen, die Inhalte je Band gescoped.
       const bandIds = (await fetchMemberships(person.id)).map((m) => m.bandId);
       const [gathered, todo] = await Promise.all([
-        fetchGathered(person.id, gesammelt, seit),
+        fetchGathered(person.id, bandIds, gesammelt, seit),
         fetchTodoForBands(person.id, bandIds, null), // Digest zählt keine „neuen Kommentare seit Besuch"
       ]);
 

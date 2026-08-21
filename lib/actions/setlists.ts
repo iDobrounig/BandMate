@@ -4,8 +4,8 @@ import { and, eq, max } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { setlists, setlistItems } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth";
+import { setlists, setlistItems, songs } from "@/lib/db/schema";
+import { requireBandContext } from "@/lib/auth";
 import type { FormState } from "@/lib/actions/auth";
 
 /** Zielzeit-Feld (Minuten) → Sekunden; leer/ungültig → null. */
@@ -23,11 +23,29 @@ async function nextPosition(setlistId: number): Promise<number> {
   return (row?.maxPos ?? 0) + 1;
 }
 
+/** Setliste der Band oder null. */
+async function setlistInBand(setlistId: number, bandId: number) {
+  return db.query.setlists.findFirst({
+    where: and(eq(setlists.id, setlistId), eq(setlists.bandId, bandId)),
+  });
+}
+
+/** Setlist-Item, dessen Setliste zur Band gehört — sonst null. Liefert setlistId mit. */
+async function itemInBand(itemId: number, bandId: number) {
+  const [row] = await db
+    .select({ id: setlistItems.id, setlistId: setlistItems.setlistId })
+    .from(setlistItems)
+    .innerJoin(setlists, eq(setlistItems.setlistId, setlists.id))
+    .where(and(eq(setlistItems.id, itemId), eq(setlists.bandId, bandId)))
+    .limit(1);
+  return row ?? null;
+}
+
 export async function createSetlist(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const name = String(formData.get("name") ?? "").trim();
   const eventDate = String(formData.get("eventDate") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
@@ -36,7 +54,7 @@ export async function createSetlist(
 
   const [setlist] = await db
     .insert(setlists)
-    .values({ name, eventDate: eventDate || null, notes: notes || null, targetSeconds })
+    .values({ bandId, name, eventDate: eventDate || null, notes: notes || null, targetSeconds })
     .returning();
 
   revalidatePath("/setlisten");
@@ -47,7 +65,7 @@ export async function updateSetlist(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireUser();
+  const { bandId } = await requireBandContext();
   const setlistId = Number(formData.get("setlistId"));
   const name = String(formData.get("name") ?? "").trim();
   const eventDate = String(formData.get("eventDate") ?? "").trim();
@@ -58,7 +76,7 @@ export async function updateSetlist(
   await db
     .update(setlists)
     .set({ name, eventDate: eventDate || null, notes: notes || null, targetSeconds })
-    .where(eq(setlists.id, setlistId));
+    .where(and(eq(setlists.id, setlistId), eq(setlists.bandId, bandId)));
 
   revalidatePath("/setlisten");
   revalidatePath(`/setlisten/${setlistId}`);
@@ -67,15 +85,14 @@ export async function updateSetlist(
 
 /** Kopiert eine Setliste samt Songs (ohne Datum), z.B. als Basis für den nächsten Gig. */
 export async function duplicateSetlist(setlistId: number) {
-  await requireUser();
-  const original = await db.query.setlists.findFirst({
-    where: eq(setlists.id, setlistId),
-  });
+  const { bandId } = await requireBandContext();
+  const original = await setlistInBand(setlistId, bandId);
   if (!original) return;
 
   const [copy] = await db
     .insert(setlists)
     .values({
+      bandId,
       name: `${original.name} (Kopie)`,
       eventDate: null,
       notes: original.notes,
@@ -90,6 +107,9 @@ export async function duplicateSetlist(setlistId: number) {
       items.map((item) => ({
         setlistId: copy.id,
         songId: item.songId,
+        kind: item.kind,
+        label: item.label,
+        breakSeconds: item.breakSeconds,
         position: item.position,
         note: item.note,
       }))
@@ -101,17 +121,22 @@ export async function duplicateSetlist(setlistId: number) {
 }
 
 export async function deleteSetlist(setlistId: number) {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   await db
     .update(setlists)
     .set({ deletedAt: new Date(), deletedById: user.id })
-    .where(eq(setlists.id, setlistId));
+    .where(and(eq(setlists.id, setlistId), eq(setlists.bandId, bandId)));
   revalidatePath("/", "layout");
   redirect(`/setlisten?undo=setlist:${setlistId}`);
 }
 
 export async function addSongToSetlist(setlistId: number, songId: number) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
+  if (!(await setlistInBand(setlistId, bandId))) return;
+  const song = await db.query.songs.findFirst({
+    where: and(eq(songs.id, songId), eq(songs.bandId, bandId)),
+  });
+  if (!song) return;
   await db.insert(setlistItems).values({
     setlistId,
     songId,
@@ -122,7 +147,8 @@ export async function addSongToSetlist(setlistId: number, songId: number) {
 }
 
 export async function addSetlistSection(setlistId: number) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
+  if (!(await setlistInBand(setlistId, bandId))) return;
   await db.insert(setlistItems).values({
     setlistId,
     kind: "section",
@@ -133,7 +159,8 @@ export async function addSetlistSection(setlistId: number) {
 }
 
 export async function addSetlistBreak(setlistId: number) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
+  if (!(await setlistInBand(setlistId, bandId))) return;
   await db.insert(setlistItems).values({
     setlistId,
     kind: "break",
@@ -144,10 +171,8 @@ export async function addSetlistBreak(setlistId: number) {
 }
 
 export async function updateSetlistItemLabel(itemId: number, label: string) {
-  await requireUser();
-  const item = await db.query.setlistItems.findFirst({
-    where: eq(setlistItems.id, itemId),
-  });
+  const { bandId } = await requireBandContext();
+  const item = await itemInBand(itemId, bandId);
   if (!item) return;
   await db
     .update(setlistItems)
@@ -157,10 +182,8 @@ export async function updateSetlistItemLabel(itemId: number, label: string) {
 }
 
 export async function updateSetlistBreakSeconds(itemId: number, seconds: number) {
-  await requireUser();
-  const item = await db.query.setlistItems.findFirst({
-    where: eq(setlistItems.id, itemId),
-  });
+  const { bandId } = await requireBandContext();
+  const item = await itemInBand(itemId, bandId);
   if (!item) return;
   const safe = Number.isFinite(seconds) && seconds >= 0 ? Math.round(seconds) : 0;
   await db
@@ -171,10 +194,8 @@ export async function updateSetlistBreakSeconds(itemId: number, seconds: number)
 }
 
 export async function removeSetlistItem(itemId: number) {
-  await requireUser();
-  const item = await db.query.setlistItems.findFirst({
-    where: eq(setlistItems.id, itemId),
-  });
+  const { bandId } = await requireBandContext();
+  const item = await itemInBand(itemId, bandId);
   if (!item) return;
   await db.delete(setlistItems).where(eq(setlistItems.id, itemId));
   revalidatePath(`/setlisten/${item.setlistId}`);
@@ -182,7 +203,8 @@ export async function removeSetlistItem(itemId: number) {
 
 /** Speichert die neue Reihenfolge (Array von Item-IDs in Zielreihenfolge). */
 export async function reorderSetlist(setlistId: number, orderedItemIds: number[]) {
-  await requireUser();
+  const { bandId } = await requireBandContext();
+  if (!(await setlistInBand(setlistId, bandId))) return;
   for (let i = 0; i < orderedItemIds.length; i++) {
     await db
       .update(setlistItems)
@@ -198,10 +220,8 @@ export async function reorderSetlist(setlistId: number, orderedItemIds: number[]
 }
 
 export async function updateSetlistItemNote(itemId: number, note: string) {
-  await requireUser();
-  const item = await db.query.setlistItems.findFirst({
-    where: eq(setlistItems.id, itemId),
-  });
+  const { bandId } = await requireBandContext();
+  const item = await itemInBand(itemId, bandId);
   if (!item) return;
   await db
     .update(setlistItems)

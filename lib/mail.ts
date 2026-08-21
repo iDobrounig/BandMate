@@ -65,6 +65,8 @@ export type BatchMailer = ReturnType<typeof createBatchMailer>;
  */
 export function notifyBand(opts: {
   kind: NotificationKind;
+  /** Empfänger sind ausschließlich Mitglieder dieser Band. */
+  bandId: number;
   subject: string;
   heading: string;
   intro: string;
@@ -80,7 +82,7 @@ export function notifyBand(opts: {
   }
   void (async () => {
     try {
-      const recipients = await fetchRecipients(opts.kind, {
+      const recipients = await fetchRecipients(opts.kind, opts.bandId, {
         excludeUserId: opts.excludeUserId,
       });
       if (recipients.length === 0) {

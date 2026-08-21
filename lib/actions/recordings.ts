@@ -4,10 +4,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db, uploadsDir } from "@/lib/db";
-import { attachments } from "@/lib/db/schema";
-import { requireUser } from "@/lib/auth";
+import { attachments, songs } from "@/lib/db/schema";
+import { requireBandContext } from "@/lib/auth";
 import { transcodeToOpus } from "@/lib/audio-transcode";
 
 function tempExtFor(mime: string): string {
@@ -26,7 +27,7 @@ function tempExtFor(mime: string): string {
 export async function saveRecording(
   formData: FormData
 ): Promise<{ error: string } | { success: string }> {
-  const user = await requireUser();
+  const { user, bandId } = await requireBandContext();
   const songId = Number(formData.get("songId"));
   const label = String(formData.get("label") ?? "").trim();
   const file = formData.get("file");
@@ -40,6 +41,11 @@ export async function saveRecording(
   if (!label) {
     return { error: "Bitte eine Bezeichnung angeben." };
   }
+
+  const song = await db.query.songs.findFirst({
+    where: and(eq(songs.id, songId), eq(songs.bandId, bandId)),
+  });
+  if (!song) return { error: "Song nicht gefunden." };
 
   const tempPath = path.join(
     os.tmpdir(),
