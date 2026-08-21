@@ -25,22 +25,26 @@ type DB = BetterSQLite3Database<typeof schema>;
  * Idempotent durch den Null-Bands-Guard; Zeitstempel als Unix-Sekunden.
  */
 function ensureTenancyBackfill(sqlite: Database.Database): void {
-  const bandCount = (
-    sqlite.prepare("SELECT count(*) AS c FROM bands").get() as { c: number }
-  ).c;
-  if (bandCount > 0) return;
-
-  const userCount = (
-    sqlite.prepare("SELECT count(*) AS c FROM users").get() as { c: number }
-  ).c;
-  // Frische Installation ohne User: nichts zu migrieren, die erste Band legt
-  // der Super-Admin an.
-  if (userCount === 0) return;
-
   const token = crypto.randomBytes(16).toString("hex");
   const name = process.env.DEFAULT_BAND_NAME ?? "Meine Band";
 
+  // Prüfung UND Inserts in einer IMMEDIATE-Transaktion: So kann kein zweiter
+  // Prozess zwischen „keine Band?" und „Band anlegen" denselben Backfill starten
+  // und eine doppelte Band erzeugen — der zweite blockt (busy_timeout) und sieht
+  // dann bandCount > 0.
   const run = sqlite.transaction(() => {
+    const bandCount = (
+      sqlite.prepare("SELECT count(*) AS c FROM bands").get() as { c: number }
+    ).c;
+    if (bandCount > 0) return;
+
+    const userCount = (
+      sqlite.prepare("SELECT count(*) AS c FROM users").get() as { c: number }
+    ).c;
+    // Frische Installation ohne User: nichts zu migrieren, die erste Band legt
+    // der Super-Admin an.
+    if (userCount === 0) return;
+
     const { lastInsertRowid } = sqlite
       .prepare(
         "INSERT INTO bands (name, active, calendar_token, created_at) VALUES (?, 1, ?, unixepoch())"
@@ -67,7 +71,7 @@ function ensureTenancyBackfill(sqlite: Database.Database): void {
       )
       .run(bandId);
   });
-  run();
+  run.immediate();
 }
 
 function createDb(): DB {
@@ -75,9 +79,21 @@ function createDb(): DB {
   const sqlite = new Database(path.join(dataDir, "band.db"));
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
+  // Warten statt sofort scheitern, wenn ein anderer Prozess gerade schreibt.
+  sqlite.pragma("busy_timeout = 5000");
   const db = drizzle(sqlite, { schema });
-  migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
-  ensureTenancyBackfill(sqlite);
+
+  // WICHTIG: Migration + Backfill NICHT während `next build` laufen lassen.
+  // Next.js sammelt die Page-Data mit MEHREREN Worker-Prozessen parallel, die
+  // alle dieses Modul laden. Liefen sie alle migrate(), käme es beim CREATE
+  // TABLE zur Kollision („table already exists") und der Build bräche ab. Zur
+  // Build-Zeit wird nichts abgefragt — die offene Verbindung genügt. Migriert
+  // wird zur Laufzeit (ein einziger PM2-Fork) bzw. im Dev-Server, also
+  // prozess-seriell und damit gefahrlos.
+  if (process.env.NEXT_PHASE !== "phase-production-build") {
+    migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+    ensureTenancyBackfill(sqlite);
+  }
   return db;
 }
 
