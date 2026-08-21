@@ -63,7 +63,7 @@ export default async function MitgliederPage() {
       .orderBy(asc(users.name));
 
     return (
-      <div className="max-w-3xl">
+      <div>
         <h1 className="headline text-3xl">Mitglieder</h1>
         <p className="mt-1 text-sm text-mute">Wer spielt was — und wie erreicht man wen.</p>
         <section className="mt-8 space-y-3">
@@ -90,13 +90,13 @@ export default async function MitgliederPage() {
   const settings = await Promise.all(members.map((m) => fetchSettings(m.id)));
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <h1 className="headline text-3xl">Mitglieder</h1>
       <p className="mt-1 text-sm text-mute">
         Neue Bandmitglieder anlegen, Passwörter setzen, Rollen verwalten.
       </p>
 
-      <section className="card mt-8 p-5">
+      <section className="card mt-8 max-w-2xl p-5">
         <h2 className="headline mb-4 text-lg">Neues Mitglied</h2>
         <NewMemberForm />
       </section>
@@ -114,7 +114,7 @@ export default async function MitgliederPage() {
 
       <AttendanceStatsCard stats={stats} />
 
-      <section className="card mt-8 p-5">
+      <section className="card mt-8 max-w-2xl p-5">
         <h2 className="headline mb-4 text-lg">SMTP-Verbindung testen</h2>
         <SmtpTestForm adminEmail={admin.email} />
       </section>

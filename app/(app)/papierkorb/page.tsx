@@ -18,7 +18,7 @@ export default async function PapierkorbPage() {
   const eintraege = await fetchTrash();
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <div className="flex flex-wrap items-center gap-3">
         <IconTrash className="size-7 text-mute" />
         <h1 className="headline text-3xl">Papierkorb</h1>
