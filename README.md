@@ -1,8 +1,8 @@
 # BandMate
 
-Selbst gehostetes Band-Dashboard: Songvorschläge mit Voting, Noten & Audio pro Song, Übe-Status, Bandchat, Setlisten, Probetermine mit Zu-/Absagen — alles an einem Ort, gebaut für kleine Bands (3–15 Leute).
+Selbst gehostetes Band-Dashboard: Songvorschläge mit Voting, Noten & Audio pro Song, Übe-Status, Bandchat, Setlisten mit Bühnenmodus, Probe- und Gig-Termine mit Zu-/Absagen und Equipment-Verwaltung — alles an einem Ort, für **eine oder mehrere Bands** auf einer Installation. Gebaut für kleine Bands (3–15 Leute je Band).
 
-> **English:** BandMate is a self-hosted dashboard for bands: song suggestions with voting, sheet music & audio per song, practice status, comments, drag-and-drop setlists with print view, rehearsal/gig scheduling with RSVPs, an ICS calendar feed, a built-in metronome and a chord transposer. Single Node.js process, SQLite, no external services required. UI is currently German only — contributions welcome.
+> **English:** BandMate is a self-hosted dashboard for bands: song suggestions with voting, sheet music & audio per song (incl. in-browser recording), practice status, comments, drag-and-drop setlists with sections/breaks, a full-screen stage mode, rehearsal/gig scheduling with RSVPs and gig logistics, shared equipment tracking, an ICS calendar feed, a built-in metronome and a chord transposer/capo helper. Multi-tenant: run several bands on one install, managed by a super-admin, with content strictly separated per band. Single Node.js process, SQLite, no external services required. UI is currently German only — contributions welcome.
 
 **Stack:** Next.js (App Router) · SQLite (better-sqlite3 + Drizzle) · Tailwind CSS · iron-session — läuft als einzelner Node-Prozess, keine externen Dienste nötig.
 
@@ -17,22 +17,36 @@ Selbst gehostetes Band-Dashboard: Songvorschläge mit Voting, Noten & Audio pro 
 
 ## Features
 
-- **Songs** mit Status-Workflow: Vorschlag → In Probe → Repertoire → Archiv
-- Tempo (BPM), Tonart, Capo, Dauer, Lyrics/Akkorde, Notizen
-- **Uploads**: Noten pro Instrument (PDF/Bilder, max. 20 MB) und Audio-Dateien (max. 50 MB) mit Player
-- **Links** mit YouTube-/Spotify-Embed
-- **Voting** (Daumen hoch/runter) auf Vorschläge
-- **Übe-Status** pro Mitglied („Noch nicht angeschaut / Übe noch / Kann ich")
-- **Bandchat**: Kommentare pro Song
-- **Setlisten** mit Drag-&-Drop-Reihenfolge, Gesamtdauer und Druck-/PDF-Ansicht
-- **Metronom** (Web Audio) mit Tap-Tempo, vorbelegt mit dem Song-Tempo
-- **Userverwaltung**: Admin legt Mitglieder an und setzt Passwörter; sonst dürfen alle alles
-- **Papierkorb**: Gelöschtes bleibt 30 Tage wiederherstellbar, dazu „Rückgängig" direkt nach dem Löschen
-- **Benachrichtigungen** je Ereignistyp einstellbar (sofort / im Wochen-Digest / nie), plus Termin-Erinnerungen per Cron
+**Songs**
+- Status-Workflow: Vorschlag → In Probe → Repertoire → Archiv, mit **Voting** (Daumen hoch/runter) und **Dubletten-Warnung** beim Vorschlagen
+- Stammdaten: Tempo (BPM), Tonart, Capo, Dauer, Lyrics/Akkorde, Notizen
+- **Uploads**: Noten pro Instrument (PDF/Bilder, mit Inline-PDF-Viewer) und Audio (mit Player + Seeking) — Audio auch **direkt im Browser aufnehmen** (Proberaum-Mitschnitt)
+- **Transponieren** live um Halbtöne (deutsch H/B & englisch B) und **Capo-Rechner** in der Lyrics-Ansicht, optional dauerhaft speichern
+- **Links** mit YouTube-/Spotify-Embed, **Bandchat** (Kommentare) und **Übe-Status** pro Mitglied mit Band-Ampel
+- **Repertoire-Gedächtnis**: „zuletzt geprobt/gespielt", Rückverweise (in welchen Setlisten/Agenden kommt der Song vor), Sortierung „am längsten nicht gespielt"
 
-- **Termine**: Proben (auch als wöchentliche Serie) und Gigs mit Zu-/Absagen der Mitglieder, optionaler E-Mail beim Anlegen, Setlisten-Verknüpfung
-- **PDF-Noten-Viewer** direkt auf der Songseite
-- **Transponieren**: Akkordzeilen in den Lyrics live um Halbtöne verschieben (deutsch H/B und englisch B unterstützt), optional dauerhaft speichern
+**Setlisten & Bühne**
+- Beliebig viele Setlisten, duplizierbar, **Drag-&-Drop** über Songs, **Set-Überschriften und Pausen**, Zwischensummen und **Zielzeit-Abgleich**
+- **Druck-/PDF-Ansicht** inkl. Lyrics & Akkorden (pro Song oder ganze Setliste, optional transponiert)
+- **Bühnenmodus**: Vollbild-Seitenfolge einer Setliste (Wischen/Pfeiltasten, Wake Lock, Noten des eigenen Instruments bzw. Lyrics/Akkorde, eingeblendetes Metronom, Pausen-Countdown) — plus „Notenpult"-Minimalansicht
+- **Metronom** (Web Audio) mit Tap-Tempo, vorbelegt mit dem Song-Tempo
+
+**Termine**
+- Proben (auch als wöchentliche **Serie**) und Gigs mit **Zu-/Absagen**, optionaler E-Mail beim Anlegen, Setlisten-Verknüpfung
+- **Probe-Agenda**: Songs einem Termin zuordnen, mit „✓ x/y können's"-Anzeige
+- **Gig-Logistik**: Load-in/Soundcheck/Auftritt, Kontakt, Gage, Anfahrt, Backline
+- **ICS-Kalender-Feed** (Abo-URL) mit nativen Erinnerungen, dazu Termin-Erinnerungs-Mails per Cron
+
+**Equipment**
+- Gemeinsames Band-Equipment mit Kategorie, Zustand, Standort, Anschaffungskosten und **Kostenbeteiligung** einzelner Mitglieder; Foto- und Rechnungs-Upload je Gerät
+
+**Mitglieder, Bands & System**
+- **Mandantenfähig**: mehrere Bands auf einer Installation, Inhalte strikt getrennt. **Super-Admin** verwaltet Bands und Konten global (`/verwaltung`); **Band-Admins** verwalten ihre Mitglieder — direkt mit Passwort oder per **Einladungslink**; ein User kann in mehreren Bands sein und wechselt im Profilmenü
+- **Login** mit Passwort-vergessen/-zurücksetzen per E-Mail-Link; alle Seiten und Datei-Downloads geschützt
+- **Mitgliederverzeichnis** für alle (Name, Instrument, Kontakt) und **Anwesenheits-Statistik** über die Proben
+- **Benachrichtigungen** je Ereignistyp einstellbar (sofort / im Wochen-Digest / nie), plus Termin-Erinnerungen per Cron
+- **Papierkorb**: Gelöschtes (Songs, Setlisten, Termine, Equipment, Dateien) bleibt 30 Tage wiederherstellbar, dazu „Rückgängig" direkt nach dem Löschen
+- Mobil-taugliches, dunkles „Backstage"-Design mit **PWA** („Zum Homescreen hinzufügen") und Update-Hinweis nach Deploy
 
 Die vollständige Feature-Liste inkl. priorisierter Roadmap steht in **[FEATURES.md](FEATURES.md)**.
 
@@ -57,9 +71,19 @@ npm run superadmin          # legt ein Super-Admin-Konto an (gibt Passwort aus)
 ```
 
 Optional über `SUPERADMIN_NAME`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD` konfigurierbar; ein
-bestehendes Konto mit der E-Mail wird zum Super-Admin erhoben. Nach dem Login landet der
-Super-Admin unter `/verwaltung` und legt dort neue Bands samt erstem Band-Admin an. Band-Admins
-nehmen weitere Mitglieder direkt oder per Einladungslink auf.
+bestehendes Konto mit der E-Mail wird zum Super-Admin erhoben. Mehrere Super-Admins sind
+möglich — das Script je Person mit eigener `SUPERADMIN_EMAIL` erneut ausführen (nur über
+dieses CLI-Script, bewusst nicht aus der Weboberfläche).
+
+Nach dem Login landet der Super-Admin unter `/verwaltung`: dort neue Bands samt erstem
+Band-Admin anlegen, Bands umbenennen/deaktivieren, Konten anlegen/bearbeiten und
+Bandzugehörigkeiten verwalten. Band-Admins nehmen weitere Mitglieder ihrer Band direkt mit
+Passwort oder per Einladungslink auf.
+
+Bestehende Installationen: Beim ersten Start nach dem Update legt ein einmaliger Backfill
+automatisch die Band „Meine Band" an, ordnet ihr alle vorhandenen Inhalte zu und macht aus
+jedem bestehenden User ein Bandmitglied (bisheriger Admin → Band-Admin). Optional vorher
+`DEFAULT_BAND_NAME` setzen, um diese Band anders zu benennen.
 
 ## Daten
 
@@ -136,13 +160,13 @@ Neue periodische Aufgabe? Eine Zeile in der `SCHEDULE`-Tabelle in [`scripts/cron
 
 ## Benachrichtigungen
 
-Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** eine Mail bekommt, alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Admin kann das auch unter `/mitglieder` für andere setzen. Voraussetzung für jeden Versand ist konfiguriertes SMTP (siehe oben); den Test dazu gibt es auf `/mitglieder`.
+Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** eine Mail bekommt, alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Band-Admin kann das auch unter `/mitglieder` für andere setzen. Die Einstellungen gelten kontobezogen; die Mails selbst gehen immer nur an die Mitglieder der jeweiligen Band. Voraussetzung für jeden Versand ist konfiguriertes SMTP (siehe oben); den Test dazu gibt es auf `/mitglieder`.
 
 Zwei Kanäle laufen unabhängig vom Mailversand: der **ICS-Feed** bringt native Kalender-Erinnerungen mit (Vortag und zwei Stunden vorher), und die zeitgesteuerten **Termin-Erinnerungen** kommen vom Cron-Job oben.
 
 ## Papierkorb
 
-Songs, Setlisten, Termine und hochgeladene Dateien werden nicht sofort gelöscht, sondern landen für **30 Tage** im Papierkorb (`/papierkorb`, im Footer verlinkt). Jedes Mitglied kann von dort wiederherstellen; endgültig löschen darf nur ein Admin — das ist die einzige Aktion in BandMate, die sich durch nichts mehr rückgängig machen lässt.
+Songs, Setlisten, Termine, Equipment und hochgeladene Dateien werden nicht sofort gelöscht, sondern landen für **30 Tage** im Papierkorb (`/papierkorb`, im App-Menü verlinkt). Jedes Mitglied kann von dort wiederherstellen; endgültig löschen darf nur ein Band-Admin — das ist die einzige Aktion in BandMate, die sich durch nichts mehr rückgängig machen lässt.
 
 Direkt nach dem Löschen erscheint zusätzlich ein **„Rückgängig"** auf der jeweiligen Liste. Die beiden Wege decken verschiedene Fälle ab: der Fehltipp fällt sofort auf, dass etwas fehlt oft erst Wochen später.
 
@@ -297,7 +321,8 @@ Alternativ `NODE_BIN_DIR` fest oben in `deploy.sh` eintragen, dann genügt `./de
 ### Vor dem Livegang
 
 - `SESSION_SECRET` gesetzt? (sonst läuft die App mit unsicherem Dev-Geheimnis)
-- Seed-Admin `admin@example.com` nach dem ersten echten Login deaktivieren
+- **Super-Admin anlegen** (`npm run superadmin`), falls du mehrere Bands verwalten willst — eigenes Konto, nie Bandmitglied (→ Abschnitt „Mandantenfähigkeit")
+- Seed-Admin `admin@example.com` nach dem ersten echten Login entfernen: aus der Band nehmen (`/mitglieder`, als Band-Admin) bzw. global sperren (`/verwaltung`, als Super-Admin)
 - Backup als Cron-Job einrichten und **einmal einen Restore proben** (→ Abschnitt „Backup & Restore"). `BACKUP_DIR` auf eine andere Platte legen als `DATA_DIR`
 - Zeitzone prüfen: `ecosystem.config.js` setzt `TZ` auf `Europe/Vienna`. Steht der Server
   woanders, den Wert dort anpassen oder `TZ` beim Start mitgeben — sonst zeigt die App
