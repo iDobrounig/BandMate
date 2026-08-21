@@ -1,6 +1,48 @@
 # Mandantenfähigkeit — Design
 
-Stand: 09.08.2026 · Welle 4 („Mandantenfähigkeit"), Entwurf vor Umsetzungsbeginn.
+Stand: 09.08.2026, revidiert 21.08.2026 · Welle 4 („Mandantenfähigkeit").
+
+## Revision 21.08.2026 — Abgleich mit aktuellem Stand + finale Entscheidungen
+
+Vor Umsetzungsbeginn gegen den aktuellen Code geprüft. Der Kern des Entwurfs trägt; folgende
+Punkte sind seit 09.08. dazugekommen oder wurden bewusst entschieden. **Bei Widersprüchen zu
+den Abschnitten unten gilt diese Revision.**
+
+- **Equipment** (seit v1.19/1.20 dazugekommen) ist eine weitere band-bezogene Root-Tabelle →
+  bekommt `bandId`. Kind-Tabellen `equipment_contributions`/`equipment_attachments` bleiben
+  transitiv gescoped (wie Songs). `fetchUserContributions` auf der Profilseite scoped über
+  `equipment.bandId` auf die aktive Band.
+- **„Band wechseln" / „Verwaltung" kommen in `components/app-menu.tsx`** — das aus dem Floating-
+  Nav-Redesign (v1.21) entstandene Profil-Popup. Ersetzt das abstrakte „Profil-Kontextmenü".
+- **Instrument wandert von `users` nach `band_members`** (pro Band, wie die Rolle). Ein User
+  kann je Band ein anderes Instrument haben. Betrifft jeden Zugriff auf `user.instrument`
+  (Bühnenmodus, Profil, Songdetail-`allUsers`, Anwesenheits-Statistik).
+- **Super-Admin ist ein eigenes, reines Verwaltungs-Konto** (eins oder mehrere), **nie**
+  Bandmitglied. `users.isSuperAdmin`-Flag; solche Konten haben keine `band_members`-Zeilen und
+  landen nach dem Login direkt in `/verwaltung`. Das bestehende Admin-Konto wird **nicht**
+  automatisch Super-Admin, sondern Band-Admin von „Band 1". Erstanlage per Script
+  (`scripts/superadmin.ts`, analog `scripts/seed.ts`).
+- **Benachrichtigungs-Einstellungen bleiben personenbezogen global** → `notification_settings`,
+  `notification_log`, `notification_runs` bekommen **kein** `bandId` (Korrektur gegenüber dem
+  09.08.-Abschnitt „Datenmodell"). Reminders/Digest scopen sich über `event.bandId`; die
+  Profil-Matrix bleibt eine einzige.
+- **Band-Admin „Mitglied entfernen" wirkt nur bandlokal** (`band_members.active = false`), das
+  globale Sperren/Löschen eines Kontos macht ausschließlich der Super-Admin.
+- **`notifyBand()` und die Reminder-/Digest-Dispatcher** werden band-bewusst: Empfänger über
+  `band_members` der jeweiligen Band statt global über `users.active`.
+- **ICS-Feed-Token pro Band als gespeicherter Zufallswert** (`bands.calendarToken`, unique),
+  statt aus `SESSION_SECRET` abgeleitet. Die Route `/api/kalender/[token]` schlägt die Band
+  über den Token nach und filtert Events auf deren `bandId`. Löst den heutigen globalen Feed
+  (Datenleck-Risiko) und den offenen Welle-2-Punkt zugleich.
+- **YAGNI-Streichungen** gegenüber dem 09.08.-Entwurf: kein `bands.slug` (URLs sind nicht
+  band-spezifisch, Session trägt die Band-ID) und kein vorab angelegtes `registrationOpen`-Feld
+  (SQLite-`ALTER ADD COLUMN` ist trivial, wird erst beim Self-Signup ergänzt).
+- **Datenmigration idempotent im DB-Bootstrap** (`lib/db/index.ts`, direkt nach `migrate()`):
+  Wenn keine Band existiert, „Band 1" anlegen, alle bestehenden `songs`/`setlists`/`events`/
+  `equipment` auf sie setzen, je bestehendem User eine `band_members`-Zeile (bisherige Rolle +
+  bisheriges Instrument). Notwendig, weil laut AGENTS.md eine Schema-Änderung bei laufendem
+  Dev-Server sofort migriert — der Backfill muss ohne separaten manuellen Schritt konsistent
+  sein. Guard: läuft nur, wenn null Bands existieren.
 
 ## Problem
 
