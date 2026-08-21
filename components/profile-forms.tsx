@@ -23,57 +23,64 @@ export function ProfileForm({
 }) {
   const [state, action] = useActionState(updateProfile, initial);
   return (
-    <form action={action} className="space-y-4">
-      <div>
-        <label className="label" htmlFor="name">
-          Name
-        </label>
-        <input
-          className="input"
-          id="name"
-          name="name"
-          defaultValue={user.name}
-          required
-        />
-      </div>
-      <div>
-        <label className="label" htmlFor="email">
-          E-Mail
-        </label>
-        <input
-          className="input"
-          id="email"
-          name="email"
-          type="email"
-          defaultValue={user.email}
-          required
-        />
-        <p className="mt-1 text-xs text-faint">
-          Diese Adresse dient auch zum Anmelden.
-        </p>
-      </div>
-      <div>
-        <label className="label" htmlFor="instrument">
-          Instrument
-        </label>
-        <input
-          className="input"
-          id="instrument"
-          name="instrument"
-          defaultValue={user.instrument ?? ""}
-          list="instruments"
-          placeholder="z.B. Gitarre"
-        />
-        <datalist id="instruments">
-          {INSTRUMENT_SUGGESTIONS.map((i) => (
-            <option key={i} value={i} />
-          ))}
-        </datalist>
-      </div>
-      <div className="border-t border-line-soft pt-4">
-        <h3 className="label">Benachrichtigungen</h3>
+    <form action={action} className="space-y-6">
+      <section className="card p-5">
+        <h2 className="headline mb-4 text-lg">Stammdaten</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="label" htmlFor="name">
+              Name
+            </label>
+            <input
+              className="input"
+              id="name"
+              name="name"
+              defaultValue={user.name}
+              required
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="email">
+              E-Mail
+            </label>
+            <input
+              className="input"
+              id="email"
+              name="email"
+              type="email"
+              defaultValue={user.email}
+              required
+            />
+            <p className="mt-1 text-xs text-faint">
+              Diese Adresse dient auch zum Anmelden.
+            </p>
+          </div>
+          <div>
+            <label className="label" htmlFor="instrument">
+              Instrument
+            </label>
+            <input
+              className="input"
+              id="instrument"
+              name="instrument"
+              defaultValue={user.instrument ?? ""}
+              list="instruments"
+              placeholder="z.B. Gitarre"
+            />
+            <datalist id="instruments">
+              {INSTRUMENT_SUGGESTIONS.map((i) => (
+                <option key={i} value={i} />
+              ))}
+            </datalist>
+          </div>
+        </div>
+      </section>
+
+      <section className="card p-5">
+        <h2 className="headline mb-4 text-lg">Benachrichtigungen</h2>
         <NotifyMatrix settings={settings} digestEnabled={user.digestEnabled} />
-      </div>
+      </section>
+
       <FormMsg state={state} />
       <SubmitButton>Profil speichern</SubmitButton>
     </form>

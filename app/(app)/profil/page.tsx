@@ -1,19 +1,22 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { fetchSettings } from "@/lib/notifications";
-import { fetchUserContributions } from "@/lib/queries";
-import { formatFee } from "@/lib/format";
+import { fetchUserContributions, fetchAttendanceStats } from "@/lib/queries";
+import { formatFee, formatDate } from "@/lib/format";
+import { ATTENDANCE_STATUS } from "@/lib/constants";
 import { ProfileForm, PasswordForm } from "@/components/profile-forms";
 
 export const metadata = { title: "Profil" };
 
 export default async function ProfilPage() {
   const user = await requireUser();
-  const [settings, contributions] = await Promise.all([
+  const [settings, contributions, attendanceStats] = await Promise.all([
     fetchSettings(user.id),
     fetchUserContributions(user.id),
+    fetchAttendanceStats(),
   ]);
   const contributionTotal = contributions.reduce((acc, c) => acc + c.amount, 0);
+  const ownAttendance = attendanceStats.find((s) => s.userId === user.id);
 
   return (
     <div>
@@ -25,17 +28,14 @@ export default async function ProfilPage() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-6">
-          <section className="card p-5">
-            <h2 className="headline mb-4 text-lg">Stammdaten</h2>
-            <ProfileForm user={user} settings={settings} />
-          </section>
+          <ProfileForm user={user} settings={settings} />
           <section className="card p-5">
             <h2 className="headline mb-4 text-lg">Passwort</h2>
             <PasswordForm />
           </section>
         </div>
 
-        <div className="min-w-0">
+        <div className="min-w-0 space-y-6">
           <section className="card p-5">
             <h2 className="headline mb-3 text-lg">Meine Beteiligungen</h2>
             {contributions.length === 0 ? (
@@ -66,6 +66,32 @@ export default async function ProfilPage() {
                 </div>
               </>
             )}
+          </section>
+
+          <section className="card p-5">
+            <h2 className="headline mb-3 text-lg">Über dich</h2>
+            <div className="mono-display space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-faint">MITGLIED SEIT</span>
+                <span>{formatDate(user.createdAt)}</span>
+              </div>
+              {ownAttendance && (
+                <div className="flex items-center justify-between">
+                  <span className="text-faint">ANWESENHEIT PROBEN</span>
+                  <span>
+                    {ownAttendance.percentage == null ? "–" : `${ownAttendance.percentage}%`}
+                    {ownAttendance.yes + ownAttendance.no + ownAttendance.maybe > 0 && (
+                      <span className="ml-1 text-faint">
+                        ({ownAttendance.yes}
+                        {ATTENDANCE_STATUS.yes.symbol} {ownAttendance.no}
+                        {ATTENDANCE_STATUS.no.symbol} {ownAttendance.maybe}
+                        {ATTENDANCE_STATUS.maybe.symbol})
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
           </section>
         </div>
       </div>
