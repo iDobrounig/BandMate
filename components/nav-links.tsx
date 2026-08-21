@@ -30,7 +30,7 @@ export function NavLinks() {
   ];
 
   return (
-    <nav className="flex items-stretch justify-between gap-1 overflow-x-auto sm:justify-start">
+    <nav className="flex items-center gap-0.5">
       {links.map(({ href, label, Icon }) => {
         const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
         return (
@@ -38,14 +38,15 @@ export function NavLinks() {
             key={href}
             href={href}
             aria-label={label}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-[11px] font-semibold leading-none transition sm:flex-none lg:flex-row lg:gap-0 lg:px-3 lg:text-sm ${
+            title={label}
+            className={`flex items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold leading-none transition ${
               active
-                ? "text-accent-hi lg:bg-accent/15"
+                ? "bg-accent/15 text-accent-hi"
                 : "text-mute hover:bg-raise hover:text-ink"
             }`}
           >
-            <Icon className="size-5 lg:hidden" />
-            <span className="whitespace-nowrap">{label}</span>
+            <Icon className="size-5" />
+            <span className="hidden whitespace-nowrap lg:inline">{label}</span>
           </Link>
         );
       })}
