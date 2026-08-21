@@ -558,6 +558,28 @@ export async function fetchEquipmentDetail(equipmentId: number): Promise<Equipme
   };
 }
 
+export type UserContribution = {
+  equipmentId: number;
+  equipmentName: string;
+  amount: number;
+  note: string | null;
+};
+
+/** Equipment-Beteiligungen eines einzelnen Users, für die eigene Profilseite. */
+export async function fetchUserContributions(userId: number): Promise<UserContribution[]> {
+  return db
+    .select({
+      equipmentId: equipment.id,
+      equipmentName: equipment.name,
+      amount: equipmentContributions.amount,
+      note: equipmentContributions.note,
+    })
+    .from(equipmentContributions)
+    .innerJoin(equipment, eq(equipmentContributions.equipmentId, equipment.id))
+    .where(and(eq(equipmentContributions.userId, userId), equipmentAktiv))
+    .orderBy(desc(equipment.createdAt));
+}
+
 /**
  * Equipment-Anhang für `/api/equipment-files/[id]` — oder `null`, wenn er nicht
  * (mehr) herausgegeben werden darf. Analog `fetchServableAttachment`: prüft
