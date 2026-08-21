@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireBandContext, fetchMemberships } from "@/lib/auth";
 import { NavLinks } from "@/components/nav-links";
 import { AppMenu } from "@/components/app-menu";
 import { VersionWatcher } from "@/components/version-watcher";
@@ -8,7 +8,8 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireUser();
+  const ctx = await requireBandContext();
+  const memberships = await fetchMemberships(ctx.user.id);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -23,7 +24,11 @@ export default async function AppLayout({
             <NavLinks />
           </div>
           <div className="h-8 w-px shrink-0 bg-line-soft" aria-hidden />
-          <AppMenu userName={user.name} />
+          <AppMenu
+            userName={ctx.user.name}
+            bandName={ctx.bandName}
+            canSwitchBand={memberships.length > 1}
+          />
         </div>
       </div>
     </div>

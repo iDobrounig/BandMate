@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireBandAdmin } from "@/lib/auth";
 import { sendTestMail } from "@/lib/mail";
 import { saveSettings, readSettingsForm } from "@/lib/notifications";
 import type { FormState } from "@/lib/actions/auth";
@@ -14,7 +14,7 @@ export async function createUser(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireAdmin();
+  await requireBandAdmin();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "")
     .trim()
@@ -46,7 +46,7 @@ export async function updateUser(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireAdmin();
+  await requireBandAdmin();
   const userId = Number(formData.get("userId"));
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "")
@@ -77,7 +77,7 @@ export async function setUserPassword(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireAdmin();
+  await requireBandAdmin();
   const userId = Number(formData.get("userId"));
   const password = String(formData.get("password") ?? "");
   if (password.length < 8)
@@ -91,7 +91,7 @@ export async function setUserPassword(
 }
 
 export async function toggleUserActive(userId: number) {
-  const admin = await requireAdmin();
+  const { user: admin } = await requireBandAdmin();
   if (userId === admin.id) return; // sich selbst nicht aussperren
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
   if (!user) return;
@@ -100,7 +100,7 @@ export async function toggleUserActive(userId: number) {
 }
 
 export async function setUserRole(userId: number, role: "admin" | "member") {
-  const admin = await requireAdmin();
+  const { user: admin } = await requireBandAdmin();
   if (userId === admin.id) return; // eigene Admin-Rolle nicht entziehen
   await db.update(users).set({ role }).where(eq(users.id, userId));
   revalidatePath("/mitglieder");
@@ -110,7 +110,7 @@ export async function sendTestEmail(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  await requireAdmin();
+  await requireBandAdmin();
   const to = String(formData.get("to") ?? "").trim();
   if (!to) return { error: "Bitte eine E-Mail-Adresse angeben." };
 

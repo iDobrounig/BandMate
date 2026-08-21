@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser, requireAdmin } from "@/lib/auth";
+import { requireUser, requireBandAdmin } from "@/lib/auth";
 import { restore, purge, purgeExpired, type TrashKind } from "@/lib/trash";
 
 /** Holt einen Eintrag zurück. Darf jedes Mitglied — siehe Entwurf E3. */
@@ -16,7 +16,7 @@ export async function restoreItem(kind: TrashKind, id: number) {
  * sich durch nichts mehr rückgängig machen lässt (Entwurf E3).
  */
 export async function purgeItem(kind: TrashKind, id: number) {
-  await requireAdmin();
+  await requireBandAdmin();
   await purge(kind, id);
   revalidatePath("/", "layout");
 }

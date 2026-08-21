@@ -2,10 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { IconUser, IconHelp, IconTrash, IconLogout } from "@/components/icons";
+import { IconUser, IconHelp, IconTrash, IconLogout, IconRepeat } from "@/components/icons";
 import { LogoutForm } from "@/components/logout-form";
 
-export function AppMenu({ userName }: { userName: string }) {
+export function AppMenu({
+  userName,
+  bandName,
+  canSwitchBand,
+}: {
+  userName: string;
+  bandName: string;
+  canSwitchBand: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -48,6 +56,21 @@ export function AppMenu({ userName }: { userName: string }) {
           role="menu"
           className="absolute bottom-full right-0 mb-2 w-52 rounded-xl border border-line bg-panel p-1.5 shadow-xl"
         >
+          <div className="px-3 pt-1.5 pb-1 text-xs text-faint uppercase tracking-wide">
+            <span className="truncate">{bandName}</span>
+          </div>
+          {canSwitchBand && (
+            <Link
+              role="menuitem"
+              href="/band-waehlen"
+              onClick={() => setOpen(false)}
+              className={itemClass}
+            >
+              <IconRepeat className="size-4" />
+              Band wechseln
+            </Link>
+          )}
+          <div className="my-1 h-px bg-line-soft" />
           <Link
             role="menuitem"
             href="/profil"

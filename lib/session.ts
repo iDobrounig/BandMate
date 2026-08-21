@@ -3,6 +3,8 @@ import { cookies, headers } from "next/headers";
 
 export type SessionData = {
   userId?: number;
+  /** Welche Band der User gerade bedient (Mandantenfähigkeit, Welle 4). */
+  activeBandId?: number;
 };
 
 const password =
