@@ -85,6 +85,13 @@
       "when": 1787212111567,
       "tag": "0011_acoustic_star_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1787334263248,
+      "tag": "0012_futuristic_glorian",
+      "breakpoints": true
     }
   ]
 }

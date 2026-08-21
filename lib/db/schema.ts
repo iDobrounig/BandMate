@@ -7,20 +7,36 @@ import {
   unique,
 } from "drizzle-orm/sqlite-core";
 
+/**
+ * Mandantenfähigkeit (Welle 4): `users` ist die globale Identität (Login, Mail,
+ * Passwort). Die Bandzugehörigkeit inkl. Rolle und Instrument liegt in
+ * `band_members`. Ein Super-Admin (isSuperAdmin) verwaltet Bands/User und ist
+ * selbst NIE Bandmitglied. Entwurf: docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md
+ */
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  // DEPRECATED seit Welle 4 — Rolle und Instrument leben jetzt pro Band in
+  // `band_members`. Bleiben vorerst als Quelle für den einmaligen Backfill
+  // stehen (siehe ensureTenancyBackfill in lib/db/index.ts); Drop später als
+  // eigene Cleanup-Migration, wenn alle Installationen migriert sind.
   role: text("role", { enum: ["admin", "member"] })
     .notNull()
     .default("member"),
   instrument: text("instrument"),
+  /** Verwaltet Bands und User global, ohne Zugriff auf Bandinhalte. */
+  isSuperAdmin: integer("is_super_admin", { mode: "boolean" })
+    .notNull()
+    .default(false),
   digestEnabled: integer("digest_enabled", { mode: "boolean" })
     .notNull()
     .default(true),
   /** Für „neu seit deinem letzten Besuch"; höchstens stündlich fortgeschrieben. */
   lastSeenAt: integer("last_seen_at", { mode: "timestamp" }),
+  // Globaler Konto-Schalter (nur Super-Admin). Die bandlokale Mitgliedschaft
+  // schaltet stattdessen band_members.active.
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   // Unverschlüsselt gespeichert — kein Hashing-Präzedenzfall im Projekt,
   // geringer Wert als Angriffsziel bei einer Handvoll interner Nutzer.
@@ -31,8 +47,73 @@ export const users = sqliteTable("users", {
     .$defaultFn(() => new Date()),
 });
 
+/** Eine Band = ein Mandant. Bandinhalte hängen über `bandId` hieran. */
+export const bands = sqliteTable("bands", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  // Geheimer, pro Band eigener Token für den ICS-Feed (/api/kalender/[token]).
+  // Zufällig bei Anlage, regenerierbar — löst den früher globalen Feed ab.
+  calendarToken: text("calendar_token").notNull().unique(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+/**
+ * Mitgliedschaft eines Users in einer Band, mit bandlokaler Rolle und
+ * Instrument. `active = false` = aus der Band entfernt (Konto bleibt global
+ * bestehen). Ein User kann in mehreren Bands mit je eigener Rolle sein.
+ */
+export const bandMembers = sqliteTable(
+  "band_members",
+  {
+    bandId: integer("band_id")
+      .notNull()
+      .references(() => bands.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["band_admin", "member"] })
+      .notNull()
+      .default("member"),
+    instrument: text("instrument"),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [primaryKey({ columns: [t.bandId, t.userId] })]
+);
+
+/**
+ * Einladungslink in eine Band (einmal verwendbar, zeitlich begrenzt) —
+ * Verallgemeinerung des Passwort-Reset-Tokens. Deckt beide Fälle ab: bekannter
+ * User tritt bei, oder neuer User legt über den Link Name + Passwort an.
+ */
+export const invites = sqliteTable("invites", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  bandId: integer("band_id")
+    .notNull()
+    .references(() => bands.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  role: text("role", { enum: ["band_admin", "member"] })
+    .notNull()
+    .default("member"),
+  invitedById: integer("invited_by_id").references(() => users.id),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  usedAt: integer("used_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
 export const songs = sqliteTable("songs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  // Mandant. Nullable im DB-Schema (SQLite kann NOT NULL nicht nachrüsten), aber
+  // von der App immer gesetzt; der Backfill füllt Altbestände. Siehe schema-Kopf.
+  bandId: integer("band_id").references(() => bands.id),
   title: text("title").notNull(),
   artist: text("artist"),
   status: text("status", {
@@ -60,6 +141,7 @@ export const songs = sqliteTable("songs", {
 
 export const equipment = sqliteTable("equipment", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  bandId: integer("band_id").references(() => bands.id),
   name: text("name").notNull(),
   category: text("category", {
     enum: ["amp", "mic", "cable_accessory", "pa_speaker", "light", "other"],
@@ -206,6 +288,7 @@ export const practiceStatus = sqliteTable(
 
 export const setlists = sqliteTable("setlists", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  bandId: integer("band_id").references(() => bands.id),
   name: text("name").notNull(),
   eventDate: text("event_date"), // ISO-Datum YYYY-MM-DD
   notes: text("notes"),
@@ -236,6 +319,7 @@ export const setlistItems = sqliteTable("setlist_items", {
 
 export const events = sqliteTable("events", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  bandId: integer("band_id").references(() => bands.id),
   title: text("title").notNull(),
   kind: text("kind", { enum: ["rehearsal", "gig"] })
     .notNull()
@@ -363,6 +447,10 @@ export const notificationRuns = sqliteTable("notification_runs", {
 });
 
 export type User = typeof users.$inferSelect;
+export type Band = typeof bands.$inferSelect;
+export type BandMember = typeof bandMembers.$inferSelect;
+export type BandRole = BandMember["role"];
+export type Invite = typeof invites.$inferSelect;
 export type NotificationKind =
   (typeof notificationSettings.$inferSelect)["kind"];
 export type NotificationMode =
