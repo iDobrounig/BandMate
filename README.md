@@ -45,7 +45,21 @@ npm run seed                # legt den ersten Admin an (gibt Passwort aus)
 npm run dev                 # http://localhost:3000
 ```
 
-`npm run seed` liest optional `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` aus der Umgebung/.env; ohne Angabe wird `admin@example.com` mit Zufallspasswort angelegt (wird in der Konsole ausgegeben). Nach dem ersten Login das Passwort im Profil ändern.
+`npm run seed` liest optional `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` aus der Umgebung/.env; ohne Angabe wird `admin@example.com` mit Zufallspasswort angelegt (wird in der Konsole ausgegeben). Nach dem ersten Login das Passwort im Profil ändern. Der Seed-User wird beim ersten Start automatisch zum Band-Admin der aus dem Altbestand angelegten Band „Meine Band".
+
+### Mandantenfähigkeit (mehrere Bands)
+
+BandMate kann mehrere Bands auf einer Installation tragen. Ein **Super-Admin** verwaltet Bands
+und Konten global, ist aber selbst nie Bandmitglied und sieht keine Bandinhalte:
+
+```bash
+npm run superadmin          # legt ein Super-Admin-Konto an (gibt Passwort aus)
+```
+
+Optional über `SUPERADMIN_NAME`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD` konfigurierbar; ein
+bestehendes Konto mit der E-Mail wird zum Super-Admin erhoben. Nach dem Login landet der
+Super-Admin unter `/verwaltung` und legt dort neue Bands samt erstem Band-Admin an. Band-Admins
+nehmen weitere Mitglieder direkt oder per Einladungslink auf.
 
 ## Daten
 
@@ -298,6 +312,7 @@ Vollständige Checkliste: [FEATURES.md](FEATURES.md), Abschnitt „Vor dem erste
 | `npm run dev` | Entwicklung |
 | `npm run build` / `npm start` | Produktion |
 | `npm run seed` | Ersten Admin anlegen (no-op, wenn User existieren) |
+| `npm run superadmin` | Super-Admin-Konto anlegen/erheben (globale Band-/Nutzer-Verwaltung) |
 | `npm run db:generate` | Drizzle-Migration aus Schema-Änderungen erzeugen |
 | `./scripts/backup.sh` | Backup von DB + Uploads (für Cron; siehe „Backup & Restore") |
 | `./scripts/restore.sh` | Backup zurückspielen — mit Vorschau, Bestätigung und Sicherheitsnetz |

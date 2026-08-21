@@ -320,24 +320,43 @@ kommen neue Fähigkeiten. Begründung: [docs/review-2026-07.md](docs/review-2026
 > mehrere Bands hinweg), eine Domain mit Band-Wechsel im Profilmenü, halb-offen zum Start
 > (nur der Super-Admin legt neue Bands samt erstem Band-Admin an).
 
-- [ ] **Datenmodell**: neue Tabellen `bands`, `band_members` (Rolle wandert hierher, pro Band
-  unterschiedlich), `invites` (Verallgemeinerung des bestehenden Reset-Token-Musters);
-  `band_id` auf `songs`/`setlists`/`events`; `users.role` entfällt zugunsten von
-  `band_members.role`, neues `users.isSuperAdmin`
-- [ ] **Auth & Session**: `activeBandId` in der Session, Rolle je Request aus `band_members`
-  aufgelöst (nicht gecacht), neue Guards `requireBandAdmin()`/`requireSuperAdmin()`
-- [ ] **Super-Admin-Oberfläche**: eigener Bereich (`/verwaltung`) nur für Band- und
-  User-Verwaltung — keine Songs/Setlisten/Termine irgendeiner Band
-- [ ] **Band-Wechsel** für Mehrfach-Mitglieder über das Profil-Icon-Kontextmenü
-- [ ] **Einladungslink** für Band-Admins — für neue wie für bereits bei BandMate registrierte
-  Personen, zusätzlich zur bestehenden Direktanlage mit Passwort
-- [ ] **ICS-Feed-Token bandbezogen statt global** — heute liefert `calendarToken()` einen
-  einzigen, installationsweiten Token ohne Filter; unter Mandantenfähigkeit ein sofortiges
-  Datenleck zwischen Bands. Trifft sich mit dem Welle-2-Punkt „Pro-Mitglied-Token"
-- [ ] `notifyBand()` auf Empfänger der jeweiligen Band beschränken
-- [ ] **Scoping-Sicherheitsnetz**: Tests, die zwei Bands seeden und für jede Lese-/
-  Schreibfunktion prüfen, dass sie strikt auf die aktive Band beschränkt bleibt
-- [ ] Datenmigration bestehender Installationen zu „Band 1" (nach Backup, siehe Welle 0)
+*Umgesetzt 21.08.2026. Revidierter Entwurf (Abgleich mit Equipment/Floating-Nav + finale
+Entscheidungen):*
+[docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md](docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md)
+
+- [x] **Datenmodell** — neue Tabellen `bands`, `band_members` (Rolle **und Instrument** pro
+  Band), `invites`; `band_id` auf `songs`/`setlists`/`events`/`equipment`; neues
+  `users.isSuperAdmin`. `users.role`/`users.instrument` bleiben vorerst als deprecated
+  Backfill-Quelle stehen (Drop als spätere Cleanup-Migration). Idempotenter
+  Datenmigrations-Backfill im DB-Bootstrap (`ensureTenancyBackfill`) macht Altbestände zu
+  „Meine Band" — gegen eine Kopie der echten Daten geprüft.
+- [x] **Auth & Session** — `activeBandId` in der Session (pro Request aufgelöst, nur beim
+  expliziten Wechsel persistiert — kein Cookie-Schreiben beim Rendern), Guards
+  `requireBandContext`/`requireBandAdmin`/`requireSuperAdmin`, `fetchMemberships`.
+- [x] **Band-Scoping** — alle Lese-Queries und Inhaltsseiten filtern nach `bandId`; alle
+  Schreib-Actions setzen `bandId` bzw. verifizieren die Bandzugehörigkeit (fremde IDs =
+  No-Op). Datei-Downloads gegen alle Bänder des Users geprüft. „Bandmitglied" läuft überall
+  über `band_members` statt `users.active` (neuer Helper `fetchBandMembers`).
+- [x] **Super-Admin-Oberfläche** — eigene Route-Group `/verwaltung` (Bands anlegen + ersten
+  Band-Admin, Nutzerliste mit Bandzugehörigkeiten, global sperren), eigenes Layout ohne
+  Band-Nav, keine Bandinhalte. Reines Super-Admin-Konto (nie Bandmitglied), Erstanlage per
+  `npm run superadmin`.
+- [x] **Band-Wechsel** für Mehrfach-Mitglieder über das AppMenu (Bandname + „Band wechseln"
+  → `/band-waehlen`), plus `/keine-band` für Konten ohne aktive Band.
+- [x] **Einladungslink** (`/einladung/[token]`, 7 Tage, einmalig) — drei Zweige: eingeloggt
+  beitreten, bekanntes Konto (erst anmelden), neues Konto (Name+Passwort). Band-Admin und
+  Super-Admin erzeugen Links; Login mit sicherem `?next`.
+- [x] **ICS-Feed-Token bandbezogen** — `bands.calendarToken` (gespeicherter Zufallswert)
+  statt global aus `SESSION_SECRET`; die Route liefert nur die Termine der Token-Band
+  (fremder/ungültiger Token → 404). Behebt das frühere Datenleck.
+- [x] **`notifyBand()` band-bewusst** — Empfänger über `band_members` der Band; Reminder-
+  und Digest-Dispatcher lösen Empfänger und Inhalte pro Band auf. Benachrichtigungs-
+  Einstellungen bleiben personenbezogen (kein `band_id` auf den Notification-Tabellen).
+- [x] **Scoping-Sicherheitsnetz** — `tests/tenancy-scoping.test.ts` seedet zwei Bands und
+  prüft für jede Lesefunktion strikte Beschränkung auf die Band; 210 Tests grün.
+
+**Zurückgestellt (siehe „Später"):** öffentliches Self-Service-Signup; Drop der deprecated
+`users.role`/`users.instrument`-Spalten als eigene Cleanup-Migration.
 
 ### Laufend — Konsistenz & Kleinkram
 
@@ -465,6 +484,10 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   — `bands`, `invites` —, es fehlt aber die öffentliche Anmeldeseite, Email-Verifizierung für
   Fremdregistrierung und die nötigen Rechtstexte. Siehe
   [docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md](docs/superpowers/specs/2026-08-09-mandantenfaehigkeit-design.md))
+- [ ] **Cleanup-Migration: `users.role` und `users.instrument` droppen** — seit Welle 4
+  deprecated (Rolle/Instrument leben in `band_members`), bleiben nur als Quelle für den
+  einmaligen Backfill stehen. Sobald sicher ist, dass alle Installationen migriert sind,
+  als eigene Drop-Migration entfernen (SQLite kann Spalten seit 3.35 droppen).
 - [x] **Auto-Deploy-Runner einrichten — auf diesem Hosting nicht möglich, verworfen
   07.08.2026.** Environment `production` mit „Required reviewers" (`iDobrounig`) und
   Repo-Variable `DEPLOY_PATH` sind per `gh api` gesetzt, bleiben aber ohne Wirkung: Der

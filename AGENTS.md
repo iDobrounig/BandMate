@@ -14,7 +14,18 @@ Voting, Setlisten, Termine. Feature-Stand & Roadmap: `FEATURES.md`. Setup/Deploy
 - Next.js App Router + TypeScript, Tailwind v4 (Theme in `app/globals.css` via `@theme`)
 - SQLite via better-sqlite3 + Drizzle. Schema: `lib/db/schema.ts`, Client-Singleton mit
   Auto-Migration beim Start: `lib/db/index.ts`. Migrationen: `npm run db:generate` → `drizzle/`
-- Auth: iron-session (`lib/session.ts`), Guards `requireUser()`/`requireAdmin()` in `lib/auth.ts`
+- **Mandantenfähig (Welle 4):** mehrere Bands in einer DB. `bands`, `band_members`
+  (Rolle + Instrument pro Band), `invites`; band-bezogene Root-Tabellen (`songs`, `setlists`,
+  `events`, `equipment`) tragen `band_id`. Auth: `requireBandContext()` liefert
+  `{ user, bandId, bandName, calendarToken, role, instrument }`; dazu `requireBandAdmin()`
+  und `requireSuperAdmin()` in `lib/auth.ts` (`requireUser()` nur noch für band-lose Seiten
+  wie Login/Einladung). **Jede** Query/Action MUSS nach `bandId` scopen (Reads filtern,
+  Writes setzen bzw. verifizieren die Bandzugehörigkeit über die Eltern-Tabelle) — Netz:
+  `tests/tenancy-scoping.test.ts`. „Bandmitglied" = `band_members`, nicht `users.active`
+  (Helper `fetchBandMembers`). Super-Admin: eigenes Konto (`users.isSuperAdmin`, nie
+  Bandmitglied), eigene Route-Group `app/(superadmin)/verwaltung`, Anlage `npm run superadmin`.
+  `users.role`/`users.instrument` sind deprecated (nur noch Backfill-Quelle).
+- Auth: iron-session (`lib/session.ts`), Guards in `lib/auth.ts` (siehe Mandantenfähigkeit)
 - Server Actions in `lib/actions/*.ts` („use server"), Formular-Actions mit Signatur
   `(prev: FormState, formData) => FormState` für `useActionState`; einfache Button-Actions direkt
 - Seiten: `app/(app)/…` (Route-Group mit Auth-Layout + Nav), Login separat unter `app/login`
