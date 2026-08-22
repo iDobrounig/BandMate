@@ -8,6 +8,22 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [2.1.0] — 2026-08-22
+
+### Geändert
+- **Mitglieder-Seite aufgeräumt:** Die Verwaltung folgt jetzt demselben Muster wie Songs
+  und Equipment. Die Übersicht ist zweispaltig — links die Mitglieder, rechts die
+  Anwesenheits-Statistik. Neue Mitglieder legt man auf einer eigenen Seite an (Direktanlage
+  oder Einladungslink an einem Ort), und jedes Mitglied wird auf einer eigenen
+  Bearbeiten-Seite im Stil des Profil-Formulars verwaltet (Stammdaten, Benachrichtigungen,
+  Passwort, Rolle geben/entziehen, aus Band entfernen) — statt der bisherigen aufklappenden
+  Panels mitten in der Liste.
+
+### Hinzugefügt
+- **Einstellungs-Bereich** `/einstellungen` (Zahnrad im Menü-Popup, nur Band-Admins):
+  bündelt bandbezogene Einstellungen und Wartung, offen für später. Erster Bewohner ist der
+  SMTP-Verbindungstest, der bisher unten auf der Mitglieder-Seite hing.
+
 ## [2.0.1] — 2026-08-21
 
 ### Behoben
