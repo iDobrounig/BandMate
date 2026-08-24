@@ -1,6 +1,6 @@
 # BandMate — Feature-Liste & Roadmap
 
-Stand: 23.07.2026 · Diese Liste ist das zentrale Dokument für „Was kann die App / was kommt als Nächstes".
+Stand: 24.08.2026 · Diese Liste ist das zentrale Dokument für „Was kann die App / was kommt als Nächstes".
 Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 
 ## ✅ Umgesetzt
@@ -369,6 +369,44 @@ Entscheidungen):*
 **Zurückgestellt (siehe „Später"):** öffentliches Self-Service-Signup; Drop der deprecated
 `users.role`/`users.instrument`-Spalten als eigene Cleanup-Migration.
 
+### Welle 5 — Marktreife & Öffnung
+
+> **Warum:** Aus der [Markt-Analyse August 2026](docs/markt-analyse-2026-08.md) (DACH-Fokus):
+> Feature-seitig spielt BandMate vorne mit, aber der Markt ist besetzt, mobil-nativ und
+> preissensibel (DACH-Preise clustern bei 1,40–3 €/Band/Monat). Der einzige *unbesetzte*
+> Claim ist **self-hosted & datensouverän** — kein Wettbewerber (BANDZONE, BandBook, Bandbee,
+> BandHelper) ist self-hostbar. Empfehlung: **Open Source ernst nehmen, Tür zu „Open Core /
+> Managed Hosting" offen lassen.**
+>
+> Die ersten drei Punkte sind das **No-Regret-Bündel**: Sie helfen dem Open-Source- *und*
+> einem späteren Hosting-Weg, also muss die SaaS-vs-OSS-Frage dafür **nicht** entschieden
+> sein. Punkt 4 ist der stärkste einzelne DACH-Differenzierer. Bewusst **nicht** auf dem
+> kritischen Pfad (Adoption entscheidet sich an 1–3): native Mobile-App und Web-Push; Self-
+> Signup und SQLite→MariaDB gehören zum Open-Core-Zweig und stehen bereits unter „Später".
+
+- [ ] **Docker-Compose** — größter Adoptions-Blocker. Heute läuft die Installation über
+  VPS + PM2 + nginx + Node-Versions-Jonglage (siehe README „Produktiv-Deployment"); Ziel ist
+  „in 5 Minuten läuft's". `Dockerfile` + `docker-compose.yml` mit Volume für `DATA_DIR`
+  (SQLite + Uploads bleiben persistent), gesetztem `SESSION_SECRET`/`TZ`, Healthcheck und
+  einer Lösung für die drei Cron-Aufgaben (Backup/Purge/Reminders — heute `scripts/cron.sh`
+  minütlich). Der `better-sqlite3`-Build und das 60-MB-Upload-Limit (Reverse-Proxy) müssen
+  im Container mitgedacht werden.
+- [ ] **i18n-Minimalgerüst** — die UI ist heute komplett deutsch hartkodiert, die Routen sind
+  deutsch (`/mitglieder`, `/setlisten`, …). Ein schlankes Gerüst (String-Extraktion,
+  Locale-Dictionary, **DE zuerst, EN als Beweis**) vervielfacht die mögliche Community, ohne
+  alles sofort zu übersetzen. Kein Voll-i18n als Ziel — nur die Grundlage, damit Übersetzungen
+  additiv beitragbar werden. Routen-Entkopplung als eigene, spätere Stufe denkbar.
+- [ ] **Contribution-Reife** — die README lädt schon auf Englisch zu Beiträgen ein, das
+  Projekt ist aber nicht dafür gerüstet. Nachziehen: englisches README (bzw. zweisprachig),
+  `CONTRIBUTING.md` (Setup, Konventionen aus AGENTS.md, Migrations-Stolperfallen), aktuelle
+  Screenshots/Demo-Hinweis, ein paar „good first issue"-Aufgaben und Lizenz-Klarheit.
+  Voraussetzung dafür ist praktisch Docker-Compose (schneller Einstieg).
+- [ ] **GEMA-Export** — Setlist in einem GEMA-kompatiblen Format exportieren (Titel,
+  Interpret/Urheber, Dauer je Song), das direkt in die GEMA-Meldung übernommen werden kann.
+  Schließt die auffälligste inhaltliche Lücke gegenüber BANDZONE; für DACH-Bands mit
+  gemeldeten Auftritten das stärkste einzelne Feature. Datenbasis größtenteils vorhanden
+  (Song-Stammdaten + Setlisten-Struktur); vor Umsetzung das genaue GEMA-Zielformat klären.
+
 ### Laufend — Konsistenz & Kleinkram
 
 Kein eigenes Release; wird mitgenommen, wenn die betroffene Datei ohnehin angefasst wird.
@@ -427,6 +465,22 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 
 ### Später / bei Bedarf
 
+- [ ] **Warnung bei ungespeicherten Formular-Änderungen** *(Idee, Stand 24.08.2026)*
+  Beim Anlegen und Bearbeiten (Song, Termin, Setliste, Equipment, Mitglied, Profil) gehen
+  alle Eingaben verloren, wenn jemand zurück navigiert, einen anderen Menüpunkt anklickt oder
+  den Tab schließt, **ohne vorher zu speichern**. Schutz: Sobald ein Formular „dirty" ist
+  (verändert gegenüber dem Ausgangszustand), beim Verlassen nachfragen — „Es gibt
+  ungespeicherte Änderungen." mit „Speichern" / „Verwerfen" / „Abbrechen".
+  Technik, zwei getrennte Fälle: (a) **In-App-Navigation** (interne Links, „Zurück"-Button
+  im UI) über einen gemeinsamen Hook/Provider abfangen und den echten Bestätigungsdialog mit
+  allen drei Optionen zeigen — der App Router hat keinen eingebauten Route-Guard, das muss
+  selbst gebaut werden (Klicks/`router`-Aufrufe abfangen). (b) **Tab schließen / Reload /
+  Browser-Zurück** nur über `beforeunload` — dort erlaubt der Browser aber **kein** eigenes
+  „Speichern", nur den generischen „Seite verlassen?"-Dialog; das „Speichern"-Angebot gilt
+  also nur für Fall (a). Dirty-Tracking am besten zentral (ein `useUnsavedChanges`-Hook +
+  Form-Wrapper), damit alle Formulare es einheitlich bekommen. Hauptziel sind die
+  Redirect-Formulare (anlegen/bearbeiten); die Onblur-Autospeicher-Felder (RSVP-Kommentar,
+  Setlisten-Notiz/Set-Name/Pausenfelder) sind bereits geschützt und brauchen es nicht.
 - [ ] **Umstieg SQLite → MariaDB** — *bewusst zurückgestellt, Stand 09.08.2026.* Kein
   Datenmengen-Thema, sondern ein Prozess-Thema: BandMate läuft heute deshalb als **eine
   einzige** PM2-Instanz im Fork-Modus (`ecosystem.config.js`: „mehrere Instanzen /
@@ -513,13 +567,19 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
 
 ### Offene Grundsatzentscheidung: Open Source ernst gemeint?
 
-Das README lädt auf Englisch zu Beiträgen ein, das Projekt ist dafür aber nicht gerüstet:
-UI komplett deutsch hartkodiert, kein i18n-Gerüst, deutsche Routen, kein Docker/Compose,
-Installation über VPS + PM2 + nginx + Node-Versions-Jonglage, keine Tests.
+**Beantwortet durch die [Markt-Analyse August 2026](docs/markt-analyse-2026-08.md):** Ja,
+Open Source ist der empfohlene Weg — der einzige unbesetzte Claim in einem sonst besetzten,
+preissensiblen Markt ist **self-hosted & datensouverän**. Die Umsetzung läuft über
+**Welle 5 — Marktreife & Öffnung** (siehe oben).
 
-Entweder **bewusst „mein Bandtool"** — dann die englische Einladung aus dem README nehmen und
-diesen Abschnitt streichen. Oder **ernst gemeint** — dann sind Docker-Compose, ein i18n-Gerüst
-und eine Test-Basis die Blocker, nicht weitere Features. Erst entscheiden, dann planen.
+Von den früher genannten Blockern ist einer erledigt: Eine **Test-Basis existiert** seit
+Welle 0 (Vitest, 210 Tests grün). Es bleiben **Docker-Compose** und ein **i18n-Gerüst** —
+beide jetzt als konkrete Punkte in Welle 5, dazu die Contribution-Reife (englisches README,
+`CONTRIBUTING.md`). Die deutschen Routen sind bewusst eine spätere, additive Stufe.
+
+Die Tür zu **Open Core / Managed Hosting** (optionale gehostete Instanz für Nicht-Techniker)
+bleibt offen; die SaaS-spezifischen Brocken (Self-Signup, Billing, SQLite→MariaDB) stehen
+weiterhin unter „Später" und sind bewusst nicht Teil des No-Regret-Starts.
 
 ---
 
