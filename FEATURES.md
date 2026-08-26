@@ -1,6 +1,6 @@
 # BandMate — Feature-Liste & Roadmap
 
-Stand: 24.08.2026 · Diese Liste ist das zentrale Dokument für „Was kann die App / was kommt als Nächstes".
+Stand: 26.08.2026 · Diese Liste ist das zentrale Dokument für „Was kann die App / was kommt als Nächstes".
 Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 
 ## ✅ Umgesetzt
@@ -534,7 +534,9 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   `channel`-Spalte aus Welle 1 hält den Platz frei, sodass es ohne zweite
   Schema-Migration dazukommt.
 - [ ] Login-Rate-Limit + Rate-Limit auf „Passwort vergessen" (Mail-Bombe gegen bekannte Adresse)
-- [ ] Pro-Mitglied-Token für den ICS-Feed statt eines gemeinsamen (heute nur global widerrufbar)
+- [ ] Pro-Mitglied-Token für den ICS-Feed statt eines gemeinsamen (Welle 4 machte das Token
+  band-bezogen — `bands.calendarToken` —, aber alle Mitglieder einer Band teilen es sich;
+  einzeln widerrufen geht nur durch Rotieren des Band-Tokens, was allen den Feed bricht)
 - [ ] Uploads streamen statt komplett in den RAM zu lesen (`lib/files.ts:52`)
 - [ ] Speicherplatz-Übersicht der Uploads
 - [ ] Health-Check / Monitoring (heute merkt niemand, wenn SMTP oder der Prozess ausfällt)
