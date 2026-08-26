@@ -481,6 +481,35 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   Form-Wrapper), damit alle Formulare es einheitlich bekommen. Hauptziel sind die
   Redirect-Formulare (anlegen/bearbeiten); die Onblur-Autospeicher-Felder (RSVP-Kommentar,
   Setlisten-Notiz/Set-Name/Pausenfelder) sind bereits geschützt und brauchen es nicht.
+- [ ] **Song-Autovervollständigung aus Musik-Diensten** *(Konzept, Stand 26.08.2026)*
+  Beim Anlegen eines Songs (Titel tippen) im Hintergrund passende Treffer inkl. Interpret
+  (und Cover) vorschlagen; ein Klick füllt Titel, Interpret, Tempo (BPM), Tonart und Dauer
+  vor. Marktstärkung: reduziert die Tipparbeit und ist ein sichtbarer Komfort-Vorteil.
+  **Anknüpfung:** Die Dubletten-Warnung reagiert bereits beim Titel-Tippen (nur beim Anlegen,
+  `lib/matching.ts`) — dieselbe Stelle kann die Suche auslösen (Debounce).
+
+  Umsetzung **gestuft** (Recherche 26.08.2026 — die Musik-API-Landschaft hat sich stark
+  verändert: Spotifys Audio-Features-Endpoint mit Tempo/Tonart ist seit Nov 2024 abgekündigt
+  und für neue Apps tot):
+  - **Stufe 1 — Zero-Config (kein API-Key, keine Anmeldung):**
+    [MusicBrainz](https://musicbrainz.org/doc/MusicBrainz_API) für die kanonische Suche
+    (Titel, Interpret, Dauer; offene CC0-Daten, unbedenklich) + [Deezer](https://developers.deezer.com/api)
+    für **BPM** (aus dem Track-Detail) und Cover (Such-Endpoint ohne Key/Auth). Deckt Titel,
+    Interpret, Dauer, Tempo ab — Tonart füllt der User selbst.
+  - **Stufe 2 — optional, per Konfiguration (Tonart):** [GetSongBPM](https://getsongbpm.com/api)
+    liefert **Tonart + BPM + Taktart**, verlangt aber einen (kostenlosen) **API-Key je
+    Installation** und einen **Pflicht-Backlink** auf getsongbpm.com (sonst Sperre). Nur
+    aktiv, wenn ein Key in der `.env` gesetzt ist; dann den Backlink sichtbar einblenden
+    (z.B. `/hilfe` oder Footer). So bleibt der Standard zero-config, Tonart ist opt-in.
+
+  **Technik/Stolperfallen:** Server-seitiger Proxy (Route Handler wie bei den Datei-Downloads)
+  — wegen CORS, Rate-Limits, Caching und um einen etwaigen Key nicht ins Frontend zu geben.
+  MusicBrainz verlangt einen aussagekräftigen `User-Agent` und erlaubt ~1 Req/s → Debounce +
+  Ergebnis-Cache. Alles muss **graceful degradieren**: fällt ein Dienst aus, bleibt die
+  manuelle Eingabe unverändert nutzbar. Übernommene Werte sind ein **Startwert** (Originalaufnahme)
+  und werden nur vorbefüllt, nie erzwungen — die Band transponiert/ändert Tempo. Capo/Notizen
+  bleiben manuell. **ToS beachten:** MusicBrainz unkritisch (CC0); Deezers kommerzielle
+  Nutzungsbedingungen vor einem gehosteten Angebot (Open-Core-Zweig) prüfen.
 - [ ] **Umstieg SQLite → MariaDB** — *bewusst zurückgestellt, Stand 09.08.2026.* Kein
   Datenmengen-Thema, sondern ein Prozess-Thema: BandMate läuft heute deshalb als **eine
   einzige** PM2-Instanz im Fork-Modus (`ecosystem.config.js`: „mehrere Instanzen /
