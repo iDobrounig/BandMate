@@ -44,6 +44,8 @@ Voting, Setlisten, Termine. Feature-Stand & Roadmap: `FEATURES.md`. Setup/Deploy
   `PRACTICE_STATUS`, `ATTENDANCE_STATUS`)
 - Nach Mutationen großzügig `revalidatePath("/", "layout")`
 - Commits: deutsch, ein Feature-Block pro Commit
+- **Antwort-Stil:** knapp und auf den Punkt. Lieber kürzer mit dem Wesentlichen als lange,
+  ausschweifende oder nichtssagende Texte.
 
 ## Stolperfallen (bereits erlebt)
 
