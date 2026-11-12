@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { bands, users, bandMembers, type BandRole } from "@/lib/db/schema";
 import { requireSuperAdmin } from "@/lib/auth";
-import { makeInvite } from "@/lib/actions/invites";
+import { makeInvite } from "@/lib/invites";
 import type { FormState } from "@/lib/actions/auth";
 
 const asRole = (v: FormDataEntryValue | null): BandRole =>

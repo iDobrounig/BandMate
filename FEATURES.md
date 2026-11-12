@@ -407,6 +407,20 @@ Entscheidungen):*
   gemeldeten Auftritten das stärkste einzelne Feature. Datenbasis größtenteils vorhanden
   (Song-Stammdaten + Setlisten-Struktur); vor Umsetzung das genaue GEMA-Zielformat klären.
 
+### Härtung aus dem Audit November 2026
+
+Befunde mit Fundstellen: [docs/audit-2026-11.md](docs/audit-2026-11.md). Patch-Punkte
+(Next-Update, Secret-Pflicht, Einladungen, `NODE_BIN_DIR`, Doku) *erledigt 12.11.2026*.
+
+- [ ] nodemailer 9 → 10 (mehrere Advisories, Major-Update) — A2
+- [ ] Session-Widerruf nach Passwort-Reset/-Änderung (`users.sessionVersion`) — A6
+- [ ] Login-/Reset-Rate-Limit vorziehen (steht unter „Später")
+- [ ] Indizes auf Fremdschlüssel (`band_id`, `song_id`, `setlist_id`, `event_id` …) — C1
+- [ ] `deploy.sh`: `npm ci` statt `npm install`; Build ohne die laufende Instanz zu stören — B1/B2
+- [ ] Kleinkram: Enum-Argumente der Actions validieren, Links nur `http(s)`, Security-Header,
+  `requireBandContext` per `cache()`, `reorderSetlist` in Transaktion, eigene
+  `error.tsx`/`not-found.tsx`, Cron holt verpasste Aufgaben nach — A7–A9, B5, C2, C3, C5
+
 ### Laufend — Konsistenz & Kleinkram
 
 Kein eigenes Release; wird mitgenommen, wenn die betroffene Datei ohnehin angefasst wird.

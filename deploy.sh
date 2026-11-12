@@ -7,9 +7,9 @@ cd "$(dirname "$0")"
 
 # Bei mehreren Node-Versionen am Server die gewünschte voranstellen, damit
 # node/npm/next einheitlich diese Version nutzen (Next.js braucht >= 20.9).
-# NODE_BIN_DIR setzen — per Umgebungsvariable oder hier fest eintragen, z.B.:
-NODE_BIN_DIR="/usr/local/node22/bin"
-NODE_BIN_DIR="${NODE_BIN_DIR:-}"
+# Default unten; per Umgebungsvariable überschreibbar (NODE_BIN_DIR=… ./deploy.sh),
+# NODE_BIN_DIR= (leer) nutzt das node aus dem PATH.
+NODE_BIN_DIR="${NODE_BIN_DIR-/usr/local/node22/bin}"
 if [[ -n "$NODE_BIN_DIR" ]]; then
   export PATH="$NODE_BIN_DIR:$PATH"
   # An PM2 durchreichen (wird in ecosystem.config.js als interpreter genutzt):

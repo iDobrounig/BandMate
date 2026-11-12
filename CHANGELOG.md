@@ -8,6 +8,37 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [2.1.1] — 2026-11-12
+
+> **Vor dem Update:** `SESSION_SECRET` muss in der Server-`.env` gesetzt sein (mind. 32
+> Zeichen) — sonst liefert die App ab dieser Version nur noch Fehler.
+
+### Sicherheit
+- **Next.js 16.2.10 → 16.4.6**: schließt u.a. eine DoS-Lücke über Server Actions und
+  mehrere als kritisch eingestufte Advisories. Dazu transitive Fixes (nanoid,
+  source-map-js, baseline-browser-mapping).
+- **`SESSION_SECRET` ist in Produktion Pflicht** (mind. 32 Zeichen): Fehlt es, liefert
+  die App einen Fehler statt mit dem öffentlich bekannten Dev-Geheimnis weiterzulaufen
+  (damit ließen sich Login-Cookies fälschen).
+- **Einladungen gelten nur noch für die eingeladene E-Mail.** Ein weitergeleiteter Link
+  lässt sich nicht mehr mit einem fremden Konto einlösen; die Einladungsseite erklärt das
+  und bietet Abmelden an. Super-Admin-Konten können nicht beitreten.
+- Einladungs-Helper (`makeInvite`, `fetchValidInvite`) liegen jetzt in `lib/invites.ts`
+  statt in einer `"use server"`-Datei — dort wären sie ohne Rechteprüfung als Endpunkt
+  erreichbar gewesen.
+
+### Behoben
+- Ein Band-Admin, der einen Mitglieds-Einladungslink einlöst, verliert nicht mehr seine
+  Admin-Rechte (Rolle wird nur noch hochgestuft).
+- Ein Einladungslink lässt sich nicht mehr durch Doppelklick/zweiten Tab zweimal einlösen.
+- `NODE_BIN_DIR` in `deploy.sh` und `scripts/cron.sh` lässt sich jetzt wie dokumentiert
+  per Umgebungsvariable überschreiben.
+
+### Geändert
+- Node-Version per `.nvmrc` (22.18.0) und `engines` (`>=22 <23`) festgelegt.
+- Doku: README verweist für den SMTP-Test auf `/einstellungen`; AGENTS.md beschreibt
+  die Vitest-Tests statt „kein Test-Framework".
+
 ## [2.1.0] — 2026-08-22
 
 ### Geändert

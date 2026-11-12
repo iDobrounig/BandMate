@@ -24,8 +24,7 @@ REPO_DIR="$PWD"
 # --- Umgebung --------------------------------------------------------------
 # Cron startet mit minimalem PATH — node/npm müssen gefunden werden. Wie in
 # deploy.sh: bei mehreren Node-Versionen die gewünschte voranstellen.
-NODE_BIN_DIR="/usr/local/node22/bin"
-NODE_BIN_DIR="${NODE_BIN_DIR:-}"
+NODE_BIN_DIR="${NODE_BIN_DIR-/usr/local/node22/bin}"
 [[ -n "$NODE_BIN_DIR" ]] && export PATH="$NODE_BIN_DIR:$PATH"
 
 # Trigger meinen LOKALE Zeit. Ohne das rechnet `date` in der System-Zeitzone —

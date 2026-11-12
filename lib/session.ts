@@ -7,14 +7,27 @@ export type SessionData = {
   activeBandId?: number;
 };
 
-const password =
-  process.env.SESSION_SECRET ??
-  "unsicheres-dev-geheimnis-bitte-in-env-aendern!!";
+const DEV_SECRET = "unsicheres-dev-geheimnis-bitte-in-env-aendern!!";
 
-if (!process.env.SESSION_SECRET && process.env.NODE_ENV === "production") {
-  console.warn(
-    "WARNUNG: SESSION_SECRET ist nicht gesetzt — bitte in .env konfigurieren!"
-  );
+const password = process.env.SESSION_SECRET ?? DEV_SECRET;
+
+/**
+ * In Produktion ohne echtes SESSION_SECRET NICHT weiterlaufen: Mit dem im Repo
+ * stehenden Dev-Geheimnis ließen sich Session-Cookies fälschen (= Login als
+ * beliebiger User). Geprüft wird erst beim Session-Zugriff statt beim
+ * Modul-Import — `next build` läuft auch mit NODE_ENV=production und braucht
+ * kein Secret.
+ */
+function assertSecret() {
+  if (process.env.NODE_ENV !== "production") return;
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET === DEV_SECRET) {
+    throw new Error(
+      "SESSION_SECRET ist nicht gesetzt — in .env konfigurieren (mind. 32 Zeichen, z.B. `openssl rand -base64 32`)."
+    );
+  }
+  if (process.env.SESSION_SECRET.length < 32) {
+    throw new Error("SESSION_SECRET ist zu kurz — mindestens 32 Zeichen.");
+  }
 }
 
 export const sessionOptions: SessionOptions = {
@@ -29,6 +42,10 @@ export const sessionOptions: SessionOptions = {
 };
 
 export async function getSession() {
+  // cookies() zuerst: Beim Prerender in `next build` steigt Next hier aus
+  // (dynamische Seite), bevor die Secret-Prüfung greift.
+  const cookieStore = await cookies();
+  assertSecret();
   let isSecure = false;
 
   if (process.env.APP_URL?.startsWith("https://")) {
@@ -51,6 +68,6 @@ export async function getSession() {
     },
   };
 
-  return getIronSession<SessionData>(await cookies(), options);
+  return getIronSession<SessionData>(cookieStore, options);
 }
 

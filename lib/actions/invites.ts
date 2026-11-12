@@ -1,69 +1,15 @@
 "use server";
 
-import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { invites, users, bandMembers, bands, type BandRole } from "@/lib/db/schema";
+import { users, type BandRole } from "@/lib/db/schema";
 import { requireBandAdmin, requireUser } from "@/lib/auth";
+import { consumeInvite, fetchValidInvite, joinBand, makeInvite } from "@/lib/invites";
 import { getSession } from "@/lib/session";
 import type { FormState } from "@/lib/actions/auth";
-
-const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-/**
- * Erzeugt einen Einladungs-Token für eine Band und gibt die teilbare URL zurück
- * — oder eine Fehlermeldung, wenn die Person dort schon aktives Mitglied ist.
- * Gemeinsamer Kern für Band-Admin (createInvite) und Super-Admin.
- */
-export async function makeInvite(
-  bandId: number,
-  email: string,
-  role: BandRole,
-  invitedById: number
-): Promise<{ url: string } | { error: string }> {
-  const bereits = await db
-    .select({ userId: bandMembers.userId })
-    .from(bandMembers)
-    .innerJoin(users, eq(bandMembers.userId, users.id))
-    .where(and(eq(bandMembers.bandId, bandId), eq(users.email, email), eq(bandMembers.active, true)))
-    .limit(1);
-  if (bereits.length > 0) return { error: "Diese Person ist bereits in der Band." };
-
-  const token = crypto.randomUUID();
-  await db.insert(invites).values({
-    bandId,
-    email,
-    token,
-    role,
-    invitedById,
-    expiresAt: new Date(Date.now() + INVITE_TTL_MS),
-  });
-  return { url: `${process.env.APP_URL ?? ""}/einladung/${token}` };
-}
-
-/** Gültige, nicht verbrauchte, nicht abgelaufene Einladung zu diesem Token. */
-export async function fetchValidInvite(token: string) {
-  const invite = await db.query.invites.findFirst({
-    where: and(
-      eq(invites.token, token),
-      isNull(invites.usedAt),
-      gt(invites.expiresAt, new Date())
-    ),
-  });
-  if (!invite) return null;
-  const band = await db.query.bands.findFirst({
-    where: and(eq(bands.id, invite.bandId), eq(bands.active, true)),
-  });
-  if (!band) return null;
-  const existingUser = await db.query.users.findFirst({
-    where: eq(users.email, invite.email),
-    columns: { id: true },
-  });
-  return { invite, bandName: band.name, emailKnown: !!existingUser };
-}
 
 /**
  * Band-Admin erzeugt einen Einladungslink. Die Ziel-E-Mail ist Pflicht (sie
@@ -86,28 +32,18 @@ export async function createInvite(
   return { success: `Einladungslink für ${email} (7 Tage gültig): ${res.url}` };
 }
 
-/** Fügt ein bestehendes Mitglied per gültigem Token der Band hinzu (Wiedereintritt inkl.). */
-async function joinBand(userId: number, bandId: number, role: BandRole) {
-  const vorhanden = await db.query.bandMembers.findFirst({
-    where: and(eq(bandMembers.bandId, bandId), eq(bandMembers.userId, userId)),
-  });
-  if (vorhanden) {
-    await db
-      .update(bandMembers)
-      .set({ active: true, role })
-      .where(and(eq(bandMembers.bandId, bandId), eq(bandMembers.userId, userId)));
-  } else {
-    await db.insert(bandMembers).values({ bandId, userId, role });
-  }
-}
-
 /** Eingeloggter User löst die Einladung ein → tritt der Band bei, wechselt hinein. */
 export async function acceptInviteAsUser(token: string) {
   const user = await requireUser();
   const valid = await fetchValidInvite(token);
-  if (!valid) redirect("/einladung/" + token); // zeigt die „ungültig"-Meldung
+  // Ungültig, fremde Adresse oder Super-Admin: Die Einladungsseite zeigt jeweils
+  // die passende Meldung. Die Einladung gilt nur für die eingeladene E-Mail —
+  // sonst macht ein weitergeleiteter Admin-Link jeden Account zum Band-Admin.
+  if (!valid || valid.invite.email !== user.email.toLowerCase() || user.isSuperAdmin) {
+    redirect("/einladung/" + token);
+  }
+  if (!(await consumeInvite(token))) redirect("/einladung/" + token);
   await joinBand(user.id, valid.invite.bandId, valid.invite.role);
-  await db.update(invites).set({ usedAt: new Date() }).where(eq(invites.token, token));
 
   const session = await getSession();
   session.activeBandId = valid.invite.bandId;
@@ -138,6 +74,9 @@ export async function acceptInviteNew(
     return { error: "Für diese E-Mail gibt es bereits ein Konto. Bitte melde dich an." };
   }
 
+  if (!(await consumeInvite(token))) {
+    return { error: "Ungültiger oder abgelaufener Einladungslink." };
+  }
   const [neu] = await db
     .insert(users)
     .values({
@@ -147,7 +86,6 @@ export async function acceptInviteNew(
     })
     .returning({ id: users.id });
   await joinBand(neu.id, valid.invite.bandId, valid.invite.role);
-  await db.update(invites).set({ usedAt: new Date() }).where(eq(invites.token, token));
 
   const session = await getSession();
   session.userId = neu.id;

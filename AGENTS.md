@@ -75,6 +75,8 @@ Voting, Setlisten, Termine. Feature-Stand & Roadmap: `FEATURES.md`. Setup/Deploy
 
 ## Verifikation
 
-Kein Test-Framework — Verifikation per Browser-Durchlauf (Login → Feature-Flow) plus
-`npx tsc --noEmit` und `npm run build`. Testdaten in `data/` (nicht im Git); echte Nutzung
+Vitest (`npm test`, Test-DB im Temp-Verzeichnis, `tests/setup.ts`) plus Browser-Durchlauf
+(Login → Feature-Flow), `npx tsc --noEmit` und `npm run build`. Node-Version: `.nvmrc` (22.x) —
+scheitert `better-sqlite3` mit `NODE_MODULE_VERSION`, hat eine fremde Node-Laufzeit installiert
+→ `npm rebuild better-sqlite3`. Testdaten in `data/` (nicht im Git); echte Nutzung
 hat begonnen — **Daten in `data/` nie löschen/überschreiben.**

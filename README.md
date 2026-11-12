@@ -160,7 +160,7 @@ Neue periodische Aufgabe? Eine Zeile in der `SCHEDULE`-Tabelle in [`scripts/cron
 
 ## Benachrichtigungen
 
-Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** eine Mail bekommt, alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Band-Admin kann das auch unter `/mitglieder` für andere setzen. Die Einstellungen gelten kontobezogen; die Mails selbst gehen immer nur an die Mitglieder der jeweiligen Band. Voraussetzung für jeden Versand ist konfiguriertes SMTP (siehe oben); den Test dazu gibt es auf `/mitglieder`.
+Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** eine Mail bekommt, alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Band-Admin kann das auch unter `/mitglieder` für andere setzen. Die Einstellungen gelten kontobezogen; die Mails selbst gehen immer nur an die Mitglieder der jeweiligen Band. Voraussetzung für jeden Versand ist konfiguriertes SMTP (siehe oben); den Test dazu gibt es unter `/einstellungen` (Band-Admins).
 
 Zwei Kanäle laufen unabhängig vom Mailversand: der **ICS-Feed** bringt native Kalender-Erinnerungen mit (Vortag und zwei Stunden vorher), und die zeitgesteuerten **Termin-Erinnerungen** kommen vom Cron-Job oben.
 
@@ -255,7 +255,7 @@ Pflicht- und optionale Werte in der `.env`:
 > | `465` | `true` | TLS von Anfang an |
 > | `587` | `false` | Klartext-Verbindung, die per STARTTLS verschlüsselt wird — `false` heißt hier **nicht** unverschlüsselt |
 >
-> `587` mit `true` erzeugt beim Verbindungsaufbau `SSL routines … wrong version number`: die App spricht TLS, der Server antwortet im Klartext. Der Versand scheitert dann **still** — `notifyBand()` loggt den Fehler nur. Nach jeder Änderung `pm2 restart ecosystem.config.js --update-env` und den **SMTP-Test auf `/mitglieder`** laufen lassen; der zeigt den echten Fehler in der Oberfläche.
+> `587` mit `true` erzeugt beim Verbindungsaufbau `SSL routines … wrong version number`: die App spricht TLS, der Server antwortet im Klartext. Der Versand scheitert dann **still** — `notifyBand()` loggt den Fehler nur. Nach jeder Änderung `pm2 restart ecosystem.config.js --update-env` und den **SMTP-Test unter `/einstellungen`** laufen lassen; der zeigt den echten Fehler in der Oberfläche.
 
 > Der Port wird **nicht** über die `.env`, sondern in [`ecosystem.config.js`](ecosystem.config.js) gesetzt.
 
