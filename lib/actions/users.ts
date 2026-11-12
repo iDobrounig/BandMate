@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { users, bandMembers, type BandRole } from "@/lib/db/schema";
-import { requireBandAdmin } from "@/lib/auth";
+import { requireBandAdmin, setPassword } from "@/lib/auth";
 import { sendTestMail } from "@/lib/mail";
 import { saveSettings, readSettingsForm } from "@/lib/notifications";
 import type { FormState } from "@/lib/actions/auth";
@@ -113,10 +113,7 @@ export async function setUserPassword(
     return { error: "Das Passwort braucht mindestens 8 Zeichen." };
   if (!(await membershipOf(userId, bandId)))
     return { error: "Kein Mitglied dieser Band." };
-  await db
-    .update(users)
-    .set({ passwordHash: bcrypt.hashSync(password, 10) })
-    .where(eq(users.id, userId));
+  await setPassword(userId, password);
   revalidatePath("/mitglieder");
   return { success: "Passwort neu gesetzt." };
 }

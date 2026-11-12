@@ -6,7 +6,8 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { bands, users, bandMembers, type BandRole } from "@/lib/db/schema";
-import { requireSuperAdmin } from "@/lib/auth";
+import { requireSuperAdmin, setPassword } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { makeInvite } from "@/lib/invites";
 import type { FormState } from "@/lib/actions/auth";
 
@@ -114,11 +115,10 @@ export async function changeOwnPassword(
   }
   if (next.length < 8) return { error: "Das neue Passwort braucht mindestens 8 Zeichen." };
   if (next !== repeat) return { error: "Die Wiederholung stimmt nicht überein." };
-  await db
-    .update(users)
-    .set({ passwordHash: bcrypt.hashSync(next, 10) })
-    .where(eq(users.id, admin.id));
-  return { success: "Passwort geändert." };
+  const session = await getSession();
+  session.sessionVersion = await setPassword(admin.id, next);
+  await session.save();
+  return { success: "Passwort geändert. Andere Geräte wurden abgemeldet." };
 }
 
 // ---- Band bearbeiten ------------------------------------------------------
@@ -267,10 +267,7 @@ export async function setUserGlobalPassword(
   const userId = Number(formData.get("userId"));
   const password = String(formData.get("password") ?? "");
   if (password.length < 8) return { error: "Das Passwort braucht mindestens 8 Zeichen." };
-  await db
-    .update(users)
-    .set({ passwordHash: bcrypt.hashSync(password, 10) })
-    .where(eq(users.id, userId));
+  await setPassword(userId, password);
   revalidatePath("/verwaltung/nutzer");
   return { success: "Passwort neu gesetzt." };
 }

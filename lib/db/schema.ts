@@ -5,6 +5,7 @@ import {
   real,
   primaryKey,
   unique,
+  index,
 } from "drizzle-orm/sqlite-core";
 
 /**
@@ -42,6 +43,12 @@ export const users = sqliteTable("users", {
   // geringer Wert als Angriffsziel bei einer Handvoll interner Nutzer.
   resetToken: text("reset_token"),
   resetTokenExpiresAt: integer("reset_token_expires_at", { mode: "timestamp" }),
+  /**
+   * Wird bei Passwort-Änderung/-Reset hochgezählt. Die Session trägt den Stand
+   * vom Login; weicht er ab, gilt sie als abgemeldet (iron-session ist
+   * zustandslos, anders lassen sich bestehende Logins nicht widerrufen).
+   */
+  sessionVersion: integer("session_version").notNull().default(0),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -83,7 +90,11 @@ export const bandMembers = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date()),
   },
-  (t) => [primaryKey({ columns: [t.bandId, t.userId] })]
+  (t) => [
+    primaryKey({ columns: [t.bandId, t.userId] }),
+    // Der PK deckt Abfragen nach band_id ab, nicht die nach user_id (Login, Bandwahl).
+    index("band_members_user_id_idx").on(t.userId),
+  ]
 );
 
 /**
@@ -107,7 +118,9 @@ export const invites = sqliteTable("invites", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
-});
+}, (t) => [
+  index("invites_band_id_idx").on(t.bandId),
+]);
 
 export const songs = sqliteTable("songs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -137,7 +150,9 @@ export const songs = sqliteTable("songs", {
   // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   deletedById: integer("deleted_by_id").references(() => users.id),
-});
+}, (t) => [
+  index("songs_band_id_idx").on(t.bandId),
+]);
 
 export const equipment = sqliteTable("equipment", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -171,7 +186,9 @@ export const equipment = sqliteTable("equipment", {
   // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   deletedById: integer("deleted_by_id").references(() => users.id),
-});
+}, (t) => [
+  index("equipment_band_id_idx").on(t.bandId),
+]);
 
 export const equipmentContributions = sqliteTable(
   "equipment_contributions",
@@ -205,7 +222,9 @@ export const equipmentAttachments = sqliteTable("equipment_attachments", {
   // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   deletedById: integer("deleted_by_id").references(() => users.id),
-});
+}, (t) => [
+  index("equipment_attachments_equipment_id_idx").on(t.equipmentId),
+]);
 
 export const songLinks = sqliteTable("song_links", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -217,7 +236,9 @@ export const songLinks = sqliteTable("song_links", {
   kind: text("kind", { enum: ["youtube", "spotify", "other"] })
     .notNull()
     .default("other"),
-});
+}, (t) => [
+  index("song_links_song_id_idx").on(t.songId),
+]);
 
 export const attachments = sqliteTable("attachments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -240,7 +261,9 @@ export const attachments = sqliteTable("attachments", {
   // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   deletedById: integer("deleted_by_id").references(() => users.id),
-});
+}, (t) => [
+  index("attachments_song_id_idx").on(t.songId),
+]);
 
 export const comments = sqliteTable("comments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -254,7 +277,9 @@ export const comments = sqliteTable("comments", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
-});
+}, (t) => [
+  index("comments_song_id_idx").on(t.songId),
+]);
 
 export const votes = sqliteTable(
   "votes",
@@ -299,7 +324,9 @@ export const setlists = sqliteTable("setlists", {
   // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   deletedById: integer("deleted_by_id").references(() => users.id),
-});
+}, (t) => [
+  index("setlists_band_id_idx").on(t.bandId),
+]);
 
 export const setlistItems = sqliteTable("setlist_items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -315,7 +342,10 @@ export const setlistItems = sqliteTable("setlist_items", {
   breakSeconds: integer("break_seconds"), // Pausendauer (break)
   position: integer("position").notNull(),
   note: text("note"),
-});
+}, (t) => [
+  index("setlist_items_setlist_id_idx").on(t.setlistId),
+  index("setlist_items_song_id_idx").on(t.songId),
+]);
 
 export const events = sqliteTable("events", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -349,7 +379,12 @@ export const events = sqliteTable("events", {
   // Papierkorb: NULL = aktiv. Siehe docs/specs/2026-07-23-papierkorb-design.md
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   deletedById: integer("deleted_by_id").references(() => users.id),
-});
+}, (t) => [
+  // Termine werden fast immer pro Band nach Datum gelesen.
+  index("events_band_id_date_idx").on(t.bandId, t.date),
+  index("events_setlist_id_idx").on(t.setlistId),
+  index("events_series_id_idx").on(t.seriesId),
+]);
 
 export const eventAttendance = sqliteTable(
   "event_attendance",
@@ -375,7 +410,10 @@ export const eventSongs = sqliteTable("event_songs", {
     .notNull()
     .references(() => songs.id, { onDelete: "cascade" }),
   position: integer("position").notNull(),
-});
+}, (t) => [
+  index("event_songs_event_id_idx").on(t.eventId),
+  index("event_songs_song_id_idx").on(t.songId),
+]);
 
 /**
  * Wer will worüber wie benachrichtigt werden?

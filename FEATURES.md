@@ -412,10 +412,16 @@ Entscheidungen):*
 Befunde mit Fundstellen: [docs/audit-2026-11.md](docs/audit-2026-11.md). Patch-Punkte
 (Next-Update, Secret-Pflicht, Einladungen, `NODE_BIN_DIR`, Doku) *erledigt 12.11.2026*.
 
-- [ ] nodemailer 9 → 10 (mehrere Advisories, Major-Update) — A2
-- [ ] Session-Widerruf nach Passwort-Reset/-Änderung (`users.sessionVersion`) — A6
-- [ ] Login-/Reset-Rate-Limit vorziehen (steht unter „Später")
-- [ ] Indizes auf Fremdschlüssel (`band_id`, `song_id`, `setlist_id`, `event_id` …) — C1
+- [x] nodemailer 9 → 10 (mehrere Advisories, Major-Update) — A2 · *erledigt 12.11.2026*: 10.5.0, bringt eigene
+  Typen mit (`@types/nodemailer` entfernt)
+- [x] Session-Widerruf nach Passwort-Reset/-Änderung (`users.sessionVersion`) — A6 · *erledigt 12.11.2026*:
+  zentral über `setPassword()` in `lib/auth.ts`; wer sein eigenes Passwort ändert, bleibt auf
+  dem aktuellen Gerät angemeldet, alle anderen Sessions fliegen raus
+- [x] Login-/Reset-Rate-Limit — *erledigt 12.11.2026*: `lib/rate-limit.ts` (im Speicher, reicht für den
+  einen PM2-Prozess). Login: 10 Fehlversuche pro Adresse / 30 pro IP in 15 min. Passwort
+  vergessen: 3 pro Adresse / 10 pro IP pro Stunde, Antwort bleibt neutral
+- [x] Indizes auf Fremdschlüssel (`band_id`, `song_id`, `setlist_id`, `event_id` …) — C1 ·
+  *erledigt 12.11.2026*: 16 Indizes, Migration `0013`
 - [ ] `deploy.sh`: `npm ci` statt `npm install`; Build ohne die laufende Instanz zu stören — B1/B2
 - [ ] Kleinkram: Enum-Argumente der Actions validieren, Links nur `http(s)`, Security-Header,
   `requireBandContext` per `cache()`, `reorderSetlist` in Transaktion, eigene
@@ -547,7 +553,7 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   Damit ist Push die unzuverlässigere Zustellung, nicht die zuverlässigere. Die
   `channel`-Spalte aus Welle 1 hält den Platz frei, sodass es ohne zweite
   Schema-Migration dazukommt.
-- [ ] Login-Rate-Limit + Rate-Limit auf „Passwort vergessen" (Mail-Bombe gegen bekannte Adresse)
+- [x] Login-Rate-Limit + Rate-Limit auf „Passwort vergessen" — *erledigt 12.11.2026*, siehe „Härtung aus dem Audit"
 - [ ] Pro-Mitglied-Token für den ICS-Feed statt eines gemeinsamen (Welle 4 machte das Token
   band-bezogen — `bands.calendarToken` —, aber alle Mitglieder einer Band teilen es sich;
   einzeln widerrufen geht nur durch Rotieren des Band-Tokens, was allen den Feed bricht)

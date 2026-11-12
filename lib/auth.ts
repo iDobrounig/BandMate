@@ -1,5 +1,6 @@
+import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, bands, bandMembers, type User, type BandRole } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
@@ -12,7 +13,33 @@ export async function currentUser(): Promise<User | null> {
     where: eq(users.id, session.userId),
   });
   if (!user || !user.active) return null;
+  // Passwort wurde seit diesem Login geändert → Session gilt als abgemeldet.
+  // Alte Sessions ohne Feld zählen als 0 (= Default), bleiben also gültig.
+  if ((session.sessionVersion ?? 0) !== user.sessionVersion) return null;
   return user;
+}
+
+/**
+ * Setzt ein neues Passwort und meldet damit alle bestehenden Sessions des
+ * Users ab (sessionVersion + 1). Gibt die neue Version zurück — ändert jemand
+ * sein EIGENES Passwort, trägt der Aufrufer sie in die eigene Session ein,
+ * damit nur die anderen Geräte rausfliegen.
+ */
+export async function setPassword(
+  userId: number,
+  plain: string,
+  extra: Partial<Pick<User, "resetToken" | "resetTokenExpiresAt">> = {}
+): Promise<number> {
+  const [row] = await db
+    .update(users)
+    .set({
+      passwordHash: bcrypt.hashSync(plain, 10),
+      sessionVersion: sql`${users.sessionVersion} + 1`,
+      ...extra,
+    })
+    .where(eq(users.id, userId))
+    .returning({ sessionVersion: users.sessionVersion });
+  return row?.sessionVersion ?? 0;
 }
 
 /** Für Seiten/Actions: leitet zu /login um, wenn nicht eingeloggt. */

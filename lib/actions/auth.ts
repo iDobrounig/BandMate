@@ -8,8 +8,9 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { users, bandMembers } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { requireUser, requireBandContext } from "@/lib/auth";
+import { requireUser, requireBandContext, setPassword } from "@/lib/auth";
 import { sendPasswordResetMail } from "@/lib/mail";
+import { clientIp, isLimited, record, reset, LOGIN_LIMIT, RESET_LIMIT } from "@/lib/rate-limit";
 import { saveSettings, readSettingsForm } from "@/lib/notifications";
 
 export type FormState = { error?: string; success?: string };
@@ -25,12 +26,23 @@ export async function login(
   if (!email || !password) {
     return { error: "Bitte E-Mail und Passwort eingeben." };
   }
+  // Gezählt werden nur Fehlversuche — pro Adresse (gezieltes Raten) und pro IP
+  // (viele Adressen durchprobieren). Erfolgreicher Login setzt die Adresse zurück.
+  const emailKey = `login:email:${email}`;
+  const ipKey = `login:ip:${await clientIp()}`;
+  if (isLimited(emailKey, LOGIN_LIMIT.perEmail) || isLimited(ipKey, LOGIN_LIMIT.perIp)) {
+    return { error: "Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen." };
+  }
   const user = await db.query.users.findFirst({ where: eq(users.email, email) });
   if (!user || !user.active || !bcrypt.compareSync(password, user.passwordHash)) {
+    record(emailKey, LOGIN_LIMIT.windowMs);
+    record(ipKey, LOGIN_LIMIT.windowMs);
     return { error: "E-Mail oder Passwort ist falsch." };
   }
+  reset(emailKey);
   const session = await getSession();
   session.userId = user.id;
+  session.sessionVersion = user.sessionVersion;
   await session.save();
   // Nur interne Pfade zulassen (kein Open-Redirect).
   const next = String(formData.get("next") ?? "");
@@ -95,11 +107,11 @@ export async function changePassword(
   if (next !== repeat) {
     return { error: "Die Wiederholung stimmt nicht überein." };
   }
-  await db
-    .update(users)
-    .set({ passwordHash: bcrypt.hashSync(next, 10) })
-    .where(eq(users.id, user.id));
-  return { success: "Passwort geändert." };
+  // Andere Geräte abmelden, dieses angemeldet lassen.
+  const session = await getSession();
+  session.sessionVersion = await setPassword(user.id, next);
+  await session.save();
+  return { success: "Passwort geändert. Andere Geräte wurden abgemeldet." };
 }
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 Stunde
@@ -117,9 +129,21 @@ export async function requestPasswordReset(
   };
   if (!email) return generic;
 
+  // Schutz vor Mail-Bomben gegen eine bekannte Adresse. Bei Überschreitung
+  // dieselbe neutrale Antwort — sonst verriete die Meldung, welche Adressen
+  // existieren.
+  const emailKey = `reset:email:${email}`;
+  const ipKey = `reset:ip:${await clientIp()}`;
+  if (isLimited(emailKey, RESET_LIMIT.perEmail) || isLimited(ipKey, RESET_LIMIT.perIp)) {
+    console.log("[passwort-vergessen] Rate-Limit erreicht — keine Mail verschickt.");
+    return generic;
+  }
+  record(emailKey, RESET_LIMIT.windowMs);
+  record(ipKey, RESET_LIMIT.windowMs);
+
   const user = await db.query.users.findFirst({ where: eq(users.email, email) });
   if (!user || !user.active) {
-    console.log(`[passwort-vergessen] Keine aktive Adresse gefunden: ${email}`);
+    console.log("[passwort-vergessen] Keine aktive Adresse gefunden.");
     return generic;
   }
 
@@ -161,14 +185,7 @@ export async function resetPassword(
     return { error: "Die Wiederholung stimmt nicht überein." };
   }
 
-  await db
-    .update(users)
-    .set({
-      passwordHash: bcrypt.hashSync(next, 10),
-      resetToken: null,
-      resetTokenExpiresAt: null,
-    })
-    .where(eq(users.id, user.id));
+  await setPassword(user.id, next, { resetToken: null, resetTokenExpiresAt: null });
 
   return { success: "Passwort geändert. Du kannst dich jetzt anmelden." };
 }

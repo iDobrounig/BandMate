@@ -5,6 +5,8 @@ export type SessionData = {
   userId?: number;
   /** Welche Band der User gerade bedient (Mandantenfähigkeit, Welle 4). */
   activeBandId?: number;
+  /** Stand von users.sessionVersion beim Login — siehe currentUser(). */
+  sessionVersion?: number;
 };
 
 const DEV_SECRET = "unsicheres-dev-geheimnis-bitte-in-env-aendern!!";

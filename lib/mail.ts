@@ -1,11 +1,11 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type TransportOptions } from "nodemailer";
 import { fetchRecipients } from "@/lib/notifications";
 import type { NotificationKind } from "@/lib/db/schema";
 import { buildEmailHtml, buildEmailText } from "@/lib/email-template";
 
 const smtpConfigured = Boolean(process.env.SMTP_HOST);
 
-function transporter(extra?: nodemailer.TransportOptions) {
+function transporter(extra?: TransportOptions) {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT ?? 587),
@@ -20,7 +20,7 @@ function transporter(extra?: nodemailer.TransportOptions) {
     greetingTimeout: 8_000,
     socketTimeout: 20_000,
     ...extra,
-  } as nodemailer.TransportOptions);
+  } as TransportOptions);
 }
 
 /**
@@ -34,7 +34,7 @@ function transporter(extra?: nodemailer.TransportOptions) {
  */
 export function createBatchMailer() {
   if (!smtpConfigured) throw new Error("SMTP nicht konfiguriert");
-  const t = transporter({ pool: true, maxConnections: 1 } as nodemailer.TransportOptions);
+  const t = transporter({ pool: true, maxConnections: 1 } as TransportOptions);
   const from = process.env.SMTP_FROM ?? process.env.SMTP_USER;
   return {
     async send(toEmail: string, subject: string, content: MailContent) {

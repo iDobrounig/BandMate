@@ -8,6 +8,24 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [2.2.0] — 2026-11-12
+
+### Sicherheit
+- **Passwort ändern meldet andere Geräte ab.** Nach einer Passwort-Änderung, einem Reset
+  oder wenn ein Admin ein Passwort neu setzt, sind alle bestehenden Logins dieses Kontos
+  ungültig. Wer sein eigenes Passwort ändert, bleibt auf dem aktuellen Gerät angemeldet.
+  Bestehende Logins bleiben beim Update erhalten.
+- **Rate-Limit für Login und „Passwort vergessen"**: nach 10 Fehlversuchen pro Adresse
+  (bzw. 30 pro IP) ist der Login 15 Minuten gesperrt; Reset-Mails höchstens 3 pro Adresse
+  und Stunde. Die IP kommt aus `X-Real-IP` (nginx-Konfiguration im README).
+- **nodemailer 9 → 10.5**: schließt mehrere Advisories; `npm audit` meldet 0 Lücken.
+  Nach dem Update den SMTP-Test unter `/einstellungen` laufen lassen.
+
+### Geändert
+- **Datenbank-Indizes** auf allen Fremdschlüsseln (16 Stück) — Abfragen nach Band, Song,
+  Setliste und Termin müssen die Tabellen nicht mehr komplett durchsuchen. Migration
+  läuft beim Start automatisch.
+
 ## [2.1.1] — 2026-11-12
 
 > **Vor dem Update:** `SESSION_SECRET` muss in der Server-`.env` gesetzt sein (mind. 32
