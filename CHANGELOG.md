@@ -8,6 +8,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [2.2.1] — 2026-11-12
+
+### Geändert
+- **Navigationsleiste im Glas-Look**: Die schwebende Leiste hob sich farblich kaum vom
+  Hintergrund ab und wurde leicht übersehen. Sie ist jetzt eine halbtransparente, warm
+  getönte Glasfläche mit Weichzeichner, heller Lichtkante und Schatten; der aktive Bereich
+  und der geöffnete Menü-Button erscheinen als Amber-Glas-Pille.
+
 ## [2.2.0] — 2026-11-12
 
 ### Sicherheit
