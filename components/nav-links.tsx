@@ -39,10 +39,10 @@ export function NavLinks() {
             href={href}
             aria-label={label}
             title={label}
-            className={`flex items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold leading-none transition ${
+            className={`flex items-center justify-center gap-2 rounded-full px-2.5 py-2 text-sm font-semibold leading-none transition ${
               active
-                ? "bg-accent/15 text-accent-hi"
-                : "text-mute hover:bg-raise hover:text-ink"
+                ? "bg-accent/30 text-[#ffe2a8] shadow-[inset_0_1px_0_rgb(255_230_190/0.35)]"
+                : "text-[rgb(255_236_205/0.85)] hover:bg-white/10 hover:text-ink"
             }`}
           >
             <Icon className="size-5" />

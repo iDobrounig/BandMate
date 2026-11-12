@@ -53,8 +53,10 @@ export function AppMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center justify-center rounded-xl p-2.5 transition ${
-          open ? "bg-accent/15 text-accent-hi" : "text-mute hover:bg-raise hover:text-ink"
+        className={`flex items-center justify-center rounded-full p-2.5 transition ${
+          open
+            ? "bg-accent/30 text-[#ffe2a8] shadow-[inset_0_1px_0_rgb(255_230_190/0.35)]"
+            : "text-[rgb(255_236_205/0.85)] hover:bg-white/10 hover:text-ink"
         }`}
       >
         <IconUser className="size-5" />

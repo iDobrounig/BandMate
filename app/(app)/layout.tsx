@@ -19,11 +19,11 @@ export default async function AppLayout({
       </main>
 
       <div className="print-hidden pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="pointer-events-auto flex max-w-full items-center gap-1 rounded-2xl border border-line bg-panel p-1.5 shadow-[0_0_14px_rgb(255_255_255/0.1)]">
+        <div className="glass-edge pointer-events-auto relative flex max-w-full items-center gap-1 rounded-3xl bg-linear-to-b from-[rgb(255_214_150/0.16)] to-accent/6 p-1.5 shadow-[inset_0_1px_1px_rgb(255_230_190/0.3),0_0_22px_rgb(242_165_28/0.12),0_10px_30px_rgb(0_0_0/0.55)] backdrop-blur-lg backdrop-saturate-[1.8]">
           <div className="flex min-w-0 items-center overflow-x-auto">
             <NavLinks />
           </div>
-          <div className="h-8 w-px shrink-0 bg-line-soft" aria-hidden />
+          <div className="h-6 w-px shrink-0 bg-[rgb(255_220_170/0.2)]" aria-hidden />
           <AppMenu
             userName={ctx.user.name}
             bandName={ctx.bandName}

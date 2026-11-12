@@ -86,6 +86,26 @@ body {
     font-family: var(--font-display);
     @apply font-bold tracking-tight text-balance;
   }
+  /* Lichtkante für Glas-Flächen (Floating-Nav): Verlaufs-Rahmen, oben links hell */
+  .glass-edge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      160deg,
+      rgb(255 255 255 / 0.55),
+      rgb(255 255 255 / 0.08) 35%,
+      rgb(255 255 255 / 0.04) 65%,
+      rgb(255 255 255 / 0.3)
+    );
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
 }
 
 /* Chords/Lyrics und Tuner-Ziffern */
