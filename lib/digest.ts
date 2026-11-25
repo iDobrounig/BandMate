@@ -232,6 +232,7 @@ export async function runDigest(
           notificationLog.refType,
           notificationLog.refId,
           notificationLog.userId,
+          notificationLog.channel,
         ],
         set: { status, error, sentAt: new Date() },
       });

@@ -34,6 +34,15 @@ export const users = sqliteTable("users", {
   digestEnabled: integer("digest_enabled", { mode: "boolean" })
     .notNull()
     .default(true),
+  /**
+   * Über welchen Kanal Sofort-Nachrichten und Erinnerungen kommen. Die Matrix in
+   * notification_settings entscheidet OB, diese Spalte WIE. Ohne aktives
+   * Push-Gerät geht immer Mail raus, auch bei "push" (Rückfall).
+   * Entwurf: docs/specs/2026-11-25-web-push-design.md
+   */
+  notifyChannel: text("notify_channel", { enum: ["beides", "push", "mail"] })
+    .notNull()
+    .default("beides"),
   /** Für „neu seit deinem letzten Besuch"; höchstens stündlich fortgeschrieben. */
   lastSeenAt: integer("last_seen_at", { mode: "timestamp" }),
   // Globaler Konto-Schalter (nur Super-Admin). Die bandlokale Mitgliedschaft
@@ -423,8 +432,9 @@ export const eventSongs = sqliteTable("event_songs", {
  * der Default aus NOTIFY_KINDS. Dadurch bekommt ein später ergänzter
  * Ereignistyp automatisch einen sinnvollen Wert, ohne Nachmigration.
  *
- * `channel` ist heute immer "mail". Die Spalte steht trotzdem schon hier, damit
- * Web Push später ohne zweite Schema-Migration dazukommt.
+ * `channel` ist immer "mail". Sie war für Web Push reserviert, wird aber nicht
+ * gebraucht: Die Matrix gilt kanalunabhängig, der Kanal steht pro Person in
+ * `users.notifyChannel` (Entscheidung B, docs/specs/2026-11-25-web-push-design.md).
  */
 export const notificationSettings = sqliteTable(
   "notification_settings",
@@ -462,11 +472,40 @@ export const notificationLog = sqliteTable(
       .$defaultFn(() => new Date()),
     status: text("status", { enum: ["ok", "fehler"] }).notNull(),
     error: text("error"),
+    /** Über welchen Kanal. Eine Erinnerung kann je Kanal einmal geloggt sein. */
+    channel: text("channel", { enum: ["mail", "push"] }).notNull().default("mail"),
   },
   (t) => [
-    unique("notification_log_einmalig").on(t.kind, t.refType, t.refId, t.userId),
+    unique("notification_log_einmalig").on(
+      t.kind,
+      t.refType,
+      t.refId,
+      t.userId,
+      t.channel
+    ),
   ]
 );
+
+/**
+ * Ein Web-Push-Abo = ein Gerät/Browser einer Person. Hängt an der Person, nicht
+ * an der Band (wie die Benachrichtigungs-Einstellungen).
+ * Entwurf: docs/specs/2026-11-25-web-push-design.md
+ */
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  /** Lesbare Gerätebezeichnung, z.B. "iPhone · Safari". */
+  label: text("label").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  lastSuccessAt: integer("last_success_at", { mode: "timestamp" }),
+});
 
 /**
  * Was hat der Cron getan? Auch „gelaufen, nichts zu tun" ist eine Information —
@@ -494,6 +533,8 @@ export type NotificationKind =
 export type NotificationMode =
   (typeof notificationSettings.$inferSelect)["mode"];
 export type NotificationRun = typeof notificationRuns.$inferSelect;
+export type NotifyChannel = User["notifyChannel"];
+export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 export type Song = typeof songs.$inferSelect;
 export type SongLink = typeof songLinks.$inferSelect;
 export type Attachment = typeof attachments.$inferSelect;

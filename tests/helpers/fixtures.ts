@@ -18,6 +18,7 @@ import {
   notificationSettings,
   notificationLog,
   notificationRuns,
+  pushSubscriptions,
   equipment,
   equipmentContributions,
   equipmentAttachments,
@@ -54,6 +55,7 @@ export async function leeren() {
   await db.delete(songs);
   await db.delete(invites);
   await db.delete(bandMembers);
+  await db.delete(pushSubscriptions);
   await db.delete(users);
   await db.delete(bands);
 }
