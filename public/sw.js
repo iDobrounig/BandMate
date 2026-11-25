@@ -28,6 +28,9 @@ self.addEventListener("push", (event) => {
       body: d.body || "",
       icon: "/icon-192.png",
       tag: d.tag,
+      // Ersetzt eine Nachricht mit gleichem tag (z.B. zweiter Kommentar zum
+      // selben Song) die alte, soll sie trotzdem wieder Ton/Vibration auslösen.
+      renotify: Boolean(d.tag),
       data: { url: d.url || "/" },
     })
   );
@@ -49,8 +52,14 @@ self.addEventListener("notificationclick", (event) => {
       const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const w of wins) {
         if (w.url.startsWith(self.location.origin)) {
-          await w.focus();
-          return w.navigate(url);
+          try {
+            await w.focus();
+            // navigate() scheitert bei Fenstern, die dieser Worker (noch) nicht
+            // steuert, z.B. nach einem harten Neuladen → dann neues Fenster.
+            return await w.navigate(url);
+          } catch {
+            break;
+          }
         }
       }
       return self.clients.openWindow(url);

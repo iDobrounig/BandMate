@@ -45,9 +45,18 @@ export async function deliverNotification(
     return { push: [], mail: [] };
   }
 
+  // Push darf die Mail nie verhindern: Jede Ausnahme im Push-Zweig (z.B. DB
+  // kurz gesperrt) zählt wie „nicht zugestellt" — dann greift Mail.
   const pushAn = isPushConfigured();
-  const geraete = pushAn ? await countDevices(recipients.map((r) => r.id)) : new Map();
-  const band = await db.query.bands.findFirst({ where: eq(bands.id, opts.bandId) });
+  const geraete: Map<number, number> = pushAn
+    ? await countDevices(recipients.map((r) => r.id)).catch((err) => {
+        console.error("[notify] Push-Geräte nicht lesbar, nur Mail:", err);
+        return new Map<number, number>();
+      })
+    : new Map();
+  const band = pushAn
+    ? await db.query.bands.findFirst({ where: eq(bands.id, opts.bandId) }).catch(() => undefined)
+    : undefined;
   const payload = toPushPayload(opts, band?.name ?? "", {
     appUrl: process.env.APP_URL ?? "",
     tag: `${opts.kind}-${opts.cta.url.replace(/^https?:\/\/[^/]+/, "")}`,
@@ -59,9 +68,14 @@ export async function deliverNotification(
     const geplant = planChannels(r.notifyChannel, geraete.get(r.id) ?? 0, pushAn);
     let zugestellt = 0;
     if (geplant.push) {
-      zugestellt = (
-        await sendToUser(r.id, payload, { ttl: PUSH_TTL.sofort, urgency: "normal" })
-      ).delivered;
+      try {
+        zugestellt = (
+          await sendToUser(r.id, payload, { ttl: PUSH_TTL.sofort, urgency: "normal" })
+        ).delivered;
+      } catch (err) {
+        console.error(`[notify] Push an Person ${r.id} fehlgeschlagen:`, err);
+        zugestellt = 0;
+      }
       if (zugestellt > 0) perPush.push(r.id);
     }
     if (geplant.mail || mailFallbackNeeded(geplant, zugestellt)) perMail.push(r);

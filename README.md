@@ -179,7 +179,7 @@ pm2 restart ecosystem.config.js --update-env
 
 - **HTTPS ist Pflicht** (Browser erlauben Push nur über HTTPS; `localhost` ist ausgenommen).
 - **iPhone/iPad:** Push geht nur in der installierten App (Safari → Teilen → „Zum Home-Bildschirm", iOS 16.4+). Im normalen Safari-Tab zeigt das Profil eine Anleitung.
-- **Schlüssel nicht wechseln:** Ein neues Schlüsselpaar macht alle bestehenden Push-Anmeldungen ungültig — alle müssten Push neu aktivieren.
+- **Schlüssel nicht wechseln:** Ein neues Schlüsselpaar macht alle bestehenden Push-Anmeldungen ungültig — alle müssten Push neu aktivieren. Das Profil erkennt das und bietet wieder „Aktivieren" an; dabei wird die alte Anmeldung dieses Geräts entfernt. Geräte, die niemand neu aktiviert, liefern bis dahin Fehler (rote Statuszeile) — sie lassen sich im Profil unter „Meine Geräte" entfernen.
 - Ausgeliefert über die Push-Dienste von Google, Apple, Mozilla und Microsoft; die Inhalte sind Ende-zu-Ende verschlüsselt. Der Server schickt nur an diese Dienste (Allowlist).
 - Band-Admins sehen unter `/mitglieder`, wer Push auf wie vielen Geräten aktiv hat.
 

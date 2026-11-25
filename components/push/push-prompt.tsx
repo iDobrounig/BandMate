@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { pushSupport, currentSubscription, subscribe } from "@/lib/push-client";
-import { savePushSubscription } from "@/lib/actions/push";
+import { savePushSubscription, removePushSubscription } from "@/lib/actions/push";
 
 const SPEICHER_KEY = "bandmate.pushPrompt";
 
@@ -53,17 +53,20 @@ export function PushPrompt({ publicKey }: { publicKey: string }) {
     setFehler(null);
     setLaeuft(true);
     try {
-      const sub = await subscribe(publicKey);
-      if (!sub) {
+      const ergebnis = await subscribe(publicKey);
+      if (!ergebnis) {
         // abgelehnt — nicht weiter nerven
         merkeWeggeklickt();
         setSichtbar(false);
         return;
       }
-      const r = await savePushSubscription(sub.toJSON());
+      const r = await savePushSubscription(ergebnis.sub.toJSON());
       if (!r.ok) {
         setFehler(r.error);
         return;
+      }
+      if (ergebnis.ersetzt && ergebnis.ersetzt !== ergebnis.sub.endpoint) {
+        await removePushSubscription(ergebnis.ersetzt);
       }
       setSichtbar(false);
       router.refresh();

@@ -13,9 +13,15 @@ import {
 import { planReminders, runReminders, tagePlus } from "@/lib/reminders";
 import { saveSettings } from "@/lib/notifications";
 import { saveSubscription } from "@/lib/push-subscriptions";
+import { sendToUser } from "@/lib/push";
 
 vi.mock("web-push", () => ({ default: { sendNotification: vi.fn() } }));
 const push = vi.mocked(webpush.sendNotification);
+vi.mock("@/lib/push", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/push")>();
+  return { ...orig, sendToUser: vi.fn(orig.sendToUser) };
+});
+
 import { anlegen } from "./helpers/fixtures";
 
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
@@ -275,6 +281,28 @@ describe("runReminders mit Push", () => {
       title: "BandMate · Testband",
       url: `/termine/${e.id}`,
     });
+  });
+
+  it("Ausnahme im Push-Zweig bricht den Lauf nicht ab, Mail-Rückfall greift", async () => {
+    await terminAn(2);
+    await geraet(f.users.anna.id);
+    await kanal(f.users.anna.id, "push");
+    vi.mocked(sendToUser).mockRejectedValueOnce(new Error("SQLITE_BUSY"));
+    const r = await runReminders(URL);
+    // anna: Push-Fehler + Mail-Versuch; bert/clara: Mail-Versuch — alle drei protokolliert
+    const mails = await db
+      .select()
+      .from(notificationLog)
+      .where(eq(notificationLog.channel, "mail"));
+    expect(mails.map((m) => m.userId).sort()).toEqual(
+      [f.users.anna.id, f.users.bert.id, f.users.clara.id].sort()
+    );
+    const annaPush = await db
+      .select()
+      .from(notificationLog)
+      .where(and(eq(notificationLog.userId, f.users.anna.id), eq(notificationLog.channel, "push")));
+    expect(annaPush[0]).toMatchObject({ status: "fehler" });
+    expect(r.errors).toBe(4);
   });
 
   it("note zählt Push mit", async () => {

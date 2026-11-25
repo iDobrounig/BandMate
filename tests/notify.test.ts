@@ -7,10 +7,16 @@ import { saveSubscription } from "@/lib/push-subscriptions";
 import { saveSettings } from "@/lib/notifications";
 import { deliverNotification, type NotifyOpts } from "@/lib/notify";
 import { sendBandMail } from "@/lib/mail";
+import { sendToUser } from "@/lib/push";
 import { anlegen } from "./helpers/fixtures";
 
 vi.mock("web-push", () => ({ default: { sendNotification: vi.fn() } }));
 vi.mock("@/lib/mail", () => ({ sendBandMail: vi.fn() }));
+vi.mock("@/lib/push", async (importOriginal) => {
+  const orig = await importOriginal<typeof import("@/lib/push")>();
+  return { ...orig, sendToUser: vi.fn(orig.sendToUser) };
+});
+
 const push = vi.mocked(webpush.sendNotification);
 const mail = vi.mocked(sendBandMail);
 
@@ -133,6 +139,16 @@ describe("deliverNotification", () => {
     expect(r.push).toEqual([]);
     expect(r.mail).toContain(f.users.bert.id);
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("Ausnahme im Push-Zweig (z.B. DB gesperrt) verhindert die Mail nicht", async () => {
+    await geraet(f.users.bert.id);
+    await kanal(f.users.bert.id, "push");
+    vi.mocked(sendToUser).mockRejectedValueOnce(new Error("SQLITE_BUSY"));
+    const r = await deliverNotification(opts());
+    expect(r.push).toEqual([]);
+    expect(sortiert(r.mail)).toEqual(sortiert([f.users.bert.id, f.users.clara.id]));
+    expect(mailAn()).toEqual(["bert@test.at", "clara@test.at"].sort());
   });
 
   it("Push-Titel enthält den Bandnamen der auslösenden Band", async () => {

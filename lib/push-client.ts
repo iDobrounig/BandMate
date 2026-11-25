@@ -50,7 +50,12 @@ function base64UrlToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
-function gleicherSchluessel(sub: PushSubscription, publicKey: string): boolean {
+/**
+ * Gehört das Abo zum aktuellen Server-Schlüssel? Nach einem Schlüsselwechsel
+ * ist ein altes Abo wertlos (der Push-Dienst lehnt mit 401/403 ab) und muss neu
+ * angelegt werden.
+ */
+export function passtZumSchluessel(sub: PushSubscription, publicKey: string): boolean {
   const vorhanden = sub.options.applicationServerKey;
   if (!vorhanden) return false;
   const a = new Uint8Array(vorhanden);
@@ -61,9 +66,12 @@ function gleicherSchluessel(sub: PushSubscription, publicKey: string): boolean {
 /**
  * Fragt (falls nötig) die Berechtigung an und meldet den Browser beim
  * Push-Dienst an. MUSS direkt aus einem Tippen/Klick aufgerufen werden —
- * iOS verlangt das. Liefert null, wenn die Berechtigung verweigert wurde.
+ * iOS verlangt das. Liefert null, wenn die Berechtigung verweigert wurde,
+ * sonst das Abo und ggf. den Endpoint eines ersetzten alten Abos.
  */
-export async function subscribe(publicKey: string): Promise<PushSubscription | null> {
+export async function subscribe(
+  publicKey: string
+): Promise<{ sub: PushSubscription; ersetzt: string | null } | null> {
   // Zuerst die Berechtigung — noch innerhalb der Nutzer-Geste.
   const erlaubnis = await Notification.requestPermission();
   if (erlaubnis !== "granted") return null;
@@ -72,14 +80,16 @@ export async function subscribe(publicKey: string): Promise<PushSubscription | n
   const reg = await navigator.serviceWorker.ready;
   const vorhanden = await reg.pushManager.getSubscription();
   if (vorhanden) {
-    if (gleicherSchluessel(vorhanden, publicKey)) return vorhanden;
-    // Server-Schlüssel gewechselt → altes Abo ist wertlos.
+    if (passtZumSchluessel(vorhanden, publicKey)) return { sub: vorhanden, ersetzt: null };
+    // Server-Schlüssel gewechselt → altes Abo ist wertlos. Den alten Endpoint
+    // zurückgeben, damit der Aufrufer ihn auch am Server entfernt.
     await vorhanden.unsubscribe();
   }
-  return reg.pushManager.subscribe({
+  const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: base64UrlToUint8Array(publicKey),
   });
+  return { sub, ersetzt: vorhanden ? vorhanden.endpoint : null };
 }
 
 /** Meldet diesen Browser ab und liefert den bisherigen Endpoint (oder null). */

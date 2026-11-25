@@ -311,7 +311,10 @@ export async function runReminders(
     // dann läuft alles wie bisher über Mail.
     const pushAn = isPushConfigured();
     const geraete = pushAn
-      ? await countDevices([...new Set(geplant.map((p) => p.userId))])
+      ? await countDevices([...new Set(geplant.map((p) => p.userId))]).catch((err) => {
+          console.error("[reminders] Push-Geräte nicht lesbar, nur Mail:", err);
+          return new Map<number, number>();
+        })
       : new Map<number, number>();
 
     try {
@@ -320,6 +323,8 @@ export async function runReminders(
 
         let zugestellt = 0;
         if (kanaele.push) {
+          // Eine Ausnahme im Push-Zweig darf weder den Lauf abbrechen noch die
+          // Mail verhindern — sie zählt als gescheiterte Zustellung.
           const r = await sendToUser(
             p.userId,
             toPushPayload(p.content, p.bandName, {
@@ -327,7 +332,12 @@ export async function runReminders(
               tag: `reminder-${p.refType}-${p.refId}`,
             }),
             { ttl: PUSH_TTL.erinnerung, urgency: "high" }
-          );
+          ).catch((err) => ({
+            delivered: 0,
+            failed: 1,
+            removed: 0,
+            lastError: err instanceof Error ? err.message : String(err),
+          }));
           zugestellt = r.delivered;
           if (r.delivered > 0) {
             await schreibeLog(p, "push", "ok", null);

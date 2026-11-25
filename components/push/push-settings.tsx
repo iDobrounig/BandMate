@@ -7,6 +7,7 @@ import {
   currentSubscription,
   subscribe,
   unsubscribeHere,
+  passtZumSchluessel,
   type PushSupport,
 } from "@/lib/push-client";
 import {
@@ -55,9 +56,13 @@ export function PushSettings({
       if (support !== "ok") return aktiv && setZustand({ art: support });
       if (Notification.permission === "denied") return aktiv && setZustand({ art: "blockiert" });
       const sub = await currentSubscription().catch(() => null);
-      // Aktiv nur, wenn der Server das Abo auch kennt — sonst (abgelaufen,
-      // anderer Account, Schlüsselwechsel) neu aktivieren lassen.
-      const bekannt = sub && bekannteEndpoints.split("|").includes(sub.endpoint);
+      // Aktiv nur, wenn der Server das Abo kennt UND es zum aktuellen Schlüssel
+      // passt — sonst (abgelaufen, anderer Account, Schlüsselwechsel) neu
+      // aktivieren lassen.
+      const bekannt =
+        sub &&
+        passtZumSchluessel(sub, publicKey) &&
+        bekannteEndpoints.split("|").includes(sub.endpoint);
       if (!aktiv) return;
       setZustand(
         bekannt && sub ? { art: "aktiv", endpoint: sub.endpoint } : { art: "aus" }
@@ -66,25 +71,28 @@ export function PushSettings({
     return () => {
       aktiv = false;
     };
-  }, [bekannteEndpoints]);
+  }, [bekannteEndpoints, publicKey]);
 
   async function aktivieren() {
     setMeldung(null);
     setBeschaeftigt(true);
     try {
-      const sub = await subscribe(publicKey);
-      if (!sub) {
+      const ergebnis = await subscribe(publicKey);
+      if (!ergebnis) {
         setZustand({
           art: Notification.permission === "denied" ? "blockiert" : "aus",
         });
         setMeldung({ ok: false, text: "Ohne Erlaubnis kann BandMate keine Push-Nachrichten schicken." });
         return;
       }
+      const { sub, ersetzt } = ergebnis;
       const r = await savePushSubscription(sub.toJSON());
       if (!r.ok) {
         setMeldung({ ok: false, text: r.error });
         return;
       }
+      // Altes Abo (Schlüsselwechsel) auch am Server entfernen.
+      if (ersetzt && ersetzt !== sub.endpoint) await removePushSubscription(ersetzt);
       setZustand({ art: "aktiv", endpoint: sub.endpoint });
       setMeldung({ ok: true, text: "Push ist auf diesem Gerät aktiv." });
       startTransition(() => router.refresh());
