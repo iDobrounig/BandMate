@@ -7,6 +7,7 @@ import {
   notificationRuns,
   type NotificationKind,
   type NotificationMode,
+  type NotifyChannel,
 } from "@/lib/db/schema";
 import { NOTIFY_KINDS, NOTIFY_KIND_ORDER } from "@/lib/constants";
 
@@ -92,10 +93,17 @@ export function readSettingsForm(formData: FormData): Partial<SettingsMap> {
   return out;
 }
 
-export type Recipient = { id: number; name: string; email: string };
+export type Recipient = {
+  id: number;
+  name: string;
+  email: string;
+  /** WIE die Person benachrichtigt werden will (Push/Mail/beides). */
+  notifyChannel: NotifyChannel;
+};
 
 /**
- * Wer bekommt bei diesem Ereignis SOFORT eine Mail?
+ * Wer bekommt bei diesem Ereignis SOFORT eine Nachricht? (Über welchen Kanal,
+ * entscheidet lib/notify-channels.ts anhand von `notifyChannel`.)
  *
  * Aktive Mitglieder, deren Einstellung für diesen Typ „sofort" ist — entweder
  * ausdrücklich oder weil sie den Standard nie geändert haben. Wer „gesammelt"
@@ -109,7 +117,12 @@ export async function fetchRecipients(
   // Aktive Mitglieder DIESER Band (und global aktives Konto). Die
   // Benachrichtigungs-Vorlieben selbst sind personenbezogen (kein bandId).
   const aktive = await db
-    .select({ id: users.id, name: users.name, email: users.email })
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      notifyChannel: users.notifyChannel,
+    })
     .from(bandMembers)
     .innerJoin(users, eq(bandMembers.userId, users.id))
     .where(

@@ -11,7 +11,7 @@ import {
   type PracticeState,
 } from "@/lib/db/schema";
 import { requireBandContext } from "@/lib/auth";
-import { notifyBand } from "@/lib/mail";
+import { notifyBand } from "@/lib/notify";
 import type { FormState } from "@/lib/actions/auth";
 
 /** Prüft, ob der Song zur Band gehört — Voraussetzung für jede Interaktion. */

@@ -15,7 +15,7 @@ import {
 } from "@/lib/db/schema";
 import { requireBandContext } from "@/lib/auth";
 import { eventAktiv } from "@/lib/db/filters";
-import { notifyBand } from "@/lib/mail";
+import { notifyBand } from "@/lib/notify";
 import { describeEventChanges } from "@/lib/event-notify";
 import { formatDate } from "@/lib/format";
 import type { FormState } from "@/lib/actions/auth";

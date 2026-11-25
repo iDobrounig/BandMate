@@ -1,7 +1,16 @@
 "use client";
 
-import { NOTIFY_KINDS, NOTIFY_KIND_ORDER, NOTIFY_MODES } from "@/lib/constants";
+import { useState } from "react";
+import {
+  NOTIFY_CHANNELS,
+  NOTIFY_KINDS,
+  NOTIFY_KIND_ORDER,
+  NOTIFY_MODES,
+} from "@/lib/constants";
 import type { SettingsMap } from "@/lib/notifications";
+import type { NotifyChannel } from "@/lib/db/schema";
+
+const CHANNEL_ORDER: NotifyChannel[] = ["beides", "push", "mail"];
 
 /**
  * Benachrichtigungs-Einstellungen je Ereignistyp.
@@ -14,10 +23,16 @@ export function NotifyMatrix({
   settings,
   digestEnabled,
   idPrefix = "",
+  channel,
+  deviceCount,
 }: {
   settings: SettingsMap;
   digestEnabled: boolean;
   idPrefix?: string;
+  /** Kanalwahl (Feld `notifyChannel`). Fehlt sie, ist Push am Server aus → keine Auswahl. */
+  channel?: NotifyChannel;
+  /** Aktive Push-Geräte der Person — nur auf der eigenen Profilseite bekannt. */
+  deviceCount?: number;
 }) {
   const zeigeDigestHinweis = NOTIFY_KIND_ORDER.some(
     (kind) => settings[kind] === "gesammelt"
@@ -58,6 +73,10 @@ export function NotifyMatrix({
         );
       })}
 
+      {channel && (
+        <ChannelChoice channel={channel} deviceCount={deviceCount} idPrefix={idPrefix} />
+      )}
+
       <div className="border-t border-line-soft pt-4">
         <label className="flex items-start gap-2 text-sm">
           <input
@@ -81,6 +100,61 @@ export function NotifyMatrix({
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * WIE die „Sofort"-Nachrichten und Erinnerungen kommen. Die Matrix oben sagt,
+ * OB. Der Wochen-Digest kommt immer per Mail.
+ */
+function ChannelChoice({
+  channel,
+  deviceCount,
+  idPrefix,
+}: {
+  channel: NotifyChannel;
+  deviceCount?: number;
+  idPrefix: string;
+}) {
+  const [gewaehlt, setGewaehlt] = useState(channel);
+  return (
+    <div className="border-t border-line-soft pt-4">
+      <p className="text-sm font-semibold">Wie sollen Benachrichtigungen kommen?</p>
+      <p className="mb-2 text-xs text-faint">
+        Push kommt auf jedes Gerät, auf dem du es aktiviert hast. Der Wochen-Digest kommt
+        immer per Mail.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {CHANNEL_ORDER.map((c) => {
+          const id = `${idPrefix}notify-channel-${c}`;
+          return (
+            <label
+              key={c}
+              htmlFor={id}
+              className="btn btn-sm cursor-pointer has-checked:border-accent has-checked:bg-accent/15 has-checked:text-accent-hi"
+              title={NOTIFY_CHANNELS[c].hint}
+            >
+              <input
+                type="radio"
+                id={id}
+                name="notifyChannel"
+                value={c}
+                checked={gewaehlt === c}
+                onChange={() => setGewaehlt(c)}
+                className="sr-only"
+              />
+              {NOTIFY_CHANNELS[c].label}
+            </label>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-xs text-faint">{NOTIFY_CHANNELS[gewaehlt].hint}</p>
+      {gewaehlt === "push" && deviceCount === 0 && (
+        <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+          Auf keinem Gerät ist Push aktiv — du bekommst bis dahin weiter Mails.
+        </p>
+      )}
     </div>
   );
 }

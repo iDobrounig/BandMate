@@ -10,7 +10,7 @@ import { SubmitButton, FormMsg } from "@/components/form";
 import { INSTRUMENT_SUGGESTIONS } from "@/lib/constants";
 import { NotifyMatrix } from "@/components/notify-matrix";
 import type { SettingsMap } from "@/lib/notifications";
-import type { User } from "@/lib/db/schema";
+import type { User, NotifyChannel } from "@/lib/db/schema";
 
 const initial: FormState = {};
 
@@ -18,11 +18,16 @@ export function ProfileForm({
   user,
   instrument,
   settings,
+  channel,
+  deviceCount,
 }: {
   user: User;
   /** Instrument in der aktiven Band (aus band_members). */
   instrument: string | null;
   settings: SettingsMap;
+  /** Kanalwahl; undefined, wenn Push am Server aus ist. */
+  channel?: NotifyChannel;
+  deviceCount?: number;
 }) {
   const [state, action] = useActionState(updateProfile, initial);
   return (
@@ -81,7 +86,12 @@ export function ProfileForm({
 
       <section className="card p-5">
         <h2 className="headline mb-4 text-lg">Benachrichtigungen</h2>
-        <NotifyMatrix settings={settings} digestEnabled={user.digestEnabled} />
+        <NotifyMatrix
+          settings={settings}
+          digestEnabled={user.digestEnabled}
+          channel={channel}
+          deviceCount={deviceCount}
+        />
       </section>
 
       <FormMsg state={state} />

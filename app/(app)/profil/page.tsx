@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireBandContext } from "@/lib/auth";
 import { fetchSettings } from "@/lib/notifications";
+import { isPushConfigured } from "@/lib/push";
+import { countDevices } from "@/lib/push-subscriptions";
 import { fetchUserContributions, fetchAttendanceStats } from "@/lib/queries";
 import { formatFee, formatDate } from "@/lib/format";
 import { ATTENDANCE_STATUS } from "@/lib/constants";
@@ -10,10 +12,12 @@ export const metadata = { title: "Profil" };
 
 export default async function ProfilPage() {
   const { user, bandId, role, instrument } = await requireBandContext();
-  const [settings, contributions, attendanceStats] = await Promise.all([
+  const pushAvailable = isPushConfigured();
+  const [settings, contributions, attendanceStats, devices] = await Promise.all([
     fetchSettings(user.id),
     fetchUserContributions(user.id, bandId),
     fetchAttendanceStats(bandId),
+    countDevices([user.id]),
   ]);
   const contributionTotal = contributions.reduce((acc, c) => acc + c.amount, 0);
   const ownAttendance = attendanceStats.find((s) => s.userId === user.id);
@@ -28,7 +32,13 @@ export default async function ProfilPage() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-6">
-          <ProfileForm user={user} instrument={instrument} settings={settings} />
+          <ProfileForm
+            user={user}
+            instrument={instrument}
+            settings={settings}
+            channel={pushAvailable ? user.notifyChannel : undefined}
+            deviceCount={devices.get(user.id) ?? 0}
+          />
           <section className="card p-5">
             <h2 className="headline mb-4 text-lg">Passwort</h2>
             <PasswordForm />

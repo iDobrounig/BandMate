@@ -12,6 +12,7 @@ import { requireUser, requireBandContext, setPassword } from "@/lib/auth";
 import { sendPasswordResetMail } from "@/lib/mail";
 import { clientIp, isLimited, record, reset, LOGIN_LIMIT, RESET_LIMIT } from "@/lib/rate-limit";
 import { saveSettings, readSettingsForm } from "@/lib/notifications";
+import { readChannelForm } from "@/lib/notify-channels";
 
 export type FormState = { error?: string; success?: string };
 
@@ -85,6 +86,12 @@ export async function updateProfile(
     .set({ instrument: instrument || null })
     .where(and(eq(bandMembers.bandId, bandId), eq(bandMembers.userId, user.id)));
   await saveSettings(user.id, readSettingsForm(formData));
+  // Kanalwahl nur, wenn das Formular sie zeigt (Push am Server aktiv) — sonst
+  // bleibt der gespeicherte Wert unverändert.
+  const notifyChannel = readChannelForm(formData);
+  if (notifyChannel) {
+    await db.update(users).set({ notifyChannel }).where(eq(users.id, user.id));
+  }
 
   revalidatePath("/", "layout");
   return { success: "Profil gespeichert." };

@@ -9,7 +9,7 @@ import { requireBandContext } from "@/lib/auth";
 import { detectLinkKind } from "@/lib/links";
 import { parseDuration } from "@/lib/format";
 import { saveUpload } from "@/lib/files";
-import { notifyBand } from "@/lib/mail";
+import { notifyBand } from "@/lib/notify";
 import { songAktiv } from "@/lib/db/filters";
 import { matchesDuplicateTitle } from "@/lib/matching";
 import type { FormState } from "@/lib/actions/auth";

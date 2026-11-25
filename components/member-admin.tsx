@@ -73,9 +73,12 @@ export function NewMemberForm() {
 function MemberDataForm({
   member,
   settings,
+  pushAvailable,
 }: {
   member: BandMemberAdminRow;
   settings: SettingsMap;
+  /** Push am Server konfiguriert → Kanalwahl anzeigen. */
+  pushAvailable: boolean;
 }) {
   const [state, action] = useActionState(updateUser, initial);
   return (
@@ -116,7 +119,11 @@ function MemberDataForm({
       </div>
       <div className="border-t border-line-soft pt-4">
         <h3 className="label">Benachrichtigungen</h3>
-        <NotifyMatrix settings={settings} digestEnabled={member.digestEnabled} />
+        <NotifyMatrix
+          settings={settings}
+          digestEnabled={member.digestEnabled}
+          channel={pushAvailable ? member.notifyChannel : undefined}
+        />
       </div>
       <FormMsg state={state} />
       <SubmitButton>Speichern</SubmitButton>
@@ -155,10 +162,12 @@ export function MemberEditPanel({
   member,
   settings,
   isSelf,
+  pushAvailable,
 }: {
   member: BandMemberAdminRow;
   settings: SettingsMap;
   isSelf: boolean;
+  pushAvailable: boolean;
 }) {
   const router = useRouter();
   const isAdmin = member.role === "band_admin";
@@ -167,7 +176,7 @@ export function MemberEditPanel({
     <div className="space-y-6">
       <section className="card p-5">
         <h2 className="headline mb-4 text-lg">Stammdaten</h2>
-        <MemberDataForm member={member} settings={settings} />
+        <MemberDataForm member={member} settings={settings} pushAvailable={pushAvailable} />
       </section>
 
       <section className="card p-5">

@@ -71,6 +71,14 @@ describe("Empfänger für Sofortmails", () => {
     expect(e).toHaveLength(3);
   });
 
+  it("liefert die Kanalwahl jeder Person mit (Standard 'beides')", async () => {
+    await db.update(users).set({ notifyChannel: "push" }).where(eq(users.id, f.users.bert.id));
+    const e = await fetchRecipients("suggestion", f.bandId);
+    const kanal = Object.fromEntries(e.map((r) => [r.id, r.notifyChannel]));
+    expect(kanal[f.users.bert.id]).toBe("push");
+    expect(kanal[f.users.clara.id]).toBe("beides");
+  });
+
   it("überspringt, wer „nie\" eingestellt hat", async () => {
     await saveSettings(f.users.clara.id, { suggestion: "nie" });
     const e = await fetchRecipients("suggestion", f.bandId);

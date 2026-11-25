@@ -1,6 +1,4 @@
 import nodemailer, { type TransportOptions } from "nodemailer";
-import { fetchRecipients } from "@/lib/notifications";
-import type { NotificationKind } from "@/lib/db/schema";
 import { buildEmailHtml, buildEmailText } from "@/lib/email-template";
 
 const smtpConfigured = Boolean(process.env.SMTP_HOST);
@@ -55,63 +53,42 @@ export function createBatchMailer() {
 export type BatchMailer = ReturnType<typeof createBatchMailer>;
 
 /**
- * Benachrichtigt alle aktiven Mitglieder, die für DIESEN Ereignistyp „sofort"
- * eingestellt haben — außer dem Auslöser. Wer „gesammelt" gewählt hat, findet
- * es später im Wochen-Digest; „nie" bekommt nichts.
+ * Eine Band-Mail an viele Empfänger (BCC) — der Mail-Zweig von notifyBand()
+ * (lib/notify.ts). Wer was bekommt, entscheidet der Aufrufer.
  *
- * Fire-and-forget: Fehler werden nur geloggt. Für die zeitgesteuerten Mails
- * (Erinnerungen, Digest) gilt das NICHT — die warten auf das Ergebnis und
- * schreiben es ins Versand-Log, siehe docs/specs/2026-07-23-benachrichtigungen-design.md.
+ * Wirft nie: Fehler werden geloggt (fire-and-forget wie bisher). Für die
+ * zeitgesteuerten Mails (Erinnerungen, Digest) gilt das NICHT — die nutzen
+ * createBatchMailer, warten auf das Ergebnis und schreiben es ins Versand-Log.
  */
-export function notifyBand(opts: {
-  kind: NotificationKind;
-  /** Empfänger sind ausschließlich Mitglieder dieser Band. */
-  bandId: number;
-  subject: string;
-  heading: string;
-  intro: string;
-  highlight?: string;
-  details?: string[];
-  quote?: string;
-  cta: { label: string; url: string };
-  excludeUserId?: number;
-}) {
+export async function sendBandMail(
+  emails: string[],
+  content: MailContent & { subject: string }
+): Promise<void> {
+  if (emails.length === 0) return;
   if (!smtpConfigured) {
-    console.log(`[mail deaktiviert] ${opts.subject}`);
+    console.log(`[mail deaktiviert] ${content.subject}`);
     return;
   }
-  void (async () => {
+  const mail = {
+    from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
+    bcc: emails,
+    subject: `[BandMate] ${content.subject}`,
+    text: buildEmailText(content),
+    html: buildEmailHtml({ ...content, preheader: content.intro }),
+  };
+  try {
+    // Ein Versuch, bei transientem Zicken (z.B. „Greeting never received")
+    // ein zweiter nach kurzer Pause — wie im Erinnerungslauf.
+    const t = transporter();
     try {
-      const recipients = await fetchRecipients(opts.kind, opts.bandId, {
-        excludeUserId: opts.excludeUserId,
-      });
-      if (recipients.length === 0) {
-        console.log(
-          `[mail] keine Empfänger für "${opts.subject}" (${opts.kind}) — Auslöser ausgeschlossen oder niemand auf "sofort"`
-        );
-        return;
-      }
-      const mail = {
-        from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
-        bcc: recipients.map((r) => r.email),
-        subject: `[BandMate] ${opts.subject}`,
-        text: buildEmailText(opts),
-        html: buildEmailHtml({ ...opts, preheader: opts.intro }),
-      };
-      // Ein Versuch, bei transientem Zicken (z.B. „Greeting never received")
-      // ein zweiter nach kurzer Pause — wie im Erinnerungslauf. Danach gibt
-      // notifyBand auf: fire-and-forget, der Fehler wird nur geloggt.
-      const t = transporter();
-      try {
-        await t.sendMail(mail);
-      } catch {
-        await new Promise((r) => setTimeout(r, 750));
-        await t.sendMail(mail);
-      }
-    } catch (err) {
-      console.error("E-Mail-Versand fehlgeschlagen:", err);
+      await t.sendMail(mail);
+    } catch {
+      await new Promise((r) => setTimeout(r, 750));
+      await t.sendMail(mail);
     }
-  })();
+  } catch (err) {
+    console.error("E-Mail-Versand fehlgeschlagen:", err);
+  }
 }
 
 export type MailContent = {

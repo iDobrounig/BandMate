@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireBandAdmin } from "@/lib/auth";
 import { fetchBandMemberAdmin } from "@/lib/queries";
 import { fetchSettings } from "@/lib/notifications";
+import { isPushConfigured } from "@/lib/push";
 import { MemberEditPanel } from "@/components/member-admin";
 
 export const metadata = { title: "Mitglied bearbeiten" };
@@ -28,7 +29,12 @@ export default async function MitgliedBearbeitenPage({
       <p className="mt-1 text-sm text-mute">{member.email}</p>
 
       <div className="mt-6">
-        <MemberEditPanel member={member} settings={settings} isSelf={member.id === user.id} />
+        <MemberEditPanel
+          member={member}
+          settings={settings}
+          isSelf={member.id === user.id}
+          pushAvailable={isPushConfigured()}
+        />
       </div>
     </div>
   );

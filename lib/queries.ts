@@ -22,6 +22,7 @@ import {
   type EventKind,
   type Equipment,
   type EquipmentAttachment,
+  type NotifyChannel,
 } from "@/lib/db/schema";
 import {
   songAktiv,
@@ -76,6 +77,7 @@ export type BandMemberAdminRow = {
   instrument: string | null;
   active: boolean;
   digestEnabled: boolean;
+  notifyChannel: NotifyChannel;
 };
 
 /** Mitgliederliste für die Band-Admin-Verwaltung (mit Rolle + Digest-Schalter). */
@@ -89,6 +91,7 @@ export async function fetchBandMembersAdmin(bandId: number): Promise<BandMemberA
       instrument: bandMembers.instrument,
       active: bandMembers.active,
       digestEnabled: users.digestEnabled,
+      notifyChannel: users.notifyChannel,
     })
     .from(bandMembers)
     .innerJoin(users, eq(bandMembers.userId, users.id))
@@ -114,6 +117,7 @@ export async function fetchBandMemberAdmin(
       instrument: bandMembers.instrument,
       active: bandMembers.active,
       digestEnabled: users.digestEnabled,
+      notifyChannel: users.notifyChannel,
     })
     .from(bandMembers)
     .innerJoin(users, eq(bandMembers.userId, users.id))

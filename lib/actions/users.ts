@@ -8,6 +8,7 @@ import { users, bandMembers, type BandRole } from "@/lib/db/schema";
 import { requireBandAdmin, setPassword } from "@/lib/auth";
 import { sendTestMail } from "@/lib/mail";
 import { saveSettings, readSettingsForm } from "@/lib/notifications";
+import { readChannelForm } from "@/lib/notify-channels";
 import type { FormState } from "@/lib/actions/auth";
 
 /** Ist der User Mitglied der Band? (egal ob aktiv) */
@@ -97,6 +98,12 @@ export async function updateUser(
     .set({ instrument: instrument || null })
     .where(and(eq(bandMembers.bandId, bandId), eq(bandMembers.userId, userId)));
   await saveSettings(userId, readSettingsForm(formData));
+  // Kanalwahl nur, wenn das Formular sie zeigt (Push am Server aktiv) — sonst
+  // bleibt der gespeicherte Wert unverändert.
+  const notifyChannel = readChannelForm(formData);
+  if (notifyChannel) {
+    await db.update(users).set({ notifyChannel }).where(eq(users.id, userId));
+  }
 
   revalidatePath("/", "layout");
   return { success: "Profil gespeichert." };
