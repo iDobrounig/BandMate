@@ -2,6 +2,8 @@ import { requireBandContext, fetchMemberships } from "@/lib/auth";
 import { NavLinks } from "@/components/nav-links";
 import { AppMenu } from "@/components/app-menu";
 import { VersionWatcher } from "@/components/version-watcher";
+import { SwRegister } from "@/components/push/sw-register";
+import { isPushConfigured } from "@/lib/push";
 
 export default async function AppLayout({
   children,
@@ -15,6 +17,7 @@ export default async function AppLayout({
     <div className="flex min-h-screen flex-col">
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-28">
         <VersionWatcher />
+        <SwRegister enabled={isPushConfigured()} />
         {children}
       </main>
 

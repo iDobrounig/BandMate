@@ -1,23 +1,25 @@
 import Link from "next/link";
 import { requireBandContext } from "@/lib/auth";
 import { fetchSettings } from "@/lib/notifications";
-import { isPushConfigured } from "@/lib/push";
-import { countDevices } from "@/lib/push-subscriptions";
+import { isPushConfigured, vapidPublicKey } from "@/lib/push";
+import { listSubscriptions } from "@/lib/push-subscriptions";
 import { fetchUserContributions, fetchAttendanceStats } from "@/lib/queries";
-import { formatFee, formatDate } from "@/lib/format";
+import { formatFee, formatDate, formatDateTime } from "@/lib/format";
 import { ATTENDANCE_STATUS } from "@/lib/constants";
 import { ProfileForm, PasswordForm } from "@/components/profile-forms";
+import { PushSettings } from "@/components/push/push-settings";
 
 export const metadata = { title: "Profil" };
 
 export default async function ProfilPage() {
   const { user, bandId, role, instrument } = await requireBandContext();
   const pushAvailable = isPushConfigured();
+  const publicKey = vapidPublicKey();
   const [settings, contributions, attendanceStats, devices] = await Promise.all([
     fetchSettings(user.id),
     fetchUserContributions(user.id, bandId),
     fetchAttendanceStats(bandId),
-    countDevices([user.id]),
+    listSubscriptions(user.id),
   ]);
   const contributionTotal = contributions.reduce((acc, c) => acc + c.amount, 0);
   const ownAttendance = attendanceStats.find((s) => s.userId === user.id);
@@ -37,8 +39,20 @@ export default async function ProfilPage() {
             instrument={instrument}
             settings={settings}
             channel={pushAvailable ? user.notifyChannel : undefined}
-            deviceCount={devices.get(user.id) ?? 0}
+            deviceCount={devices.length}
           />
+          {publicKey && (
+            <PushSettings
+              publicKey={publicKey}
+              devices={devices.map((d) => ({
+                id: d.id,
+                label: d.label,
+                endpoint: d.endpoint,
+                aktiviert: formatDate(d.createdAt),
+                zugestellt: d.lastSuccessAt ? formatDateTime(d.lastSuccessAt) : null,
+              }))}
+            />
+          )}
           <section className="card p-5">
             <h2 className="headline mb-4 text-lg">Passwort</h2>
             <PasswordForm />
