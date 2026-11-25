@@ -5,6 +5,7 @@ import type {
   AttendanceStatus,
   NotificationKind,
   NotificationMode,
+  NotifyChannel,
   EquipmentCategory,
   EquipmentStatus,
 } from "@/lib/db/schema";
@@ -240,9 +241,19 @@ export const NOTIFY_KIND_ORDER: NotificationKind[] = [
 ];
 
 export const NOTIFY_MODES: Record<NotificationMode, { label: string; hint: string }> = {
-  sofort: { label: "Sofort", hint: "eigene Mail, sobald es passiert" },
+  sofort: { label: "Sofort", hint: "einzeln, sobald es passiert" },
   gesammelt: { label: "Gesammelt", hint: "nur im Wochen-Digest am Sonntag" },
-  nie: { label: "Nie", hint: "gar keine Mail" },
+  nie: { label: "Nie", hint: "gar keine Benachrichtigung" },
+};
+
+/**
+ * Über welchen Kanal „Sofort"-Nachrichten und Erinnerungen kommen
+ * (users.notifyChannel). Ohne aktives Push-Gerät kommt immer Mail.
+ */
+export const NOTIFY_CHANNELS: Record<NotifyChannel, { label: string; hint: string }> = {
+  beides: { label: "Beides", hint: "Push aufs Gerät und zusätzlich Mail" },
+  push: { label: "Push", hint: "nur Push; ohne aktives Gerät weiter per Mail" },
+  mail: { label: "Mail", hint: "nur Mail, kein Push" },
 };
 
 /**
