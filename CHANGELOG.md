@@ -6,6 +6,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
+_Noch nichts._
+
+## [2.3.0] — 2026-11-25
+
 ### Neu
 - **Web-Push-Benachrichtigungen**: Neue Vorschläge, Kommentare, neue/geänderte Termine und
   Termin-Erinnerungen kommen auf Wunsch direkt aufs Handy bzw. in den Browser — auch wenn der
@@ -22,6 +26,18 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 - Datenbank-Migration (neue Tabelle `push_subscriptions`, Spalten `users.notify_channel` und
   `notification_log.channel`) läuft beim Start automatisch.
 - Beim Abmelden wird die Push-Anmeldung des Geräts entfernt.
+- Ein **Passwortwechsel** meldet die anderen Geräte ab und entfernt auch deren
+  Push-Anmeldung; das Gerät, an dem geändert wurde, behält sie. Ein Passwort-Reset oder ein
+  vom Admin gesetztes Passwort entfernt alle Push-Anmeldungen der Person.
+- Fehlen die VAPID-Werte oder sind sie falsch geformt, ist Push aus; das Log nennt einmalig
+  den Grund (`[push] …`).
+
+### Nach dem Deploy (einmalig, auf dem Server)
+1. `npm run push:keys` → die drei Zeilen in die `.env` übernehmen, `VAPID_SUBJECT` auf eine
+   echte Kontaktadresse setzen (`mailto:…`).
+2. `pm2 restart ecosystem.config.js --update-env`
+3. Im Log prüfen, dass kein `[push] Web Push ist AUS …` erscheint (`pm2 logs bandmate`).
+   Die Schlüssel danach nicht mehr wechseln — sonst müssen alle Push neu aktivieren.
 
 ## [2.2.1] — 2026-11-12
 
