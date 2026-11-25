@@ -15,18 +15,36 @@ import type { ValidSubscription } from "@/lib/notify-channels";
 export const MAX_DEVICES = 10;
 
 /**
- * Speichert ein Abo. Ein bekannter Endpoint wird aktualisiert — auch wenn er
- * bisher einer anderen Person gehörte: Nur der Browser selbst kennt die
- * Schlüssel, wer ihn vorlegt, sitzt also an diesem Gerät (z.B. Abmelden und
- * Anmelden als jemand anderes).
+ * Speichert ein Abo. Ein bekannter Endpoint der GLEICHEN Person wird
+ * aktualisiert.
+ *
+ * Gehört der Endpoint einer ANDEREN Person, wechselt er nur den Besitzer, wenn
+ * dieselben Schlüssel vorgelegt werden — also vom selben Browser (z.B. Anna
+ * meldet sich ab, das Aufräumen klappt nicht, Bert meldet sich am selben Gerät
+ * an). Wer nur den Endpoint kennt und eigene Schlüssel mitschickt, könnte sonst
+ * das Abo kapern: Der Push-Dienst nähme die Nachrichten weiter an, die Person
+ * bekäme still nichts mehr. Liefert false, wenn abgelehnt.
  */
 export async function saveSubscription(
   userId: number,
   sub: ValidSubscription,
   label: string
-): Promise<void> {
+): Promise<boolean> {
   // better-sqlite3 ist synchron — die Transaktion muss es auch sein.
-  db.transaction((tx) => {
+  return db.transaction((tx) => {
+    const vorhanden = tx
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.endpoint, sub.endpoint))
+      .get();
+    if (
+      vorhanden &&
+      vorhanden.userId !== userId &&
+      (vorhanden.p256dh !== sub.p256dh || vorhanden.auth !== sub.auth)
+    ) {
+      return false;
+    }
+
     const jetzt = new Date();
     tx.insert(pushSubscriptions)
       .values({ userId, ...sub, label, createdAt: jetzt })
@@ -61,6 +79,7 @@ export async function saveSubscription(
         )
         .run();
     }
+    return true;
   });
 }
 

@@ -2,7 +2,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, pushSubscriptions } from "@/lib/db/schema";
+import { saveSubscription, listSubscriptions } from "@/lib/push-subscriptions";
 import { setPassword } from "@/lib/auth";
 import { anlegen } from "./helpers/fixtures";
 
@@ -45,5 +46,44 @@ describe("setPassword", () => {
     expect(clara.resetToken).toBeNull();
     expect(clara.resetTokenExpiresAt).toBeNull();
     expect((await laden(a.users.anna.id)).sessionVersion).toBe(0);
+  });
+});
+
+describe("setPassword und Push-Geräte", () => {
+  // Eigene Person, damit die übrigen Tests (sessionVersion von anna) unberührt bleiben.
+  let pw: { id: number };
+  beforeAll(async () => {
+    [pw] = await db
+      .insert(users)
+      .values({ name: "Push Wechsel", email: "pw@test.at", passwordHash: "x" })
+      .returning();
+  });
+
+  const abo = (userId: number, n: string) =>
+    saveSubscription(
+      userId,
+      { endpoint: `https://fcm.googleapis.com/fcm/send/pw-${n}`, p256dh: "p", auth: "a" },
+      "Test"
+    );
+
+  it("entfernt die Push-Geräte der Person (abgemeldete Geräte bekommen nichts mehr)", async () => {
+    await abo(pw.id, "1");
+    await abo(pw.id, "2");
+    await abo(a.users.clara.id, "3");
+    await setPassword(pw.id, "anna-neu-123");
+    expect(await listSubscriptions(pw.id)).toHaveLength(0);
+    expect(await listSubscriptions(a.users.clara.id)).toHaveLength(1);
+    await db.delete(pushSubscriptions);
+  });
+
+  it("behält das Gerät, an dem das Passwort geändert wurde", async () => {
+    await abo(pw.id, "hier");
+    await abo(pw.id, "anderes");
+    await setPassword(pw.id, "anna-neu-456", {}, {
+      keepPushEndpoint: "https://fcm.googleapis.com/fcm/send/pw-hier",
+    });
+    const rest = await listSubscriptions(pw.id);
+    expect(rest.map((r) => r.endpoint)).toEqual(["https://fcm.googleapis.com/fcm/send/pw-hier"]);
+    await db.delete(pushSubscriptions);
   });
 });

@@ -116,6 +116,15 @@ export function PushSettings({
       setZustand({ art: "aus" });
       setMeldung({ ok: true, text: "Push ist auf diesem Gerät ausgeschaltet." });
       startTransition(() => router.refresh());
+    } catch (err) {
+      console.error("[push] Deaktivieren fehlgeschlagen:", err);
+      // Der Browser kann schon abgemeldet sein, der Server noch nicht —
+      // Zustand neu ermitteln lassen und Bescheid geben.
+      setMeldung({
+        ok: false,
+        text: "Deaktivieren hat nicht ganz geklappt. Bitte Seite neu laden und unter „Meine Geräte“ prüfen.",
+      });
+      startTransition(() => router.refresh());
     } finally {
       setBeschaeftigt(false);
     }

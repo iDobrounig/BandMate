@@ -46,6 +46,21 @@ describe("Push-Abos", () => {
     expect(await listSubscriptions(f.users.bert.id)).toHaveLength(1);
   });
 
+  it("Übernahme durch eine andere Person nur mit denselben Schlüsseln (also vom selben Browser)", async () => {
+    expect(await saveSubscription(f.users.anna.id, sub(1, "p-anna", "a-anna"), "A")).toBe(true);
+    // Bert kennt den Endpoint, legt aber eigene Schlüssel vor → abgelehnt
+    expect(await saveSubscription(f.users.bert.id, sub(1, "p-bert", "a-bert"), "B")).toBe(false);
+    const alle = await db.select().from(pushSubscriptions);
+    expect(alle).toHaveLength(1);
+    expect(alle[0]).toMatchObject({ userId: f.users.anna.id, p256dh: "p-anna", auth: "a-anna" });
+  });
+
+  it("eigenes Abo darf neue Schlüssel bekommen", async () => {
+    await saveSubscription(f.users.anna.id, sub(1, "p1", "a1"), "A");
+    expect(await saveSubscription(f.users.anna.id, sub(1, "p2", "a2"), "A")).toBe(true);
+    expect((await listSubscriptions(f.users.anna.id))[0]).toMatchObject({ p256dh: "p2" });
+  });
+
   it("mehr als 10 Abos → das älteste fällt weg", async () => {
     for (let i = 1; i <= 11; i++) await saveSubscription(f.users.anna.id, sub(i), `G${i}`);
     const liste = await listSubscriptions(f.users.anna.id);

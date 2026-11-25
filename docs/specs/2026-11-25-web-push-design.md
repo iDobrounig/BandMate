@@ -259,7 +259,8 @@ VAPID_SUBJECT=mailto:...   # oder https://… ; Pflicht laut RFC 8292
 |---|---|
 | **SSRF:** Der Server schickt HTTP-Requests an eine vom Client gelieferte URL | Endpoint muss `https:` sein, und der Host muss auf einer **Allowlist** der Push-Dienste stehen: `fcm.googleapis.com`, `updates.push.services.mozilla.com`, `*.push.apple.com`, `*.notify.windows.com`. Ein fremder Endpoint wird abgelehnt. (Liste beim Bau gegen aktuelle Browser prüfen.) |
 | Manipulierte Abo-Daten | Strikte Prüfung: Endpoint ≤ 1000 Zeichen, `p256dh`/`auth` base64url mit plausibler Länge, sonst Ablehnung. |
-| Fremde Abos löschen/übernehmen | Löschen nur eigener Abos. Übernahme eines Endpoints setzt den Besitz des Geräts voraus, denn nur der Browser kennt die Schlüssel. |
+| Fremde Abos löschen/übernehmen | Löschen nur eigener Abos. Ein Endpoint einer anderen Person wechselt nur den Besitzer, wenn dieselben Schlüssel (`p256dh`/`auth`) vorgelegt werden, also vom selben Browser. Wer nur den Endpoint kennt und eigene Schlüssel schickt, wird abgelehnt (sonst würden Nachrichten still ins Leere gehen). *Nachtrag 25.11.2026 aus dem Review.* |
+| Verlorenes/geteiltes Gerät nach Passwortwechsel | `setPassword` entfernt die Push-Abos der Person, außer dem des Geräts, an dem geändert wird. *Nachtrag 25.11.2026.* |
 | Geteiltes Gerät nach Logout | Abmelden entfernt das Abo des Geräts (best effort). |
 | Spam über „Test-Push“ / Abo-Flut | Test-Push über `lib/rate-limit.ts` begrenzt (z.B. 5/min). Höchstens 10 Abos pro Person, beim elften fällt das älteste weg. |
 | Öffnen fremder URLs per Push-Klick | Der Service Worker öffnet nur Ziele derselben Herkunft, sonst `/`. |

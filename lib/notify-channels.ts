@@ -38,21 +38,30 @@ function kuerzen(text: string, max: number): string {
 
 /**
  * Nur Ziele derselben Herkunft — als Pfad. Alles andere (fremde Domain,
- * protokoll-relativ, javascript:) wird zu "/". Der Service Worker prüft
+ * protokoll-relativ, javascript:, Backslash-/Steuerzeichen-Tricks) wird zu "/".
+ *
+ * Bewusst über den URL-Parser statt über String-Präfixe: Der Parser entfernt
+ * z.B. Tabs und Zeilenumbrüche und liest "\\" wie "//" — genau so, wie der
+ * Browser die URL später auch auflösen würde. Der Service Worker prüft
  * zusätzlich selbst.
  */
 function sichererPfad(url: string | undefined, appUrl: string): string {
   if (!url) return "/";
-  if (url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\")) return url;
+  let basis: URL;
   try {
-    const ziel = new URL(url);
-    if (appUrl && ziel.origin === new URL(appUrl).origin) {
-      return ziel.pathname + ziel.search + ziel.hash;
-    }
+    basis = new URL(appUrl || "https://bandmate.invalid");
   } catch {
-    // ungültige URL → "/"
+    basis = new URL("https://bandmate.invalid");
   }
-  return "/";
+  try {
+    const ziel = new URL(url, basis);
+    if (ziel.origin !== basis.origin) return "/";
+    // Absolute URLs nur akzeptieren, wenn eine APP_URL sie bestätigen kann.
+    if (!appUrl && /^[a-z][a-z0-9+.-]*:/i.test(url.trim())) return "/";
+    return ziel.pathname + ziel.search + ziel.hash;
+  } catch {
+    return "/";
+  }
 }
 
 /** Macht aus dem Mail-Inhalt eine kurze Push-Nachricht. */

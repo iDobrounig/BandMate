@@ -23,6 +23,7 @@ vi.mock("@/lib/push", async (importOriginal) => {
 });
 
 import { anlegen } from "./helpers/fixtures";
+import { TEST_VAPID } from "./helpers/vapid";
 
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
 let f: Fixtures;
@@ -196,11 +197,7 @@ describe("runReminders (ohne SMTP)", () => {
 });
 
 describe("runReminders mit Push", () => {
-  const VAPID = {
-    VAPID_PUBLIC_KEY: "pub",
-    VAPID_PRIVATE_KEY: "priv",
-    VAPID_SUBJECT: "mailto:t@example.com",
-  };
+  const VAPID = TEST_VAPID;
   beforeEach(() => {
     Object.assign(process.env, VAPID);
     push.mockReset();

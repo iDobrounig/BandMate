@@ -90,6 +90,23 @@ describe("toPushPayload", () => {
     expect(url(undefined)).toBe("/");
   });
 
+  it("Steuerzeichen und Backslashes können den Pfad nicht auf fremde Herkunft biegen", () => {
+    const url = (u: string, app = appUrl) =>
+      toPushPayload({ intro: "i", cta: { url: u } }, "B", { appUrl: app }).url;
+    expect(url("/\t/evil.example")).toBe("/");
+    expect(url("/\n/evil.example/x")).toBe("/");
+    expect(url("\\\\evil.example")).toBe("/"); // zwei Backslashes = wie "//"
+    expect(url("/\\evil.example")).toBe("/");
+    // ein einzelner Backslash bleibt ein harmloser eigener Pfad
+    expect(url("\\evil.example")).toBe("/evil.example");
+  });
+
+  it("lässt Pfade auch ohne APP_URL durch, fremde absolute URLs nicht", () => {
+    const url = (u: string) => toPushPayload({ intro: "i", cta: { url: u } }, "B", { appUrl: "" }).url;
+    expect(url("/songs/5?x=1#k")).toBe("/songs/5?x=1#k");
+    expect(url("https://band.example.com/songs/5")).toBe("/");
+  });
+
   it("reicht den tag durch", () => {
     expect(toPushPayload(basis, "B", { appUrl, tag: "suggestion-5" }).tag).toBe("suggestion-5");
   });

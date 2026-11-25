@@ -31,7 +31,13 @@ export async function savePushSubscription(raw: unknown): Promise<PushActionResu
     return { ok: false, error: "Die Push-Anmeldung dieses Geräts ist ungültig." };
   }
   const ua = (await headers()).get("user-agent");
-  await saveSubscription(user.id, sub, deviceLabel(ua));
+  if (!(await saveSubscription(user.id, sub, deviceLabel(ua)))) {
+    return {
+      ok: false,
+      error:
+        "Dieses Gerät ist noch für eine andere Person angemeldet. Bitte Push deaktivieren und erneut aktivieren.",
+    };
+  }
   revalidatePath("/", "layout");
   return { ok: true };
 }

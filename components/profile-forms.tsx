@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   updateProfile,
   changePassword,
@@ -11,6 +11,7 @@ import { INSTRUMENT_SUGGESTIONS } from "@/lib/constants";
 import { NotifyMatrix } from "@/components/notify-matrix";
 import type { SettingsMap } from "@/lib/notifications";
 import type { User, NotifyChannel } from "@/lib/db/schema";
+import { currentSubscription } from "@/lib/push-client";
 
 const initial: FormState = {};
 
@@ -102,8 +103,17 @@ export function ProfileForm({
 
 export function PasswordForm() {
   const [state, action] = useActionState(changePassword, initial);
+  // Push-Abo DIESES Geräts mitschicken: Beim Passwortwechsel werden die Abos
+  // der anderen (abgemeldeten) Geräte entfernt, dieses bleibt.
+  const [pushEndpoint, setPushEndpoint] = useState("");
+  useEffect(() => {
+    currentSubscription()
+      .then((sub) => setPushEndpoint(sub?.endpoint ?? ""))
+      .catch(() => {});
+  }, []);
   return (
     <form action={action} className="space-y-4">
+      <input type="hidden" name="pushEndpoint" value={pushEndpoint} />
       <div>
         <label className="label" htmlFor="current">
           Aktuelles Passwort

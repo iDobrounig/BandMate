@@ -1,8 +1,15 @@
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { users, bands, bandMembers, type User, type BandRole } from "@/lib/db/schema";
+import {
+  users,
+  bands,
+  bandMembers,
+  pushSubscriptions,
+  type User,
+  type BandRole,
+} from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 
 /** Liefert den eingeloggten, global aktiven User oder null. */
@@ -28,8 +35,24 @@ export async function currentUser(): Promise<User | null> {
 export async function setPassword(
   userId: number,
   plain: string,
-  extra: Partial<Pick<User, "resetToken" | "resetTokenExpiresAt">> = {}
+  extra: Partial<Pick<User, "resetToken" | "resetTokenExpiresAt">> = {},
+  opts: {
+    /** Push-Abo des Geräts, an dem das Passwort gerade geändert wird — bleibt. */
+    keepPushEndpoint?: string;
+  } = {}
 ): Promise<number> {
+  // Abgemeldete Geräte sollen auch keine Push-Nachrichten mehr bekommen
+  // (verlorenes oder geteiltes Handy). Nur das aktuelle Gerät bleibt.
+  await db
+    .delete(pushSubscriptions)
+    .where(
+      opts.keepPushEndpoint
+        ? and(
+            eq(pushSubscriptions.userId, userId),
+            ne(pushSubscriptions.endpoint, opts.keepPushEndpoint)
+          )
+        : eq(pushSubscriptions.userId, userId)
+    );
   const [row] = await db
     .update(users)
     .set({

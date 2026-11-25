@@ -160,7 +160,7 @@ Neue periodische Aufgabe? Eine Zeile in der `SCHEDULE`-Tabelle in [`scripts/cron
 
 ## Benachrichtigungen
 
-Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** benachrichtigt wird (per Mail und/oder Push, siehe unten), alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Band-Admin kann das auch unter `/mitglieder` für andere setzen. Die Einstellungen gelten kontobezogen; die Mails selbst gehen immer nur an die Mitglieder der jeweiligen Band. Voraussetzung für jeden Versand ist konfiguriertes SMTP (siehe oben); den Test dazu gibt es unter `/einstellungen` (Band-Admins).
+Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** benachrichtigt wird (per Mail und/oder Push, siehe unten), alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Band-Admin kann das auch unter `/mitglieder` für andere setzen. Die Einstellungen gelten kontobezogen; die Mails selbst gehen immer nur an die Mitglieder der jeweiligen Band. Für Mails braucht es konfiguriertes SMTP (siehe oben); den Test dazu gibt es unter `/einstellungen` (Band-Admins). Push (siehe unten) läuft unabhängig davon.
 
 Zwei Kanäle laufen unabhängig vom Mailversand: der **ICS-Feed** bringt native Kalender-Erinnerungen mit (Vortag und zwei Stunden vorher), und die zeitgesteuerten **Termin-Erinnerungen** kommen vom Cron-Job oben.
 
@@ -182,6 +182,8 @@ pm2 restart ecosystem.config.js --update-env
 - **Schlüssel nicht wechseln:** Ein neues Schlüsselpaar macht alle bestehenden Push-Anmeldungen ungültig — alle müssten Push neu aktivieren. Das Profil erkennt das und bietet wieder „Aktivieren" an; dabei wird die alte Anmeldung dieses Geräts entfernt. Geräte, die niemand neu aktiviert, liefern bis dahin Fehler (rote Statuszeile) — sie lassen sich im Profil unter „Meine Geräte" entfernen.
 - Ausgeliefert über die Push-Dienste von Google, Apple, Mozilla und Microsoft; die Inhalte sind Ende-zu-Ende verschlüsselt. Der Server schickt nur an diese Dienste (Allowlist).
 - Band-Admins sehen unter `/mitglieder`, wer Push auf wie vielen Geräten aktiv hat.
+- Ein **Passwortwechsel** meldet die anderen Geräte ab und entfernt auch deren Push-Anmeldung; das Gerät, an dem geändert wurde, behält sie. Ein Passwort-Reset oder ein vom Admin gesetztes Passwort entfernt alle Push-Anmeldungen der Person.
+- Fehlen die Schlüssel oder sind sie falsch geformt, ist Push aus und das Log nennt einmalig den Grund (`[push] …`).
 
 ## Papierkorb
 

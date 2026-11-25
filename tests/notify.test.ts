@@ -9,6 +9,7 @@ import { deliverNotification, type NotifyOpts } from "@/lib/notify";
 import { sendBandMail } from "@/lib/mail";
 import { sendToUser } from "@/lib/push";
 import { anlegen } from "./helpers/fixtures";
+import { TEST_VAPID } from "./helpers/vapid";
 
 vi.mock("web-push", () => ({ default: { sendNotification: vi.fn() } }));
 vi.mock("@/lib/mail", () => ({ sendBandMail: vi.fn() }));
@@ -23,11 +24,7 @@ const mail = vi.mocked(sendBandMail);
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
 let f: Fixtures;
 
-const VAPID = {
-  VAPID_PUBLIC_KEY: "pub",
-  VAPID_PRIVATE_KEY: "priv",
-  VAPID_SUBJECT: "mailto:t@example.com",
-};
+const VAPID = TEST_VAPID;
 
 beforeEach(async () => {
   f = await anlegen();
@@ -64,6 +61,8 @@ const kanal = (userId: number, notifyChannel: "beides" | "push" | "mail") =>
   db.update(users).set({ notifyChannel }).where(eq(users.id, userId));
 const sortiert = (ids: number[]) => [...ids].sort();
 const mailAn = () => (mail.mock.calls[0]?.[0] ?? []).slice().sort();
+/** Alle Adressen über alle Mail-Aufrufe (Rückfall-Mails kommen separat). */
+const alleMailAdressen = () => mail.mock.calls.flatMap((c) => c[0]).sort();
 
 describe("deliverNotification", () => {
   it("ohne Geräte: exakt wie bisher – alle Empfänger per Mail, kein Push", async () => {
@@ -148,7 +147,23 @@ describe("deliverNotification", () => {
     const r = await deliverNotification(opts());
     expect(r.push).toEqual([]);
     expect(sortiert(r.mail)).toEqual(sortiert([f.users.bert.id, f.users.clara.id]));
-    expect(mailAn()).toEqual(["bert@test.at", "clara@test.at"].sort());
+    expect(alleMailAdressen()).toEqual(["bert@test.at", "clara@test.at"].sort());
+  });
+
+  it("Mail an die Mail-Empfänger wartet nicht auf langsame Pushes", async () => {
+    await geraet(f.users.bert.id); // bert: beides
+    let freigeben: () => void = () => {};
+    vi.mocked(sendToUser).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          freigeben = () => resolve({ delivered: 1, failed: 0, removed: 0 });
+        })
+    );
+    const laufend = deliverNotification(opts());
+    await vi.waitFor(() => expect(mail).toHaveBeenCalled());
+    expect(alleMailAdressen()).toEqual(["bert@test.at", "clara@test.at"].sort());
+    freigeben();
+    await laufend;
   });
 
   it("Push-Titel enthält den Bandnamen der auslösenden Band", async () => {

@@ -114,9 +114,15 @@ export async function changePassword(
   if (next !== repeat) {
     return { error: "Die Wiederholung stimmt nicht überein." };
   }
-  // Andere Geräte abmelden, dieses angemeldet lassen.
+  // Andere Geräte abmelden, dieses angemeldet lassen — auch sein Push-Abo.
+  const pushEndpoint = String(formData.get("pushEndpoint") ?? "").slice(0, 1000);
   const session = await getSession();
-  session.sessionVersion = await setPassword(user.id, next);
+  session.sessionVersion = await setPassword(
+    user.id,
+    next,
+    {},
+    { keepPushEndpoint: pushEndpoint || undefined }
+  );
   await session.save();
   return { success: "Passwort geändert. Andere Geräte wurden abgemeldet." };
 }

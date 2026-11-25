@@ -5,6 +5,7 @@ import { pushSubscriptions } from "@/lib/db/schema";
 import { saveSubscription, listSubscriptions } from "@/lib/push-subscriptions";
 import { isPushConfigured, sendToUser, vapidPublicKey, PUSH_TTL } from "@/lib/push";
 import { anlegen } from "./helpers/fixtures";
+import { TEST_VAPID } from "./helpers/vapid";
 
 vi.mock("web-push", () => ({ default: { sendNotification: vi.fn() } }));
 const send = vi.mocked(webpush.sendNotification);
@@ -12,11 +13,7 @@ const send = vi.mocked(webpush.sendNotification);
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
 let f: Fixtures;
 
-const VAPID = {
-  VAPID_PUBLIC_KEY: "pub-key",
-  VAPID_PRIVATE_KEY: "priv-key",
-  VAPID_SUBJECT: "mailto:test@example.com",
-};
+const VAPID = TEST_VAPID;
 
 beforeEach(async () => {
   f = await anlegen();
@@ -38,6 +35,43 @@ const sub = (n: number) => ({
 const fehler = (statusCode: number) =>
   Object.assign(new Error(`Status ${statusCode}`), { statusCode, body: "", headers: {} });
 
+describe("Push-Konfiguration", () => {
+  it("erkennt ungültige Werte als nicht konfiguriert und warnt einmal", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    process.env.VAPID_SUBJECT = "admin@example.com"; // ohne mailto:
+    expect(isPushConfigured()).toBe(false);
+    expect(isPushConfigured()).toBe(false);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain("VAPID_SUBJECT");
+    warn.mockRestore();
+  });
+
+  it("verlangt Schlüssel im richtigen Format", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    process.env.VAPID_PUBLIC_KEY = "pub";
+    expect(isPushConfigured()).toBe(false);
+    process.env.VAPID_PUBLIC_KEY = TEST_VAPID.VAPID_PUBLIC_KEY;
+    process.env.VAPID_PRIVATE_KEY = "kurz";
+    expect(isPushConfigured()).toBe(false);
+    warn.mockRestore();
+  });
+
+  it("akzeptiert https:-Subject", () => {
+    process.env.VAPID_SUBJECT = "https://band.example.com";
+    expect(isPushConfigured()).toBe(true);
+  });
+
+  it("ohne alle drei Werte: aus, mit einmaligem Hinweis", () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    for (const k of Object.keys(VAPID)) delete process.env[k];
+    expect(isPushConfigured()).toBe(false);
+    expect(isPushConfigured()).toBe(false);
+    expect(info).toHaveBeenCalledTimes(1);
+    expect(String(info.mock.calls[0][0])).toContain("push:keys");
+    info.mockRestore();
+  });
+});
+
 describe("Push-Versand", () => {
   it("ohne VAPID: nicht konfiguriert, kein Versandversuch", async () => {
     delete process.env.VAPID_PRIVATE_KEY;
@@ -53,7 +87,7 @@ describe("Push-Versand", () => {
     await saveSubscription(f.users.anna.id, sub(1), "A");
     await saveSubscription(f.users.anna.id, sub(2), "B");
     expect(isPushConfigured()).toBe(true);
-    expect(vapidPublicKey()).toBe("pub-key");
+    expect(vapidPublicKey()).toBe(TEST_VAPID.VAPID_PUBLIC_KEY);
     const r = await sendToUser(f.users.anna.id, payload, { ttl: 86400, urgency: "normal" });
     expect(r).toMatchObject({ delivered: 2, failed: 0, removed: 0 });
     expect(send).toHaveBeenCalledTimes(2);
@@ -64,9 +98,9 @@ describe("Push-Versand", () => {
         TTL: 86400,
         urgency: "normal",
         vapidDetails: {
-          subject: "mailto:test@example.com",
-          publicKey: "pub-key",
-          privateKey: "priv-key",
+          subject: TEST_VAPID.VAPID_SUBJECT,
+          publicKey: TEST_VAPID.VAPID_PUBLIC_KEY,
+          privateKey: TEST_VAPID.VAPID_PRIVATE_KEY,
         },
       })
     );

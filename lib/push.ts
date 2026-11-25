@@ -12,14 +12,56 @@ import type { PushPayload } from "@/lib/notify-channels";
  * Die VAPID-Werte werden bei JEDEM Aufruf aus der Umgebung gelesen und als
  * Option übergeben (kein globales setVapidDetails): So spielt es keine Rolle,
  * ob ein Script (scripts/notify.ts) die .env erst nach dem Import lädt.
- * Fehlt einer der drei Werte, ist Push aus — keine UI, kein Versand.
+ * Fehlt einer der drei Werte oder ist er falsch geformt, ist Push aus — keine
+ * UI, kein Versand, Mail übernimmt — mit einem einmaligen Hinweis im Log.
  */
 
+/** Jede Meldung nur einmal pro Prozess — isPushConfigured() läuft bei jedem Seitenaufruf. */
+let zuletztGemeldet: string | null = null;
+function meldeEinmal(art: "info" | "warn", text: string) {
+  if (zuletztGemeldet === text) return;
+  zuletztGemeldet = text;
+  console[art](text);
+}
+
+function bytes(wert: string): number {
+  return /^[A-Za-z0-9_-]+={0,2}$/.test(wert) ? Buffer.from(wert, "base64url").length : -1;
+}
+
+/** Was an der Konfiguration falsch ist — oder null, wenn alles passt. */
+function konfigFehler(subject: string, publicKey: string, privateKey: string): string | null {
+  if (!/^(mailto:\S+@\S+|https:\/\/\S+)$/.test(subject)) {
+    return "VAPID_SUBJECT muss mit mailto: (Adresse) oder https:// beginnen";
+  }
+  if (bytes(publicKey) !== 65) return "VAPID_PUBLIC_KEY hat nicht das erwartete Format";
+  if (bytes(privateKey) !== 32) return "VAPID_PRIVATE_KEY hat nicht das erwartete Format";
+  return null;
+}
+
 function vapid() {
-  const publicKey = process.env.VAPID_PUBLIC_KEY?.trim();
-  const privateKey = process.env.VAPID_PRIVATE_KEY?.trim();
-  const subject = process.env.VAPID_SUBJECT?.trim();
-  return publicKey && privateKey && subject ? { subject, publicKey, privateKey } : null;
+  const publicKey = process.env.VAPID_PUBLIC_KEY?.trim() ?? "";
+  const privateKey = process.env.VAPID_PRIVATE_KEY?.trim() ?? "";
+  const subject = process.env.VAPID_SUBJECT?.trim() ?? "";
+  if (!publicKey && !privateKey && !subject) {
+    meldeEinmal(
+      "info",
+      "[push] Web Push ist aus — keine VAPID-Schlüssel gesetzt (npm run push:keys, siehe README)."
+    );
+    return null;
+  }
+  if (!publicKey || !privateKey || !subject) {
+    meldeEinmal(
+      "warn",
+      "[push] Web Push ist AUS: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY und VAPID_SUBJECT müssen alle gesetzt sein."
+    );
+    return null;
+  }
+  const fehler = konfigFehler(subject, publicKey, privateKey);
+  if (fehler) {
+    meldeEinmal("warn", `[push] Web Push ist AUS: ${fehler}.`);
+    return null;
+  }
+  return { subject, publicKey, privateKey };
 }
 
 export function isPushConfigured(): boolean {

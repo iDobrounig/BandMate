@@ -62,30 +62,54 @@ export async function deliverNotification(
     tag: `${opts.kind}-${opts.cta.url.replace(/^https?:\/\/[^/]+/, "")}`,
   });
 
-  const perPush: number[] = [];
-  const perMail: typeof recipients = [];
-  for (const r of recipients) {
-    const geplant = planChannels(r.notifyChannel, geraete.get(r.id) ?? 0, pushAn);
-    let zugestellt = 0;
-    if (geplant.push) {
-      try {
-        zugestellt = (
-          await sendToUser(r.id, payload, { ttl: PUSH_TTL.sofort, urgency: "normal" })
-        ).delivered;
-      } catch (err) {
-        console.error(`[notify] Push an Person ${r.id} fehlgeschlagen:`, err);
-        zugestellt = 0;
-      }
-      if (zugestellt > 0) perPush.push(r.id);
-    }
-    if (geplant.mail || mailFallbackNeeded(geplant, zugestellt)) perMail.push(r);
-  }
+  const plaene = recipients.map((r) => ({
+    r,
+    geplant: planChannels(r.notifyChannel, geraete.get(r.id) ?? 0, pushAn),
+  }));
 
-  await sendBandMail(
-    perMail.map((r) => r.email),
-    opts
+  // Wer ohnehin Mail bekommt, bekommt sie SOFORT — parallel zu den Pushes,
+  // nicht erst, wenn ein langsamer Push-Dienst geantwortet hat.
+  const direktMail = plaene.filter((p) => p.geplant.mail).map((p) => p.r);
+  const mailLaeuft =
+    direktMail.length > 0
+      ? sendBandMail(
+          direktMail.map((r) => r.email),
+          opts
+        )
+      : Promise.resolve();
+
+  // Pushes parallel je Person (je Person nacheinander über ihre Geräte).
+  // Push darf die Mail nie verhindern: Eine Ausnahme zählt als „nicht
+  // zugestellt" — dann greift der Mail-Rückfall.
+  const ergebnisse = await Promise.all(
+    plaene
+      .filter((p) => p.geplant.push)
+      .map(async (p) => {
+        try {
+          const r = await sendToUser(p.r.id, payload, {
+            ttl: PUSH_TTL.sofort,
+            urgency: "normal",
+          });
+          return { ...p, zugestellt: r.delivered };
+        } catch (err) {
+          console.error(`[notify] Push an Person ${p.r.id} fehlgeschlagen:`, err);
+          return { ...p, zugestellt: 0 };
+        }
+      })
   );
-  return { push: perPush, mail: perMail.map((r) => r.id) };
+  const perPush = ergebnisse.filter((e) => e.zugestellt > 0).map((e) => e.r.id);
+  const rueckfall = ergebnisse
+    .filter((e) => mailFallbackNeeded(e.geplant, e.zugestellt))
+    .map((e) => e.r);
+
+  await mailLaeuft;
+  if (rueckfall.length > 0) {
+    await sendBandMail(
+      rueckfall.map((r) => r.email),
+      opts
+    );
+  }
+  return { push: perPush, mail: [...direktMail, ...rueckfall].map((r) => r.id) };
 }
 
 /**
