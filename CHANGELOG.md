@@ -6,7 +6,22 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 ## [Unreleased]
 
-_Noch nichts._
+### Neu
+- **Web-Push-Benachrichtigungen**: Neue Vorschläge, Kommentare, neue/geänderte Termine und
+  Termin-Erinnerungen kommen auf Wunsch direkt aufs Handy bzw. in den Browser — auch wenn der
+  Mailversand hakt. Aktivieren pro Gerät im Profil (oder über den Hinweis auf dem Dashboard),
+  dort auch „Test-Push senden" und die Liste der eigenen Geräte. Auf iPhone/iPad nur in der
+  vom Home-Bildschirm gestarteten App.
+- **Kanalwahl** im Profil und in der Mitglieder-Verwaltung: Beides, nur Push oder nur Mail.
+  Ohne aktives Gerät (oder wenn Push scheitert) kommt immer Mail.
+- Band-Admins sehen unter `/mitglieder`, wer Push auf wie vielen Geräten aktiv hat.
+
+### Betrieb
+- Neue optionale `.env`-Werte `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+  (erzeugen mit `npm run push:keys`). Ohne sie ist Push aus und alles läuft wie bisher.
+- Datenbank-Migration (neue Tabelle `push_subscriptions`, Spalten `users.notify_channel` und
+  `notification_log.channel`) läuft beim Start automatisch.
+- Beim Abmelden wird die Push-Anmeldung des Geräts entfernt.
 
 ## [2.2.1] — 2026-11-12
 

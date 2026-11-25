@@ -61,6 +61,13 @@ Voting, Setlisten, Termine. Feature-Stand & Roadmap: `FEATURES.md`. Setup/Deploy
 - Upload-Limit: `next.config.ts` `serverActions.bodySizeLimit: "60mb"`; better-sqlite3 steht in
   `serverExternalPackages`.
 - Dev-Server läuft über `.claude/launch.json` (`bandmate-dev`, Port 3000).
+- **Web Push** (`lib/push.ts`, `lib/notify.ts`, `public/sw.js`): Der Service Worker hat
+  bewusst **keinen `fetch`-Handler** — nie Caching nachrüsten, sonst drohen hängende
+  Versionen (der Update-Banner verließe sich darauf). Push-Endpoints werden gegen eine
+  Allowlist der Push-Dienste geprüft (`parseSubscription`, Schutz vor SSRF) — neue Dienste
+  dort ergänzen. `web-push` ist auf 3.6.7 gepinnt (4.x ist ESM-only). VAPID wird zur
+  Aufrufzeit gelesen; ohne Schlüssel ist Push aus. Neue Sofort-Benachrichtigungen immer über
+  `notifyBand()` aus `lib/notify.ts`, nicht direkt über Mail — sonst fehlt der Push-Kanal.
 - **Schema-Änderung bei laufendem Dev-Server migriert `data/` sofort.** Next.js lädt
   `lib/db/index.ts` beim Ändern von `lib/db/schema.ts` neu, und dabei läuft `migrate()`
   erneut — die frisch erzeugte Migration wird also ohne Zutun auf die echte DB angewandt.

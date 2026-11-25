@@ -40,8 +40,16 @@ Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 - [x] **Passwort vergessen / zurücksetzen** per E-Mail-Link (1 h gültig, einmal verwendbar) — *seit 1.9.0*
 - [x] Admin legt Mitglieder an, setzt Passwörter, vergibt Rollen, entfernt Mitglieder — über eigene Seiten `/mitglieder/neu` (inkl. Einladungslink) und `/mitglieder/[id]/bearbeiten`
 - [x] **Admin bearbeitet Mitglieder** (Name, E-Mail, Instrument, Benachrichtigungen) auf eigener Seite im Profil-Stil
-- [x] Jedes Mitglied bearbeitet das eigene Profil (Name, Instrument, Passwort, Mail-Opt-out) unter `/profil`
+- [x] Jedes Mitglied bearbeitet das eigene Profil (Name, Instrument, Passwort, Benachrichtigungen) unter `/profil`
 - [x] E-Mail-Benachrichtigung bei neuem Vorschlag / Kommentar / Termin (wenn SMTP konfiguriert)
+- [x] **Web-Push-Benachrichtigungen** (zusätzlich zu Mail) — *erledigt 25.11.2026*
+  Sofort-Nachrichten und Termin-Erinnerungen auch als Push aufs Gerät. Aktivieren pro Gerät
+  im Profil (plus einmaliger Dashboard-Hinweis), Kanalwahl Beides/Push/Mail mit
+  Mail-Rückfall, Test-Push, Geräteliste, Abo-Abmeldung beim Logout, Push-Status für Admins.
+  Service Worker ohne `fetch`-Handler (kein Caching), Endpoint-Allowlist gegen SSRF.
+  Einrichtung: `npm run push:keys` → `.env`. Entwurf:
+  [docs/specs/2026-11-25-web-push-design.md](docs/specs/2026-11-25-web-push-design.md),
+  Plan: [docs/superpowers/plans/2026-11-25-web-push.md](docs/superpowers/plans/2026-11-25-web-push.md)
 - [x] **SMTP-Test-Funktion** unter `/einstellungen` (nur Admin) — Verbindung prüfen + echte Test-Mail — *seit 1.6.0, verschoben in den Einstellungs-Bereich*
 - [x] **Hilfe-Seite** `/hilfe` mit Screenshots, verlinkt im Menü-Popup der Bottom-Nav — *seit 1.8.0*
 - [x] Dashboard: heiße Vorschläge, in Probe, nächste Termine mit RSVP-Status, letzte Kommentare
@@ -545,14 +553,11 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   werden, die raw-SQL-Subqueries in `lib/queries.ts` (AGENTS.md-Stolperfalle mit der
   Spalten-Qualifizierung) verhalten sich anders, und das komplette Backup/Restore-System
   (`scripts/backup.sh`, SQLite-Online-Backup-API) müsste neu gebaut werden.
-- [ ] **Web-Push-Benachrichtigungen** (zusätzlich zu E-Mail, nicht statt)
-  Machbar und nicht besonders komplex (~300–400 Zeilen mit `web-push`), aber zwei harte
-  Einschränkungen: Auf iOS funktioniert Push **nur**, wenn die Seite vorher über „Zum
-  Homescreen hinzufügen" installiert wurde — sonst bekommt die Person stillschweigend
-  nichts. Und eine einmal abgelehnte Berechtigung lässt sich nicht erneut erfragen.
-  Damit ist Push die unzuverlässigere Zustellung, nicht die zuverlässigere. Die
-  `channel`-Spalte aus Welle 1 hält den Platz frei, sodass es ohne zweite
-  Schema-Migration dazukommt.
+- [x] **Web-Push-Benachrichtigungen** — *erledigt 25.11.2026*, siehe „Mitglieder & System".
+  Anlass war unzuverlässiger Mailversand. Die iOS-Einschränkung (nur installierte App) und
+  die nicht erneut erfragbare Berechtigung bleiben; dagegen helfen die Hinweise im Profil
+  und der Mail-Rückfall. Die reservierte `channel`-Spalte wurde dafür nicht gebraucht:
+  Der Kanal steht pro Person in `users.notify_channel`.
 - [x] Login-Rate-Limit + Rate-Limit auf „Passwort vergessen" — *erledigt 12.11.2026*, siehe „Härtung aus dem Audit"
 - [ ] Pro-Mitglied-Token für den ICS-Feed statt eines gemeinsamen (Welle 4 machte das Token
   band-bezogen — `bands.calendarToken` —, aber alle Mitglieder einer Band teilen es sich;

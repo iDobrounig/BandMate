@@ -160,9 +160,28 @@ Neue periodische Aufgabe? Eine Zeile in der `SCHEDULE`-Tabelle in [`scripts/cron
 
 ## Benachrichtigungen
 
-Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** eine Mail bekommt, alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Band-Admin kann das auch unter `/mitglieder` für andere setzen. Die Einstellungen gelten kontobezogen; die Mails selbst gehen immer nur an die Mitglieder der jeweiligen Band. Voraussetzung für jeden Versand ist konfiguriertes SMTP (siehe oben); den Test dazu gibt es unter `/einstellungen` (Band-Admins).
+Jedes Mitglied stellt unter `/profil` je Ereignistyp ein, ob es **sofort** benachrichtigt wird (per Mail und/oder Push, siehe unten), alles **gesammelt** im Wochen-Digest oder **nie**. Termin-Erinnerungen kennen nur sofort/nie. Ein Band-Admin kann das auch unter `/mitglieder` für andere setzen. Die Einstellungen gelten kontobezogen; die Mails selbst gehen immer nur an die Mitglieder der jeweiligen Band. Voraussetzung für jeden Versand ist konfiguriertes SMTP (siehe oben); den Test dazu gibt es unter `/einstellungen` (Band-Admins).
 
 Zwei Kanäle laufen unabhängig vom Mailversand: der **ICS-Feed** bringt native Kalender-Erinnerungen mit (Vortag und zwei Stunden vorher), und die zeitgesteuerten **Termin-Erinnerungen** kommen vom Cron-Job oben.
+
+### Web Push
+
+Sofort-Nachrichten und Termin-Erinnerungen kommen auf Wunsch auch als **Push** direkt aufs Gerät — unabhängig vom Mailserver. Jedes Mitglied aktiviert Push pro Gerät unter `/profil` (oder über den einmaligen Hinweis auf dem Dashboard) und wählt dort den Kanal: **Beides** (Standard), **Push** oder **Mail**. Wer „Push" gewählt hat, aber kein aktives Gerät hat oder bei dem die Zustellung scheitert, bekommt die Nachricht trotzdem per Mail. Der Wochen-Digest bleibt immer Mail. Entwurf: [docs/specs/2026-11-25-web-push-design.md](docs/specs/2026-11-25-web-push-design.md).
+
+**Einrichten (einmal pro Installation):**
+
+```bash
+npm run push:keys            # gibt drei .env-Zeilen aus
+# → in die .env übernehmen, VAPID_SUBJECT auf eine echte Kontaktadresse setzen
+#   (mailto:… oder https://…), dann:
+pm2 restart ecosystem.config.js --update-env
+```
+
+- **HTTPS ist Pflicht** (Browser erlauben Push nur über HTTPS; `localhost` ist ausgenommen).
+- **iPhone/iPad:** Push geht nur in der installierten App (Safari → Teilen → „Zum Home-Bildschirm", iOS 16.4+). Im normalen Safari-Tab zeigt das Profil eine Anleitung.
+- **Schlüssel nicht wechseln:** Ein neues Schlüsselpaar macht alle bestehenden Push-Anmeldungen ungültig — alle müssten Push neu aktivieren.
+- Ausgeliefert über die Push-Dienste von Google, Apple, Mozilla und Microsoft; die Inhalte sind Ende-zu-Ende verschlüsselt. Der Server schickt nur an diese Dienste (Allowlist).
+- Band-Admins sehen unter `/mitglieder`, wer Push auf wie vielen Geräten aktiv hat.
 
 ## Papierkorb
 
@@ -248,6 +267,7 @@ Pflicht- und optionale Werte in der `.env`:
 | `DATA_DIR` | empfohlen | absoluter Pfad zum Datenverzeichnis **außerhalb** des Clone-Ordners, damit `git pull` die Daten nie berührt (z.B. `/var/bandmate-data`) |
 | `BACKUP_DIR` | empfohlen | Ablage der Backups, am besten auf einer **anderen Platte** als `DATA_DIR` (siehe „Backup & Restore") |
 | `SMTP_HOST` … `SMTP_FROM` | optional | E-Mail-Versand; ohne diese Werte werden keine Mails verschickt |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | optional | Web Push (siehe „Benachrichtigungen"); ohne alle drei Werte ist Push aus |
 
 > **`SMTP_PORT` und `SMTP_SECURE` gehören zusammen** — die falsche Paarung ist der häufigste Grund, warum keine Mails ankommen:
 > | Port | `SMTP_SECURE` | |
