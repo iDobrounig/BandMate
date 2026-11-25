@@ -140,9 +140,12 @@ export function PushSettings({
           ? {
               ok: true,
               text:
-                r.delivered === 1
+                (r.delivered === 1
                   ? "Test-Push verschickt."
-                  : `Test-Push an ${r.delivered} Geräte verschickt.`,
+                  : `Test-Push an ${r.delivered} Geräte verschickt.`) +
+                // Häufigste Ursache für „kommt nicht an": Fokus/Nicht stören
+                // unterdrückt Banner und Ton, obwohl die Nachricht zugestellt ist.
+                " Nichts angekommen? Prüfe „Nicht stören“ bzw. den Fokus und ob Mitteilungen für BandMate erlaubt sind.",
             }
           : { ok: false, text: r.error }
       );

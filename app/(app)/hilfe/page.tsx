@@ -147,6 +147,7 @@ export default function HilfePage() {
             "Benachrichtigungen (neue Vorschläge, Kommentare, Termine, Erinnerungen) je Art einstellen: sofort, gesammelt im Wochen-Digest oder nie",
             "Push-Benachrichtigungen: unter „Push-Benachrichtigungen\" auf „Auf diesem Gerät aktivieren\" tippen und erlauben — pro Gerät einmal. Mit „Test-Push senden\" prüfst du, ob es ankommt",
             "iPhone/iPad: Push geht nur in der installierten App — in Safari auf Teilen → „Zum Home-Bildschirm\", dann BandMate vom Home-Bildschirm öffnen und dort aktivieren",
+            "Test-Push kommt nicht an? Meist ist „Nicht stören“ bzw. ein Fokus aktiv (am iPhone und Mac oft gekoppelt) — die Nachricht liegt dann still in der Mitteilungszentrale. Außerdem prüfen, ob Mitteilungen für BandMate (iPhone) bzw. für den Browser (Mac/PC: Systemeinstellungen → Mitteilungen) erlaubt sind",
             "Berechtigung versehentlich abgelehnt? In den Einstellungen des Geräts bzw. Browsers (Website-Einstellungen → Benachrichtigungen) wieder erlauben und die Seite neu laden",
             "Unter „Wie sollen Benachrichtigungen kommen?\" wählst du Beides, nur Push oder nur Mail. Ohne aktives Gerät kommt immer Mail",
             "Passwort vergessen? Auf der Anmeldeseite „Passwort vergessen?\" — der Link kommt per E-Mail und gilt eine Stunde",

@@ -8,6 +8,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/) — siehe [RELEASING.md
 
 _Noch nichts._
 
+## [2.3.1] — 2026-11-25
+
+### Geändert
+- **Hinweis bei Test-Push**: Nach „Test-Push senden“ weist die Meldung darauf hin, „Nicht
+  stören“ bzw. den Fokus und die Mitteilungs-Einstellungen zu prüfen — die häufigste Ursache,
+  wenn eine zugestellte Nachricht nicht sichtbar wird. Derselbe Hinweis steht in der Hilfe.
+
 ## [2.3.0] — 2026-11-25
 
 ### Neu
