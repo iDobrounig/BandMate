@@ -1,6 +1,6 @@
 # BandMate — Feature-Liste & Roadmap
 
-Stand: 26.08.2026 · Diese Liste ist das zentrale Dokument für „Was kann die App / was kommt als Nächstes".
+Stand: 25.11.2026 · Diese Liste ist das zentrale Dokument für „Was kann die App / was kommt als Nächstes".
 Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 
 ## ✅ Umgesetzt
@@ -42,12 +42,16 @@ Grundlage der Priorisierung: [docs/review-2026-07.md](docs/review-2026-07.md).
 - [x] **Admin bearbeitet Mitglieder** (Name, E-Mail, Instrument, Benachrichtigungen) auf eigener Seite im Profil-Stil
 - [x] Jedes Mitglied bearbeitet das eigene Profil (Name, Instrument, Passwort, Benachrichtigungen) unter `/profil`
 - [x] E-Mail-Benachrichtigung bei neuem Vorschlag / Kommentar / Termin (wenn SMTP konfiguriert)
-- [x] **Web-Push-Benachrichtigungen** (zusätzlich zu Mail) — *erledigt 25.11.2026*
+- [x] **Web-Push-Benachrichtigungen** (zusätzlich zu Mail) — *seit 2.3.0, produktiv seit
+  25.11.2026, auf iPhone (Homescreen-App) und Mac-Chrome bestätigt*
   Sofort-Nachrichten und Termin-Erinnerungen auch als Push aufs Gerät. Aktivieren pro Gerät
   im Profil (plus einmaliger Dashboard-Hinweis), Kanalwahl Beides/Push/Mail mit
   Mail-Rückfall, Test-Push, Geräteliste, Abo-Abmeldung beim Logout, Push-Status für Admins.
-  Service Worker ohne `fetch`-Handler (kein Caching), Endpoint-Allowlist gegen SSRF.
-  Einrichtung: `npm run push:keys` → `.env`. Entwurf:
+  Passwortwechsel entfernt die Push-Abos der abgemeldeten Geräte. Service Worker ohne
+  `fetch`-Handler (kein Caching), Endpoint-Allowlist gegen SSRF, Prüfung der VAPID-Werte.
+  Seit 2.3.1 Hinweis auf „Nicht stören“/Fokus, wenn ein Test-Push scheinbar nicht ankommt
+  (die häufigste Ursache — so auch beim ersten Produktivtest).
+  Einrichtung: `npm run push:keys` → `.env` (eigenes Schlüsselpaar je Server). Entwurf:
   [docs/specs/2026-11-25-web-push-design.md](docs/specs/2026-11-25-web-push-design.md),
   Plan: [docs/superpowers/plans/2026-11-25-web-push.md](docs/superpowers/plans/2026-11-25-web-push.md)
 - [x] **SMTP-Test-Funktion** unter `/einstellungen` (nur Admin) — Verbindung prüfen + echte Test-Mail — *seit 1.6.0, verschoben in den Einstellungs-Bereich*
@@ -618,7 +622,10 @@ Vollständige Liste mit Fundstellen in [docs/review-2026-07.md](docs/review-2026
   contents is required for '…' and each directory up the hierarchy"). Das ist bewusste
   Kunden-Isolation des Hosters, nicht reparierbar ohne Provider-seitige Rechteänderung.
   Workflow (`.github/workflows/deploy.yml`, seit 1.14.2) bleibt im Repo für den Fall
-  eines Hosting-Wechsels, läuft aber mangels Runner nie automatisch los.
+  eines Hosting-Wechsels, läuft aber mangels Runner nie automatisch los. Seit 25.11.2026 in
+  GitHub **deaktiviert** (`disabled_manually`), damit Releases keine ewig wartenden Läufe
+  mehr erzeugen; bei einem Hosting-Wechsel mit `gh workflow enable "Deploy nach Release"`
+  wieder einschalten.
   **Weiterhin manuell:** `./deploy.sh` auf dem Server nach jedem Release.
 
 ### Offene Grundsatzentscheidung: Open Source ernst gemeint?
