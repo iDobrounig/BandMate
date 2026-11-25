@@ -5,6 +5,7 @@ import {
   fetchBandMembers,
   fetchBandMembersAdmin,
   type AttendanceStats,
+  type BandMemberAdminRow,
 } from "@/lib/queries";
 import { ATTENDANCE_STATUS } from "@/lib/constants";
 
@@ -83,6 +84,8 @@ export default async function MitgliederPage() {
           {members.map((member) => {
             const isMemberAdmin = "role" in member && member.role === "band_admin";
             const inactive = "active" in member && !member.active;
+            // Nur die Admin-Ansicht kennt die Push-Geräte.
+            const pushDevices = isAdmin ? (member as BandMemberAdminRow).pushDevices : 0;
             return (
               <div key={member.id} className={`card p-4 ${inactive ? "opacity-50" : ""}`}>
                 <div className="flex flex-wrap items-center gap-3">
@@ -96,6 +99,14 @@ export default async function MitgliederPage() {
                       )}
                       {inactive && (
                         <span className="badge ml-2 border-line text-faint">ausgetreten</span>
+                      )}
+                      {pushDevices > 0 && (
+                        <span
+                          className="badge ml-2 border-line text-mute"
+                          title="Web Push ist auf so vielen Geräten aktiv"
+                        >
+                          Push · {pushDevices} {pushDevices === 1 ? "Gerät" : "Geräte"}
+                        </span>
                       )}
                     </p>
                     <p className="truncate text-sm text-mute">

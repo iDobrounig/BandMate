@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { countDevices } from "@/lib/push-subscriptions";
 import {
   songs,
   votes,
@@ -78,11 +79,13 @@ export type BandMemberAdminRow = {
   active: boolean;
   digestEnabled: boolean;
   notifyChannel: NotifyChannel;
+  /** Aktive Web-Push-Geräte (0 = kein Push). */
+  pushDevices: number;
 };
 
 /** Mitgliederliste für die Band-Admin-Verwaltung (mit Rolle + Digest-Schalter). */
 export async function fetchBandMembersAdmin(bandId: number): Promise<BandMemberAdminRow[]> {
-  return db
+  const zeilen = await db
     .select({
       id: users.id,
       name: users.name,
@@ -97,6 +100,8 @@ export async function fetchBandMembersAdmin(bandId: number): Promise<BandMemberA
     .innerJoin(users, eq(bandMembers.userId, users.id))
     .where(eq(bandMembers.bandId, bandId))
     .orderBy(asc(users.name));
+  const geraete = await countDevices(zeilen.map((z) => z.id));
+  return zeilen.map((z) => ({ ...z, pushDevices: geraete.get(z.id) ?? 0 }));
 }
 
 /**
@@ -123,7 +128,9 @@ export async function fetchBandMemberAdmin(
     .innerJoin(users, eq(bandMembers.userId, users.id))
     .where(and(eq(bandMembers.bandId, bandId), eq(users.id, userId)))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+  const geraete = await countDevices([row.id]);
+  return { ...row, pushDevices: geraete.get(row.id) ?? 0 };
 }
 
 export type SongListItem = Song & {

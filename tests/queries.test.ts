@@ -6,9 +6,11 @@ import {
   fetchSetlists,
   fetchEvents,
   getSetlistPrintData,
+  fetchBandMembersAdmin,
 } from "@/lib/queries";
+import { saveSubscription } from "@/lib/push-subscriptions";
 import { db } from "@/lib/db";
-import { setlists, setlistItems, songs } from "@/lib/db/schema";
+import { setlists, setlistItems, songs, pushSubscriptions } from "@/lib/db/schema";
 import { anlegen, isoTag } from "./helpers/fixtures";
 
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
@@ -255,5 +257,25 @@ describe("getSetlistPrintData", () => {
 
       await db.update(songs).set({ deletedAt: null }).where(eq(songs.id, songAId));
     });
+  });
+});
+
+describe("fetchBandMembersAdmin: Push-Geräte", () => {
+  afterAll(async () => {
+    await db.delete(pushSubscriptions);
+  });
+
+  it("zählt die Push-Geräte je Mitglied (0 ohne Abo)", async () => {
+    for (const n of [1, 2]) {
+      await saveSubscription(
+        f.users.bert.id,
+        { endpoint: `https://fcm.googleapis.com/fcm/send/q${n}`, p256dh: "p", auth: "a" },
+        "Test"
+      );
+    }
+    const zeilen = await fetchBandMembersAdmin(f.bandId);
+    const geraete = Object.fromEntries(zeilen.map((z) => [z.id, z.pushDevices]));
+    expect(geraete[f.users.bert.id]).toBe(2);
+    expect(geraete[f.users.anna.id]).toBe(0);
   });
 });

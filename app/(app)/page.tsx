@@ -11,6 +11,8 @@ import { SONG_STATUS, EVENT_KIND, ATTENDANCE_STATUS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ReminderStatusLine } from "@/components/reminder-status";
 import { TodoBlock } from "@/components/todo-block";
+import { PushPrompt } from "@/components/push/push-prompt";
+import { vapidPublicKey } from "@/lib/push";
 
 export default async function DashboardPage() {
   const { user, bandId, role } = await requireBandContext();
@@ -58,6 +60,7 @@ export default async function DashboardPage() {
     .slice(0, 4);
 
   const firstName = user.name.split(" ")[0];
+  const pushKey = vapidPublicKey();
 
   return (
     <div className="space-y-10">
@@ -85,6 +88,7 @@ export default async function DashboardPage() {
       </div>
 
       {reminderStatus && <ReminderStatusLine status={reminderStatus} />}
+      {pushKey && <PushPrompt publicKey={pushKey} />}
       {(todo.gesamt > 0 || programs.probe || programs.gig) && (
         <TodoBlock todo={todo} programs={programs} />
       )}
