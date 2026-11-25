@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { and, eq } from "drizzle-orm";
+import webpush from "web-push";
 import { db } from "@/lib/db";
 import {
   events,
@@ -7,9 +8,14 @@ import {
   eventSongs,
   notificationLog,
   notificationRuns,
+  users,
 } from "@/lib/db/schema";
 import { planReminders, runReminders, tagePlus } from "@/lib/reminders";
 import { saveSettings } from "@/lib/notifications";
+import { saveSubscription } from "@/lib/push-subscriptions";
+
+vi.mock("web-push", () => ({ default: { sendNotification: vi.fn() } }));
+const push = vi.mocked(webpush.sendNotification);
 import { anlegen } from "./helpers/fixtures";
 
 type Fixtures = Awaited<ReturnType<typeof anlegen>>;
@@ -180,5 +186,103 @@ describe("runReminders (ohne SMTP)", () => {
     // Immer noch genau 3 Zeilen — Upsert, nicht Insert
     expect(await db.select().from(notificationLog)).toHaveLength(3);
     expect(await db.select().from(notificationRuns)).toHaveLength(2);
+  });
+});
+
+describe("runReminders mit Push", () => {
+  const VAPID = {
+    VAPID_PUBLIC_KEY: "pub",
+    VAPID_PRIVATE_KEY: "priv",
+    VAPID_SUBJECT: "mailto:t@example.com",
+  };
+  beforeEach(() => {
+    Object.assign(process.env, VAPID);
+    push.mockReset();
+    push.mockResolvedValue({ statusCode: 201, body: "", headers: {} });
+  });
+  afterEach(() => {
+    for (const k of Object.keys(VAPID)) delete process.env[k];
+  });
+
+  const geraet = (userId: number) =>
+    saveSubscription(
+      userId,
+      { endpoint: `https://fcm.googleapis.com/fcm/send/${userId}`, p256dh: "p", auth: "a" },
+      "Test"
+    );
+  const kanal = (userId: number, notifyChannel: "beides" | "push" | "mail") =>
+    db.update(users).set({ notifyChannel }).where(eq(users.id, userId));
+  const logVon = (userId: number) =>
+    db.select().from(notificationLog).where(eq(notificationLog.userId, userId));
+
+  it("'push' mit Gerät: Push-Log ok, keine Mail-Zeile", async () => {
+    await terminAn(2);
+    await geraet(f.users.anna.id);
+    await kanal(f.users.anna.id, "push");
+    await runReminders(URL);
+    const log = await logVon(f.users.anna.id);
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ channel: "push", status: "ok" });
+  });
+
+  it("zweiter Lauf nach erfolgreichem Push verschickt nichts", async () => {
+    await terminAn(2);
+    await geraet(f.users.anna.id);
+    await kanal(f.users.anna.id, "push");
+    await runReminders(URL);
+    push.mockClear();
+    await runReminders(URL);
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("Push ok + Mail fehler ('beides'): zweiter Lauf verschickt nichts", async () => {
+    await terminAn(2);
+    await geraet(f.users.anna.id); // 'beides' ist Standard; SMTP ist im Test aus
+    await runReminders(URL);
+    const log = await logVon(f.users.anna.id);
+    expect(log.map((l) => `${l.channel}:${l.status}`).sort()).toEqual([
+      "mail:fehler",
+      "push:ok",
+    ]);
+    push.mockClear();
+    const zweiter = await runReminders(URL);
+    expect(push).not.toHaveBeenCalled();
+    expect(await logVon(f.users.anna.id)).toHaveLength(2);
+    // Anna gilt als erledigt; nur bert/clara (ohne Gerät) werden erneut versucht.
+    expect(zweiter.errors).toBe(2);
+  });
+
+  it("'push', Push 410 → Mail-Versuch wird geloggt (fehler, da kein SMTP)", async () => {
+    await terminAn(2);
+    await geraet(f.users.anna.id);
+    await kanal(f.users.anna.id, "push");
+    push.mockRejectedValue(Object.assign(new Error("gone"), { statusCode: 410 }));
+    await runReminders(URL);
+    const log = await db
+      .select()
+      .from(notificationLog)
+      .where(and(eq(notificationLog.userId, f.users.anna.id), eq(notificationLog.channel, "mail")));
+    expect(log).toHaveLength(1);
+    expect(log[0].status).toBe("fehler");
+  });
+
+  it("Push-Erinnerung nutzt TTL 43200 und urgency 'high'", async () => {
+    const e = await terminAn(2);
+    await geraet(f.users.anna.id);
+    await runReminders(URL);
+    expect(push.mock.calls[0][2]).toMatchObject({ TTL: 43200, urgency: "high" });
+    expect(JSON.parse(String(push.mock.calls[0][1]))).toMatchObject({
+      title: "BandMate · Testband",
+      url: `/termine/${e.id}`,
+    });
+  });
+
+  it("note zählt Push mit", async () => {
+    await terminAn(2);
+    await geraet(f.users.anna.id);
+    await kanal(f.users.anna.id, "push");
+    const r = await runReminders(URL);
+    expect(r.sent).toBe(1);
+    expect(r.note).toContain("1 Push");
   });
 });

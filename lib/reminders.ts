@@ -7,6 +7,8 @@ import {
   songs,
   notificationLog,
   notificationRuns,
+  bands,
+  type NotifyChannel,
 } from "@/lib/db/schema";
 import { fetchRecipients } from "@/lib/notifications";
 import {
@@ -15,6 +17,9 @@ import {
   type MailContent,
 } from "@/lib/mail";
 import { formatDate } from "@/lib/format";
+import { countDevices } from "@/lib/push-subscriptions";
+import { isPushConfigured, sendToUser, PUSH_TTL } from "@/lib/push";
+import { planChannels, mailFallbackNeeded, toPushPayload } from "@/lib/notify-channels";
 import { EVENT_KIND } from "@/lib/constants";
 
 /**
@@ -38,6 +43,10 @@ export type ReminderRefType = "event_rsvp" | "event_soon";
 export type PlannedSend = {
   userId: number;
   email: string;
+  /** Push, Mail oder beides — siehe lib/notify-channels.ts */
+  notifyChannel: NotifyChannel;
+  /** für den Push-Titel */
+  bandName: string;
   refType: ReminderRefType;
   refId: number;
   subject: string;
@@ -85,6 +94,16 @@ export async function planReminders(
     }
     return e;
   };
+  const bandNamen = new Map<number, string>();
+  const bandNameFuer = async (bandId: number) => {
+    let n = bandNamen.get(bandId);
+    if (n === undefined) {
+      const b = await db.query.bands.findFirst({ where: eq(bands.id, bandId) });
+      n = b?.name ?? "";
+      bandNamen.set(bandId, n);
+    }
+    return n;
+  };
 
   const geplant: PlannedSend[] = [];
 
@@ -102,12 +121,15 @@ export async function planReminders(
       .where(eq(eventAttendance.eventId, event.id));
     const hatGeantwortet = new Set(geantwortet.map((a) => a.userId));
     const kindLabel = EVENT_KIND[event.kind].label;
+    const bandName = await bandNameFuer(event.bandId);
 
     for (const person of empfaenger) {
       if (hatGeantwortet.has(person.id)) continue;
       geplant.push({
         userId: person.id,
         email: person.email,
+        notifyChannel: person.notifyChannel,
+        bandName,
         refType: "event_rsvp",
         refId: event.id,
         subject: `Sag noch zu: ${event.title}`,
@@ -141,6 +163,7 @@ export async function planReminders(
       );
     const kindLabel = EVENT_KIND[event.kind].label;
     const agenda = await agendaZeilen(event.id);
+    const bandName = await bandNameFuer(event.bandId);
 
     for (const { userId } of zusagen) {
       const person = empfById.get(userId);
@@ -148,6 +171,8 @@ export async function planReminders(
       geplant.push({
         userId: person.id,
         email: person.email,
+        notifyChannel: person.notifyChannel,
+        bandName,
         refType: "event_soon",
         refId: event.id,
         subject: `Morgen: ${event.title}`,
@@ -166,6 +191,9 @@ export async function planReminders(
   }
 
   // ---- schon erfolgreich Versendetes herausfiltern (Idempotenz) ------------
+  // Kanalunabhängig: Ein „ok" in IRGENDEINEM Kanal heißt, die Person hat die
+  // Erinnerung bekommen — ein gescheiterter zweiter Kanal wird nicht
+  // nachgeholt, sonst käme sie doppelt (Entwurf Web Push, „Wiederholung").
   // Nur „ok" gilt als erledigt. Ein „fehler"-Eintrag (z.B. SMTP kurz weg) darf
   // den nächsten Lauf NICHT blockieren — sonst heilt sich ein vorübergehendes
   // Problem nie von selbst.
@@ -208,8 +236,10 @@ export async function runReminders(
     .values({ art: "reminders" })
     .returning({ id: notificationRuns.id });
 
-  let sent = 0;
+  let mailSent = 0;
+  let pushSent = 0;
   let errors = 0;
+  let note = "";
 
   try {
     const geplant = await planReminders(appUrl, heute);
@@ -220,6 +250,7 @@ export async function runReminders(
     // Insert, sonst kollidierte der zweite Versuch mit dem Index.
     const schreibeLog = (
       p: PlannedSend,
+      channel: "mail" | "push",
       status: "ok" | "fehler",
       error: string | null
     ) =>
@@ -230,6 +261,7 @@ export async function runReminders(
           refType: p.refType,
           refId: p.refId,
           userId: p.userId,
+          channel,
           status,
           error,
         })
@@ -275,34 +307,66 @@ export async function runReminders(
       throw letzter;
     };
 
+    // Push: Geräte einmal je Lauf zählen. Ohne VAPID-Schlüssel ist Push aus —
+    // dann läuft alles wie bisher über Mail.
+    const pushAn = isPushConfigured();
+    const geraete = pushAn
+      ? await countDevices([...new Set(geplant.map((p) => p.userId))])
+      : new Map<number, number>();
+
     try {
       for (const p of geplant) {
-        try {
-          await sendeEinmal(p);
-          await schreibeLog(p, "ok", null);
-          sent++;
-        } catch (err) {
-          errors++;
-          const message = err instanceof Error ? err.message : String(err);
-          await schreibeLog(p, "fehler", message.slice(0, 500));
+        const kanaele = planChannels(p.notifyChannel, geraete.get(p.userId) ?? 0, pushAn);
+
+        let zugestellt = 0;
+        if (kanaele.push) {
+          const r = await sendToUser(
+            p.userId,
+            toPushPayload(p.content, p.bandName, {
+              appUrl,
+              tag: `reminder-${p.refType}-${p.refId}`,
+            }),
+            { ttl: PUSH_TTL.erinnerung, urgency: "high" }
+          );
+          zugestellt = r.delivered;
+          if (r.delivered > 0) {
+            await schreibeLog(p, "push", "ok", null);
+            pushSent++;
+          } else if (r.failed > 0) {
+            // Nur echte Fehler zählen — ein abgelaufenes Gerät (404/410) ist
+            // keiner, es wurde bereits aufgeräumt.
+            errors++;
+            await schreibeLog(p, "push", "fehler", (r.lastError ?? "").slice(0, 500));
+          }
+        }
+
+        if (kanaele.mail || mailFallbackNeeded(kanaele, zugestellt)) {
+          try {
+            await sendeEinmal(p);
+            await schreibeLog(p, "mail", "ok", null);
+            mailSent++;
+          } catch (err) {
+            errors++;
+            const message = err instanceof Error ? err.message : String(err);
+            await schreibeLog(p, "mail", "fehler", message.slice(0, 500));
+          }
         }
       }
     } finally {
       mailer?.close();
     }
   } finally {
-    const note = !isSmtpConfigured()
-      ? "SMTP nicht konfiguriert — nichts versendet"
-      : `${sent} versendet, ${errors} Fehler`;
+    const sent = mailSent + pushSent;
+    note =
+      !isSmtpConfigured() && pushSent === 0
+        ? "SMTP nicht konfiguriert — nichts versendet"
+        : `${mailSent} Mails, ${pushSent} Push, ${errors} Fehler` +
+          (isSmtpConfigured() ? "" : " (SMTP nicht konfiguriert)");
     await db
       .update(notificationRuns)
       .set({ finishedAt: new Date(), sentCount: sent, errorCount: errors, note })
       .where(eq(notificationRuns.id, lauf.id));
   }
 
-  return {
-    sent,
-    errors,
-    note: `${sent} Erinnerung(en) versendet, ${errors} Fehler`,
-  };
+  return { sent: mailSent + pushSent, errors, note };
 }
